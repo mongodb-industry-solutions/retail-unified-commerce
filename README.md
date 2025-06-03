@@ -1,6 +1,6 @@
-# Demo Template: Python Backend with Next.js Frontend
+# Empowering Store Associate - Unified Commerce with MongoDB Atlas
 
-This repository provides a template for creating a web application with a Python backend and a Next.js frontend. The backend is managed using Poetry for dependency management, while the frontend is built with Next.js, offering a modern React-based user interface.
+
 
 ## Table of Contents
 
@@ -32,29 +32,6 @@ Before you begin, ensure you have met the following requirements:
 ## Getting Started
 
 Follow these steps to set up the project locally.
-
-### Create a New Repository
-
-1. Navigate to the repository template on GitHub and click on **Use this template**.
-2. Create a new repository.
-3. **Do not** check the "Include all branches" option.
-4. Define a repository name following the naming convention: `<industry>-<project_name>-<highlighted_feature>`. For example, `fsi-leafybank-ai-personal-assistant` (use hyphens to separate words).
-   - The **industry** and **project name** are required; you can be creative with the highlighted feature.
-5. Provide a clear description for the repository, such as: "A repository template to easily create new demos by following the same structure."
-6. Set the visibility to **Internal**.
-7. Click **Create repository**.
-
-### GitHub Desktop Setup
-
-1. Install GitHub Desktop if you haven't already. You can download it from [GitHub Desktop's official website](https://desktop.github.com/).
-2. Open GitHub Desktop and sign in to your GitHub account.
-3. Clone the newly created repository:
-   - Click on **File** > **Clone Repository**.
-   - Select your repository from the list and click **Clone**.
-4. Create your first branch:
-   - In the GitHub Desktop interface, click on the **Current Branch** dropdown.
-   - Select **New Branch** and name it `feature/branch01`.
-   - Click **Create Branch**.
 
 ### Backend Setup
 
@@ -88,7 +65,3 @@ npm install
 npm run dev
 ````
 4. The frontend will now be accessible at http://localhost:3000 by default, providing a user interface.
-
-## DEMO README
-
-<h1 style="color:red">REPLACE THE CONTENT OF THIS README WITH `README-demo.md` and DELETE THE `README-demo.md` FILE!!!!!!!!! </h1>
