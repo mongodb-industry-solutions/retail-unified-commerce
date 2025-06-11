@@ -24,6 +24,7 @@ export default function Home() {
               moduleName={`${card.name}`}
               description={`${card.description}`}
               url={`${card.url}`}
+              disabled={card.disabled}
             />
           ))
         }

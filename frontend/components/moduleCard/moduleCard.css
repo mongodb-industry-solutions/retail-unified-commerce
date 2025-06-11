@@ -1,0 +1,9 @@
+.module-card{
+
+    cursor: pointer;
+}
+.module-card.disabled{
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}
