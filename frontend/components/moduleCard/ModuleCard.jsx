@@ -1,18 +1,32 @@
 import React from 'react'
+import { useRouter } from 'next/navigation';
 import Card from '@leafygreen-ui/card';
+import Link from "next/link";
+import './moduleCard.css';
+import Button from '@leafygreen-ui/button';
 
 const ModuleCard = (props) => {
     const { 
         moduleName, 
         description,
-        url
+        url,
+        disabled = false
     } = props;
+    const router = useRouter();
+
+    const handleClick = () => {
+        if (!disabled) {
+            router.push(url);
+        }
+    }    
 
     return (
-        <Card className='m-3 p-3' style={{ width: '100%' }}>
+        <Card className={`module-card m-3 p-3 ${disabled ? 'disabled' : ''}`} style={{ width: '100%' }} >
             <h3>{moduleName}</h3>
             <p>{description}</p>
-            <p>{url}</p>
+            <Button onClick={handleClick}>
+                Visit Module
+            </Button>
         </Card>
     )
 }
