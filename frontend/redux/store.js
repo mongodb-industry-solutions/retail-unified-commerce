@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import AlertReducer from './slices/AlertSlice.js'
+import ProductInventoryReducer from './slices/ProductInventorySlice.js';
 
 const store = configureStore({
     reducer: {
-        "Alerts": AlertReducer
+        "Alerts": AlertReducer,
+        "ProductInventory": ProductInventoryReducer
     }
 });
 

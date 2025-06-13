@@ -5,3 +5,15 @@
   margin-top: 2rem;
   align-items: stretch;
 }
+.big-text {
+  font-size: 18px;
+
+}
+.medium-text {
+  font-size: 14px;
+  color: #6f6f6f;              /* Muted text color */
+  line-height: 1.5;            /* Improved readability */
+}
+.progress-bar{
+  background-color: #00a35c;
+}

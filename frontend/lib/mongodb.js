@@ -4,12 +4,12 @@ import { EJSON } from "bson";
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
-if (!process.env.DATABASE_NAME) {
-  throw new Error('Invalid/Missing environment variable: "DATABASE_NAME"');
+if (!process.env.DB_NAME) {
+  throw new Error('Invalid/Missing environment variable: "DB_NAME"');
 }
 
 const uri = process.env.MONGODB_URI;
-const dbName = process.env.DATABASE_NAME;
+const dbName = process.env.DB_NAME;
 const options = { };
 
 let client;
