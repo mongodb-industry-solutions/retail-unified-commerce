@@ -11,7 +11,7 @@ const LoadingSearchBanner = (props) => {
     return (
         <div
             style={{
-                width: '100vw',
+                width: '100%',
                 minHeight: '30vh',
                 display: 'flex',
                 justifyContent: 'center',

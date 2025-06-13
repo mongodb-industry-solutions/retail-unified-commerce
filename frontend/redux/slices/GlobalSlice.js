@@ -11,6 +11,7 @@ const GlobalSlice = createSlice({
             return {
                 ...state,
                 stores: action.payload.stores || [],
+                selectedStore: action.payload.stores.length > 0 ? action.payload.stores[0]._id : null,
             };
         },
         setSelectedStore(state, action) {

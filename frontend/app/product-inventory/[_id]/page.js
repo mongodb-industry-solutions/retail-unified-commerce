@@ -14,6 +14,8 @@ import { setProductDetails } from '@/redux/slices/ProductInventorySlice';
 import LoadingSearchBanner from '@/components/loadingSearchBanner/LoadingSearchBanner';
 import ProductGeneralDetails from '@/components/productGeneralDetails/ProductGeneralDetails';
 import InventoryContainer from '@/components/iventoryContainer/InventoryContainer';
+import LocationsContainer from '@/components/locationsContainer/LocationsContainer';
+import BusinessIntelligenceContainer from '@/components/businessIntelligence/BusinessIntelligenceContainer';
 
 export default function ProductInventoryDetailePage({ params }) {
     const router = useRouter();
@@ -81,8 +83,8 @@ export default function ProductInventoryDetailePage({ params }) {
                         <ProductGeneralDetails />
                         <Tabs className='mt-4' setSelected={setSelected} selected={selected}>
                             <Tab name="Inventory"><InventoryContainer/></Tab>
-                            <Tab name="Locations">Comming soon...</Tab>
-                            <Tab name="AI Business Intelligence">Comming soon...</Tab>
+                            <Tab name="Locations"><LocationsContainer/></Tab>
+                            <Tab name="AI Business Intelligence"><BusinessIntelligenceContainer/></Tab>
                         </Tabs>
                     </div>
                     : null

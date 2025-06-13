@@ -19,7 +19,7 @@ export async function POST(request) {
     }
 
     const result = await collection
-        .find(filter, projection, options )
+        .find(filter, {projection, ...options} )
         .toArray()
     console.log('-- result: ', result)
     
