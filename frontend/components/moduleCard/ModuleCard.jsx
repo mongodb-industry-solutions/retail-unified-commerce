@@ -1,7 +1,6 @@
 import React from 'react'
 import { useRouter } from 'next/navigation';
 import Card from '@leafygreen-ui/card';
-import Link from "next/link";
 import './moduleCard.css';
 import Button from '@leafygreen-ui/button';
 
