@@ -8,12 +8,14 @@ import Button from '@leafygreen-ui/button';
 import { Option, Select, Size } from '@leafygreen-ui/select';
 import { SearchInput } from '@leafygreen-ui/search-input';
 import { setProductQuery } from '@/redux/slices/ProductInventorySlice';
+import ProductScan from '../productScan/ProductScan';
 
 
 const ProductSearch = (props) => {
     const dispatch = useDispatch();
     const [openHelpModal, setOpenHelpModal] = useState(false);
     const [searchValue, setSearchValue] = useState('');
+    const [show, setShow] = useState(false);
     const query = useSelector(state => state.ProductInventory.query);
 
     const handleSearch = () => {
@@ -28,7 +30,7 @@ const ProductSearch = (props) => {
 
     return (
         <div className="product-search mt-5 mb-5 justify-content-between">
-
+            <ProductScan show={show} setShow={setShow}/>
             <div className='d-flex flex-row '>
                 <Select
                     className={'me-2'}
@@ -37,6 +39,9 @@ const ProductSearch = (props) => {
                     size={Size.Default}
                     defaultValue={"search"}
                 >
+                    <Option value="search" description="Exact match">
+                        Exact match
+                    </Option>
                     <Option value="search" description="Full-text search">
                         Atlas Search
                     </Option>
@@ -70,7 +75,10 @@ const ProductSearch = (props) => {
                 />
             </div>
             <div>
-                <Button leftGlyph={<Icon glyph={"Stitch"} />}>
+                <Button 
+                    leftGlyph={<Icon glyph={"Stitch"} />}
+                    onClick={() => setShow(true)}
+                >
                     Scan Product
                 </Button>
             </div>

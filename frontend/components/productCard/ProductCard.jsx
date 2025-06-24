@@ -67,16 +67,16 @@ const ProductCard = (props) => {
       <Body className="mb-2"><strong>SKU: </strong>{sku}</Body>
       <div className="w-100 d-flex flex-column" style={{ marginBottom: 8 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Icon glyph="Pin" size="small" /> {/* Aisle icon */}
+          <Icon glyph="Pin" size="large" /> {/* Aisle icon */}
           <span style={{ fontSize: 13 }}>Aisle: {aisleNumber}</span>
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Icon glyph="Package" size="small" /> {/* Shelf icon */}
+          <Icon glyph="Package" size="large" /> {/* Shelf icon */}
           <span style={{ fontSize: 13 }}>Shelf: {shelfNumber ?? 'N/A'}</span>
         </span>
       </div>
       <Button className="w-100 mt-auto" onClick={() => router.push(productInventoryURL + '/' + _id)}>
-        View detailss
+        View details
       </Button>
     </Card>
   );

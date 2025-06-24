@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { clientPromise } from "@/lib/mongodb";
 import { PAGINATION_PER_PAGE } from "@/lib/constant";
+import { ObjectId } from "mongodb";
 
 export async function POST(request) {
-    const { query, facets, pagination_page } = await request.json();
+    const { query, facets, pagination_page, storeObjectId } = await request.json();
 
     try {
         const client = await clientPromise;
@@ -32,6 +33,19 @@ export async function POST(request) {
                 },
 
             });
+            // Filter by inventorySummary.storeObjectId
+            // I only want to get products that are inside this store
+            if (storeObjectId) {
+                pipeline.push({
+                    $match: {
+                        inventorySummary: {
+                            $elemMatch: {
+                                storeObjectId: new ObjectId(storeObjectId)
+                            }
+                        }
+                    }
+                });
+            }
             pipeline.push({
                 $project: {
                     _id: 1,
@@ -40,6 +54,7 @@ export async function POST(request) {
                     description: 1,
                     imageUrlS3: 1,
                     shelfNumber: 1,
+                    inventorySummary: 1,
                     // Add other fields
                     score: { $meta: "searchScore" }
                 }
@@ -77,6 +92,7 @@ export async function POST(request) {
         const totalItems = totalCount.length > 0 ? totalCount[0].total : 0;
 
         console.log('pipeline: ', pipeline)
+        console.log('storeObjectId', storeObjectId)
         // Query 2: Get paginated results
         const products = await collection
             .aggregate(pipeline)
