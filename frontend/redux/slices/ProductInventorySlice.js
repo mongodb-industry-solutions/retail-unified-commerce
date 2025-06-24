@@ -151,7 +151,8 @@ const ProductInventorySlice = createSlice({
         searchResults: [],
         totalItems: 0, // Total number of items for pagination
         pagination_page: 0,
-        productDetails: null,
+        productDetails: null, // the product from the product collection
+        productInventory: null, // the product from the inventory collection
         searchType: 'search', // 'search' or 'vector-search'
         loading: false,
         error: null,
@@ -184,9 +185,21 @@ const ProductInventorySlice = createSlice({
             };
         },
         setProductDetails(state, action) {
-            return {
+            let newState =  {
                 ...state,
                 productDetails: action.payload.product, // Assuming product is an object with product details
+                loading: false,
+                error: null,
+            };
+
+            if(action.payload.product === null) newState.productInventory = null; // Reset productInventory if productDetails is null
+
+            return newState;
+        },
+        setProductInventory(state, action) {
+            return {
+                ...state,
+                productInventory: action.payload.inventory, // Assuming product is an object with product details
                 loading: false,
                 error: null,
             };
@@ -213,6 +226,7 @@ export const {
     searchIsLoading,
     searchProductError,
     setProductDetails,
+    setProductInventory,
     setProductQuery,
     setCurrentPage
 } = ProductInventorySlice.actions

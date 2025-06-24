@@ -9,8 +9,8 @@ import { useRouter } from 'next/navigation';
 
 import InfoWizard from '@/components/InfoWizard/InfoWizard';
 import { productInventoryURL } from '@/lib/constant';
-import { getProductDetails } from '@/lib/api';
-import { setProductDetails } from '@/redux/slices/ProductInventorySlice';
+import { getProductDetails, getProductInventory } from '@/lib/api';
+import { setProductDetails, setProductInventory } from '@/redux/slices/ProductInventorySlice';
 import LoadingSearchBanner from '@/components/loadingSearchBanner/LoadingSearchBanner';
 import ProductGeneralDetails from '@/components/productGeneralDetails/ProductGeneralDetails';
 import InventoryContainer from '@/components/iventoryContainer/InventoryContainer';
@@ -26,25 +26,33 @@ export default function ProductInventoryDetailePage({ params }) {
     const [loadingDetails, setLoadingDetails] = useState(false)
     const [selected, setSelected] = useState(0)
     const { productDetails: product } = useSelector(state => state.ProductInventory);
+    const { selectedStore } = useSelector(state => state.Global);
 
     useEffect(() => {
-        if (!_id) {
+        if (!_id || !selectedStore) {
             router.push(productInventoryURL);
             return;
         }
+
         setLoadingDetails(true);
-        dispatch(setProductDetails({ product: null }));
-        getProductDetails(_id)
-            .then(product => {
-                console.log('Product details fetched:', product);
-                if (product)
-                    dispatch(setProductDetails({ product: product }));
-            })
-            .catch(() => {
-                // Optionally handle error (e.g., redirect or show error)
-            }).finally(() => {
-                setLoadingDetails(false);
-            });
+        dispatch(setProductDetails({ product: null })); // this also resets the inventory
+        Promise.all([
+            getProductDetails(_id),
+            getProductInventory(_id, selectedStore)
+        ])
+        .then(([product, inventory]) => {
+            console.log('Product details:', product);
+            console.log('Product inventory:', inventory);
+            if (product) dispatch(setProductDetails({ product }));
+            if (inventory) dispatch(setProductInventory({ inventory }));
+        })
+        .catch((e) => {
+            // Optionally handle error
+            console.log('Error fetching product details or inventory:', e);
+        })
+        .finally(() => {
+            setLoadingDetails(false);
+        });
     }, [_id, dispatch, router]);
 
 
@@ -79,12 +87,13 @@ export default function ProductInventoryDetailePage({ params }) {
                 loadingDetails
                     ? <LoadingSearchBanner title={'Loading details...'} />
                     : product
-                    ? <div className='mt-5'>
+                    ? 
+                    <div className='mt-5'>
                         <ProductGeneralDetails />
-                        <Tabs className='mt-4' setSelected={setSelected} selected={selected}>
-                            <Tab name="Inventory"><InventoryContainer/></Tab>
-                            <Tab name="Locations"><LocationsContainer/></Tab>
-                            <Tab name="AI Business Intelligence"><BusinessIntelligenceContainer/></Tab>
+                        <Tabs  aria-label="Product details tabs" className='mt-4' setSelected={setSelected} selected={selected}>
+                            <Tab name="Inventory"><InventoryContainer selectedStore={selectedStore}/></Tab>
+                            <Tab name="Locations"><LocationsContainer selectedStore={selectedStore}/></Tab>
+                            <Tab name="AI Business Intelligence"><BusinessIntelligenceContainer selectedStore={selectedStore}/></Tab>
                         </Tabs>
                     </div>
                     : null

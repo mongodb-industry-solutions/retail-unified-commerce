@@ -9,6 +9,7 @@ export async function getProductsWithSearch(query = '', filters = {}) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      storeObjectId: store.getState('Global').Global.selectedStore,
       query,
       facets: filters,
       pagination_page: store.getState('ProductInventory').ProductInventory.pagination_page
@@ -59,16 +60,47 @@ export async function getProductDetails(_id) {
   return data.result[0] || null;
 }
 
+export async function getProductInventory(_id, storeObjectId) {
+  const response = await fetch(`/api/findDocuments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      filter: { productId:  _id },
+      collectionName: 'inventory',
+      projection: {
+        storeInventory: {
+          $elemMatch: { storeObjectId: storeObjectId }
+        },
+        productId: 1,
+        updatedAt: 1
+      },
+      //objectIdFields: ['projection.storeInventory.$elemMatch.storeObjectId']
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching product details: ${response.status}`);
+  }
+  let data = await response.json();
+  data = data.result[0] || null
+    // If storeInventory is an array with one object, return just the object
+  if (data && Array.isArray(data.storeInventory) && data.storeInventory.length === 1) {
+    data.storeInventory = data.storeInventory[0];
+  }
+  return data;
+}
+
 export async function getStores() {
   const response = await fetch(`/api/findDocuments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ 
-      filter: {}, 
+    body: JSON.stringify({
+      filter: {},
       collectionName: 'stores',
-      projection:{
+      projection: {
         _id: 1,
         storeName: 1,
         'location.address': 1

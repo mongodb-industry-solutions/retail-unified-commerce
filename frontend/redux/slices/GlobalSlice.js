@@ -4,7 +4,7 @@ const GlobalSlice = createSlice({
     name: "Global",
     initialState: {
         stores: [],
-        selectedStore: null,
+        selectedStore:'684aa28064ff7c785a568aca'// null,
     },
     reducers: {
         setStores(state, action) {
