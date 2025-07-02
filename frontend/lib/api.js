@@ -9,6 +9,7 @@ export async function getProductsWithSearch(query = '', filters = {}) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
       storeObjectId: store.getState('Global').Global.selectedStore,
       query,
       facets: filters,
@@ -46,12 +47,26 @@ export async function getProductsWithVectorSearch(query, filters = {}) {
 }
 
 export async function getProductDetails(_id) {
+
   const response = await fetch(`/api/findDocuments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ filter: { _id: _id }, collectionName: 'products-v2' }),
+    body: JSON.stringify({
+      filter: { _id: _id },
+      projection: {
+        _id: 1,
+        productName: 1,
+        brand: 1,
+        price: 1,
+        imageUrlS3: 1,
+        aboutTheProduct: 1,
+        category: 1,
+        subCategory: 1
+      },
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
+    }),
   });
   if (!response.ok) {
     throw new Error(`Error fetching product details: ${response.status}`);
@@ -67,14 +82,26 @@ export async function getProductInventory(_id, storeObjectId) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      filter: { productId:  _id },
-      collectionName: 'inventory',
+      filter: { productId: _id },
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_INVENTORY,
       projection: {
-        storeInventory: {
-          $elemMatch: { storeObjectId: storeObjectId }
-        },
         productId: 1,
-        updatedAt: 1
+        updatedAt: 1,
+        selectedStoreInventory: {
+          $filter: {
+            input: "$storeInventory",
+            as: "item",
+            cond: { $eq: ["$$item.storeObjectId", storeObjectId] }
+          }
+        },
+        // All inventory objects NOT for the selected store
+        otherStoreInventory: {
+          $filter: {
+            input: "$storeInventory",
+            as: "item",
+            cond: { $ne: ["$$item.storeObjectId", storeObjectId] }
+          }
+        },
       },
       //objectIdFields: ['projection.storeInventory.$elemMatch.storeObjectId']
     }),
@@ -84,11 +111,33 @@ export async function getProductInventory(_id, storeObjectId) {
   }
   let data = await response.json();
   data = data.result[0] || null
-    // If storeInventory is an array with one object, return just the object
+  // If storeInventory is an array with one object, return just the object
   if (data && Array.isArray(data.storeInventory) && data.storeInventory.length === 1) {
     data.storeInventory = data.storeInventory[0];
   }
   return data;
+}
+
+export async function getDistancesForOtherStores(mainPoint = null) {
+  let selectedStoreId = store.getState().Global.selectedStore;
+  if (!mainPoint) mainPoint = store.getState().Global.stores.find(store => store._id === selectedStoreId ).location.coordinates;
+  console.log('getDistancesForOtherStores', mainPoint)
+  const response = await fetch(`/api/getDistances`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,
+      mainPoint: mainPoint
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching distances: ${response.status}`);
+  }
+  const data = await response.json();
+  console.log('Distances:', data.distances);
+  return data.distances || null;
 }
 
 export async function getStores() {
@@ -99,11 +148,11 @@ export async function getStores() {
     },
     body: JSON.stringify({
       filter: {},
-      collectionName: 'stores',
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,
       projection: {
         _id: 1,
         storeName: 1,
-        'location.address': 1
+        location: 1,
       }
     }),
   });

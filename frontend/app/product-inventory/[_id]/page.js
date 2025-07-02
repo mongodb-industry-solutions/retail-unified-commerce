@@ -9,13 +9,14 @@ import { useRouter } from 'next/navigation';
 
 import InfoWizard from '@/components/InfoWizard/InfoWizard';
 import { productInventoryURL } from '@/lib/constant';
-import { getProductDetails, getProductInventory } from '@/lib/api';
-import { setProductDetails, setProductInventory } from '@/redux/slices/ProductInventorySlice';
+import { getDistancesForOtherStores, getProductDetails, getProductInventory } from '@/lib/api';
+import { setDistancesFromOtherStores, setProductDetails, setProductInventory } from '@/redux/slices/ProductInventorySlice';
 import LoadingSearchBanner from '@/components/loadingSearchBanner/LoadingSearchBanner';
 import ProductGeneralDetails from '@/components/productGeneralDetails/ProductGeneralDetails';
 import InventoryContainer from '@/components/iventoryContainer/InventoryContainer';
 import LocationsContainer from '@/components/locationsContainer/LocationsContainer';
 import BusinessIntelligenceContainer from '@/components/businessIntelligence/BusinessIntelligenceContainer';
+import store from '@/redux/store';
 
 export default function ProductInventoryDetailePage({ params }) {
     const router = useRouter();
@@ -45,6 +46,15 @@ export default function ProductInventoryDetailePage({ params }) {
             console.log('Product inventory:', inventory);
             if (product) dispatch(setProductDetails({ product }));
             if (inventory) dispatch(setProductInventory({ inventory }));
+            if(inventory){
+                getDistancesForOtherStores().then((distances) => {
+                    console.log('Distances for other stores:', distances);
+                    //if (distances) dispatch(setDistancesFromOtherStores({ distances }));
+                })
+                
+
+            }
+           
         })
         .catch((e) => {
             // Optionally handle error
@@ -91,8 +101,8 @@ export default function ProductInventoryDetailePage({ params }) {
                     <div className='mt-5'>
                         <ProductGeneralDetails />
                         <Tabs  aria-label="Product details tabs" className='mt-4' setSelected={setSelected} selected={selected}>
-                            <Tab name="Inventory"><InventoryContainer selectedStore={selectedStore}/></Tab>
-                            <Tab name="Locations"><LocationsContainer selectedStore={selectedStore}/></Tab>
+                            <Tab name="Inventory"><InventoryContainer/></Tab>
+                            <Tab name="Locations"><LocationsContainer/></Tab>
                             <Tab name="AI Business Intelligence"><BusinessIntelligenceContainer selectedStore={selectedStore}/></Tab>
                         </Tabs>
                     </div>

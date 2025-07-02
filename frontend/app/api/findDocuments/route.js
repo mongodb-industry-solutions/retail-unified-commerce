@@ -22,7 +22,8 @@ export async function POST(request) {
     // exception handle
     if(collectionName == 'inventory' && filter['productId']){
         filter['productId'] = new ObjectId(filter['productId'])
-        projection['storeInventory'].$elemMatch.storeObjectId = new ObjectId(projection['storeInventory'].$elemMatch.storeObjectId);    
+        projection['selectedStoreInventory'].$filter.cond.$eq[1] = new ObjectId(projection['selectedStoreInventory'].$filter.cond.$eq[1]);    
+        projection['otherStoreInventory'].$filter.cond.$ne[1] = new ObjectId(projection['otherStoreInventory'].$filter.cond.$ne[1]);    
     }
 
     const result = await collection
