@@ -51,7 +51,7 @@ export async function getProductDetails(_id) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ filter: { _id: _id }, collectionName: 'products' }),
+    body: JSON.stringify({ filter: { _id: _id }, collectionName: 'products-v2' }),
   });
   if (!response.ok) {
     throw new Error(`Error fetching product details: ${response.status}`);

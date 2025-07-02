@@ -25,6 +25,7 @@ export async function POST(request) {
                                 text: {
                                     query: query,
                                     path: ['title', 'sku', 'description'],
+                                    // product_search --> productName, brand, category, subCategory
                                     fuzzy: { maxEdits: 2 } // Allows typos (Levenshtein distance)
                                 }
                             }

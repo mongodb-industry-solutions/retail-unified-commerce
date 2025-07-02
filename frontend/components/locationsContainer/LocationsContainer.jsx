@@ -92,6 +92,7 @@ const LocationsContainer = (props) => {
                 <p className='medium-text text-dark'>
                     <Icon glyph="Building" size="large" /> {/* Aisle icon */}
                     <strong>Other Store Availability</strong>
+                    {/* Esta seccion se toma de la collection Inventory */}
                 </p>
                 <Table>
                     <TableHead>

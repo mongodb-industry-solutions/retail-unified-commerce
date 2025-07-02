@@ -32,10 +32,7 @@ const InventoryContainer = (props) => {
                         Shelf inventory
                     </p>
                     <h2>{inventory.storeInventory.shelfQuantity}</h2>
-                    <div style={{ width: '80%' }}>
-                        <ProgressBar now={60} />
-                    </div>
-                    <Description className="medium-text">X of X units</Description>
+
                 </div>
             </div>
             <div className='col-4 col-md-4 col-sm-12 col-12 mb-4'>
@@ -45,10 +42,7 @@ const InventoryContainer = (props) => {
                         Backroom inventory
                     </p>
                     <h2>{inventory.storeInventory.backroomQuantity}</h2>
-                    <div style={{ width: '80%' }}>
-                        <ProgressBar now={60} />
-                    </div>
-                    <Description className="medium-text">X of X units</Description>
+
                 </div>
             </div>
             <div className='col-4 col-md-4 col-sm-12 col-12 mb-4'>
