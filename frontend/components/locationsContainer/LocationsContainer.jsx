@@ -18,14 +18,20 @@ import {
 const calculateStockLevel = (shelfQuantity = 0, backroomQuantity = 0) => {
     const amount = Number(shelfQuantity) + Number(backroomQuantity);
     const text = amount < 0 ? 'Out of Stock' : amount <= 10 ? 'Low In Stock' : 'In Stock';    
-    const color = amount < 0 ? 'red' : amount <= 10 ? 'yellow' : 'green';
+    const color = amount < 0 ? 'red' : amount <= 40 ? 'yellow' : 'green';
     return {color, text}
 }
 
-const LocationsContainer = (props) => {
-    const { selectedStore } = props;
-    const { inventorySummary: productInventorySummary } = useSelector(state => state.ProductInventory.productDetails) || [];
+const LocationsContainer = () => {
+    const { selectedStore } = useSelector(state => state.Global);
     const { productInventory: inventory } = useSelector(state => state.ProductInventory);
+    const {otherStoreInventory} = inventory || [];
+        const {
+        sectionId = 'N/A',
+        aisleId = 'N/A',
+        shelfId = 'N/A',
+    } = inventory.selectedStoreInventory?.[0] || {};
+
     const [loading, setLoading] = useState(true)
 
 
@@ -43,36 +49,18 @@ const LocationsContainer = (props) => {
                     <div className='col-4 col-md-4 col-sm-12 col-12 mb-4 d-flex flex-column align-items-center'>
 
                         <p className='m-0 medium-text text-dark'>Section:</p>
-                        <p className='mb-0'>
-                            {
-                                inventory.storeInventory
-                                    ? inventory.storeInventory.sectionId
-                                    : 'N/A'
-                            }
-                        </p>
+                        <p className='mb-0'> {sectionId}  </p>
 
                     </div>
                     <div className='col-4 col-md-4 col-sm-12 col-12 mb-4 d-flex flex-column align-items-center'>
 
                         <p className='m-0 medium-text text-dark'>Aisle:</p>
-                        <p className='mb-0'>
-                            {
-                                inventory.storeInventory
-                                    ? inventory.storeInventory.aisleId
-                                    : 'N/A'
-                            }
-                        </p>
+                        <p className='mb-0'> {aisleId} </p>
                     </div>
                     <div className='col-4 col-md-4 col-sm-12 col-12 mb-4 d-flex flex-column align-items-center'>
 
                         <p className='m-0 medium-text text-dark'>Shelf:</p>
-                        <p className='mb-0'>
-                           {
-                                inventory.storeInventory
-                                    ? inventory.storeInventory.shelfId
-                                    : 'N/A'
-                            }
-                        </p>
+                        <p className='mb-0'> {shelfId} </p>
                     </div>
                 </div>
             </Card>
@@ -97,17 +85,17 @@ const LocationsContainer = (props) => {
                 <Table>
                     <TableHead>
                         <HeaderRow>
-                            <HeaderCell>Store</HeaderCell>
                             <HeaderCell>Distance</HeaderCell>
+                            <HeaderCell>Store</HeaderCell>
                             <HeaderCell>Availability</HeaderCell>
                             <HeaderCell>Quantity</HeaderCell>
                         </HeaderRow>
                     </TableHead>
                     <TableBody>
-                        {productInventorySummary && productInventorySummary?.map((store, rowIndex) => (
-                            <Row key={store.storeId}>
-                                <Cell>{store.storeId}</Cell>
+                        {otherStoreInventory && otherStoreInventory?.map((store, rowIndex) => (
+                            <Row key={store.storeObjectId}>
                                 <Cell>TODO</Cell>
+                                <Cell>{store.storeName}</Cell>
                                 <Cell>
                                     <Badge variant={calculateStockLevel(store.shelfQuantity, store.backroomQuantity).color} className="my-badge">
                                         {calculateStockLevel(store.shelfQuantity, store.backroomQuantity).text}

@@ -4,13 +4,19 @@ import { PAGINATION_PER_PAGE } from "@/lib/constant";
 import { ObjectId } from "mongodb";
 
 export async function POST(request) {
-    const { query, facets, pagination_page, storeObjectId } = await request.json();
+    const {
+        query,
+        facets,
+        pagination_page,
+        storeObjectId,
+        collectionName,
+    } = await request.json();
 
     try {
         const client = await clientPromise;
         const db = client.db(process.env.DB_NAME);
-        const collection = db.collection("products");
-
+        const collection = db.collection(collectionName);
+        console.log('-------- collectionName: ', collectionName);
         // Build the aggregation pipeline
         const pipeline = [];
 
@@ -18,15 +24,14 @@ export async function POST(request) {
         if (query) {
             pipeline.push({
                 $search: {
-                    index: 'product_search', // Use your index name
+                    index: process.env.SEARCH_INDEX, // Use your index name
                     compound: {
                         should: [
                             {
                                 text: {
                                     query: query,
-                                    path: ['title', 'sku', 'description'],
-                                    // product_search --> productName, brand, category, subCategory
-                                    fuzzy: { maxEdits: 2 } // Allows typos (Levenshtein distance)
+                                    path: ['productName', 'brand', 'category', 'subCategory'],
+                                    fuzzy: { maxEdits: 2 }
                                 }
                             }
                         ]
@@ -50,17 +55,17 @@ export async function POST(request) {
             pipeline.push({
                 $project: {
                     _id: 1,
-                    title: 1,
-                    sku: 1,
-                    description: 1,
+                    productName: 1,
                     imageUrlS3: 1,
-                    shelfNumber: 1,
-                    inventorySummary: 1,
-                    // Add other fields
-                    score: { $meta: "searchScore" }
+                    inventorySummary: {
+                        $filter: {
+                            input: "$inventorySummary",
+                            as: "item",
+                            cond: { $eq: ["$$item.storeObjectId", new ObjectId(storeObjectId)] }
+                        }
+                    }, score: { $meta: "searchScore" }
                 }
             });
-            //  $limit stages
             pipeline.push(
                 {
                     $limit: 100, // Limit the number of results
@@ -92,7 +97,7 @@ export async function POST(request) {
         const totalCount = await collection.aggregate(pipeline.concat([{ $count: "total" }])).toArray();
         const totalItems = totalCount.length > 0 ? totalCount[0].total : 0;
 
-        console.log('pipeline: ', pipeline)
+        console.log('pipeline: ', JSON.stringify(pipeline, null, 2));
         console.log('storeObjectId', storeObjectId)
         // Query 2: Get paginated results
         const products = await collection

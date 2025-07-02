@@ -17,14 +17,15 @@ const ProductCard = (props) => {
   const router = useRouter();
   const {
     _id,
-    title,
-    sku,
-    description,
+    productName: title,
+    _id: sku,
     imageUrlS3,
-    shelfNumber,
-    aisleNumber = 'N/A',
     score = 0
   } = props.product;
+  const {
+    shelfId: shelfNumber,
+    aisleId: aisleNumber = 'N/A',
+  } = props.product.inventorySummary[0] || {};
 
 
   return (
@@ -63,7 +64,6 @@ const ProductCard = (props) => {
         )}
       </div>
       <Subtitle className="mb-1">{title}</Subtitle>
-      <Body className="mb-1" style={{ color: "#888" }}>{description}</Body>
       <Body className="mb-2"><strong>SKU: </strong>{sku}</Body>
       <div className="w-100 d-flex flex-column" style={{ marginBottom: 8 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -86,7 +86,7 @@ ProductCard.propTypes = {
     _id: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     sku: PropTypes.string.isRequired,
-    description: PropTypes.string,
+    // description: PropTypes.string,
     score: PropTypes.number
   }).isRequired
 };

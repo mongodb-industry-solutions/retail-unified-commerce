@@ -204,6 +204,9 @@ const ProductInventorySlice = createSlice({
                 error: null,
             };
         },
+        setDistancesFromOtherStores(state, action){
+
+        },
         setProductQuery(state, action) {
             return {
                 ...state,
@@ -228,7 +231,8 @@ export const {
     setProductDetails,
     setProductInventory,
     setProductQuery,
-    setCurrentPage
+    setCurrentPage,
+    setDistancesFromOtherStores
 } = ProductInventorySlice.actions
 
 export default ProductInventorySlice.reducer
