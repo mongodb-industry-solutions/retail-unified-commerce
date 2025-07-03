@@ -17,6 +17,7 @@ import InventoryContainer from '@/components/iventoryContainer/InventoryContaine
 import LocationsContainer from '@/components/locationsContainer/LocationsContainer';
 import BusinessIntelligenceContainer from '@/components/businessIntelligence/BusinessIntelligenceContainer';
 import store from '@/redux/store';
+import { setStores } from '@/redux/slices/GlobalSlice';
 
 export default function ProductInventoryDetailePage({ params }) {
     const router = useRouter();
@@ -49,7 +50,7 @@ export default function ProductInventoryDetailePage({ params }) {
             if(inventory){
                 getDistancesForOtherStores().then((distances) => {
                     console.log('Distances for other stores:', distances);
-                    //if (distances) dispatch(setDistancesFromOtherStores({ distances }));
+                    if (distances) dispatch(setStores({ stores: distances }));
                 })
                 
 

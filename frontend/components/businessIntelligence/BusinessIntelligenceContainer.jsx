@@ -3,9 +3,11 @@ import './businessIntelligenceContainer.css';
 import { useSelector, useDispatch } from 'react-redux';
 import Icon from '@leafygreen-ui/icon';
 
-const BusinessIntelligenceContainer = (props) => {
-    const { } = props;
-    const { productInventory: inventory } = useSelector(state => state.ProductInventory);
+const BusinessIntelligenceContainer = () => {
+    const { productInventory } = useSelector(state => state.ProductInventory);
+    const {
+        predictedConsumptionPerWeek
+    } = productInventory.selectedStoreInventory[0] || {};
 
     return (
         <div className='mt-4 row'>
@@ -28,7 +30,7 @@ const BusinessIntelligenceContainer = (props) => {
             </div>
             <div className='mb-3'>
                 <p className='medium-text text-dark  mb-0'>
-                    <strong>Average Sell-Through Rate: </strong> {inventory.storeInventory.predictedConsumptionPerWeek} units per week
+                    <strong>Average Sell-Through Rate: </strong> {predictedConsumptionPerWeek} units per week
                 </p>
             </div>
             <div className='mb-3'>
