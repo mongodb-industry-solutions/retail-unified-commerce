@@ -1,26 +1,30 @@
 /******************************************************************************
- *  12-HOURLY INVENTORY SIMULATION TRIGGER                                     *
+ *  12-HOURLY INVENTORY SIMULATION TRIGGER                                    *
  *  ========================================================================  *
- *  WHAT IT DOES                                                              *
- *  ------------                                                              *
- *  • Every 12 hours it randomly selects up to BATCH_SIZE documents from the  *
- *    `inventory` collection that have NOT been processed in the current      *
- *    “simulation cycle” (or that have never been processed at all).          *
- *  • For each selected document it regenerates the volatile fields inside    *
- *    every entry of `storeInventory` (stock levels, flags, restock dates,    *
- *    consumption metrics, etc.).                                             *
- *  • It marks the doc with `lastSimulationCycle = currentCycle` so the same  *
- *    document is not touched again until the next cycle.                     *
- *  • When no documents remain, it increments `currentCycle` (stored in a     *
- *    tiny meta collection) so the next run starts a fresh sweep.             *
+ *  PURPOSE                                                                   *
+ *  -------                                                                   *
+ *  This script simulates **real store operations** by updating 500 random    *
+ *  products every 12 hours. The idea is to keep the inventory data fresh,    *
+ *  contemporary, and coherent for demos, reflecting how stock levels and     *
+ *  store metrics naturally change over time.                                 *
+ *                                                                            *
+ *  - Shelf and backroom quantities are refreshed to mimic real movements.   *
+ *  - Flags like `inStock` and `nearToReplenishmentInShelf` stay coherent.   *
+ *  - Consumption metrics and restock dates are updated to remain realistic, *
+ *     avoiding outdated timestamps that break demo immersion.                *
+ *  - The `updatedAt` field is set to indicate the document was              *
+ *     recently refreshed.                                                    *
+ *                                                                            *
+ *  In essence, this keeps your demo dataset **alive and business-realistic**,*
+ *  so each time the data is viewed, it looks like a real store evolving day *
+ *  by day.                                                                   *
  *                                                                            *
  *  SCHEDULE: create an **Atlas Scheduled Trigger** → “Every 12 hours”.       *
  ******************************************************************************/
 
-const CLUSTER_SERVICE = "IST-Shared";     // Linked-data-source name in Atlas
+const CLUSTER_SERVICE = "IST-Shared";     // Linked data source name
 const DB_NAME         = "retail-unified-commerce";
-const INVENTORY_COLL  = "inventory";      // renamed collection
-const META_COLL       = "inventory-sim-meta"; // holds { _id:"cycle", currentCycle }
+const INVENTORY_COLL  = "inventory";
 const BATCH_SIZE      = 500;
 
 exports = async function () {
@@ -29,61 +33,40 @@ exports = async function () {
   const today = new Date();
 
   /* ---------- handles ---------------------------------------------------- */
-  const svc  = context.services.get(CLUSTER_SERVICE);
-  const db   = svc.db(DB_NAME);
-  const inv  = db.collection(INVENTORY_COLL);
-  const meta = db.collection(META_COLL);
+  const svc = context.services.get(CLUSTER_SERVICE);
+  const db  = svc.db(DB_NAME);
+  const inv = db.collection(INVENTORY_COLL);
 
-  /* 1 ▸ read or create the cycle counter ---------------------------------- */
-  const { currentCycle } = await meta.findOneAndUpdate(
-    { _id: "cycle" },
-    { $setOnInsert: { currentCycle: 1 } },
-    { upsert: true, returnNewDocument: true }
-  );
-
-  /* 2 ▸ pull up to BATCH_SIZE docs not yet processed this cycle ----------- */
+  /* 1 ▸ pick up to BATCH_SIZE random docs --------------------------------- */
   const batch = await inv.aggregate([
-    {
-      $match: {
-        $or: [
-          { lastSimulationCycle: { $lt: currentCycle } },  // already tagged but < cycle
-          { lastSimulationCycle: { $exists: false } }      // never processed
-        ]
-      }
-    },
     { $sample: { size: BATCH_SIZE } }
   ]).toArray();
 
-  /* 2b ▸ if no docs left, bump the cycle counter and exit ----------------- */
   if (batch.length === 0) {
-    await meta.updateOne({ _id: "cycle" }, { $inc: { currentCycle: 1 } });
-    console.log(`🌀 Cycle ${currentCycle} finished. Next cycle = ${currentCycle + 1}`);
+    console.log(`ℹ️ No documents found to update.`);
     return;
   }
 
-  /* 3 ▸ build bulk update operations ------------------------------------- */
+  /* 2 ▸ build bulk update operations ------------------------------------- */
   const ops = batch.map(doc => {
     const newStores = (doc.storeInventory || []).map(si => {
-      /* random stock + thresholds */
       const shelfQty = rand(0, 50);
       const backQty  = rand(0, 60);
       const lowThr   = rand(5, 12);
       const total    = shelfQty + backQty;
 
-      /* random consumption → depletion date */
       const weekly   = rand(20, 120);
       const daysOut  = Math.max(1, Math.floor(total / (weekly / 7)));
       const deplete  = new Date(today);
       deplete.setDate(today.getDate() + daysOut);
 
-      /* restock dates around “today” */
       const lastRest = new Date(today);
       lastRest.setDate(today.getDate() - rand(1, 10));
       const nextRest = new Date(today);
       nextRest.setDate(today.getDate() + rand(1, 15));
 
       return {
-        ...si,                                 // keep IDs/layout
+        ...si,
         shelfQuantity: shelfQty,
         backroomQuantity: backQty,
         shelfLowThreshold: lowThr,
@@ -102,20 +85,18 @@ exports = async function () {
         update: {
           $set: {
             storeInventory: newStores,
-            lastSimulationCycle: currentCycle,
-            updatedAt: new Date()
+            updatedAt: new Date()  //ensures updatedAt reflects this run
           }
         }
       }
     };
   });
 
-  /* 4 ▸ execute bulk write ------------------------------------------------ */
+  /* 3 ▸ execute bulk write ------------------------------------------------ */
   if (ops.length) await inv.bulkWrite(ops);
-  console.log(`✅ ${ops.length} docs updated (cycle ${currentCycle}).`);
+  console.log(`✅ ${ops.length} inventory docs updated.`);
 };
 
 /*******************************************************************************
- *  MIT License                                                                *
- *  Copyright (c) 2025 IST-MongoDB                                             *
+ *  MIT License – 2025 IST-MongoDB                                             *
  ******************************************************************************/
