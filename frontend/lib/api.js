@@ -1,4 +1,5 @@
 
+import { setStores } from "@/redux/slices/GlobalSlice";
 import store from "@/redux/store";
 
 export async function getProductsWithSearch(query = '', filters = {}) {
@@ -120,7 +121,15 @@ export async function getProductInventory(_id, storeObjectId) {
 
 export async function getDistancesForOtherStores(mainPoint = null) {
   let selectedStoreId = store.getState().Global.selectedStore;
-  if (!mainPoint) mainPoint = store.getState().Global.stores.find(store => store._id === selectedStoreId ).location.coordinates;
+  if(store.getState().Global.stores.length === 0) {
+    console.log('No stores available in the state. Cannot fetch distances.');
+    const stores = await getStores()
+      if (stores) {
+        store.dispatch(setStores({ stores }));
+      }
+
+  }
+  if (!mainPoint) mainPoint = store.getState().Global.stores.find(store => store._id === selectedStoreId )?.location.coordinates;
   console.log('getDistancesForOtherStores', mainPoint)
   const response = await fetch(`/api/getDistances`, {
     method: "POST",

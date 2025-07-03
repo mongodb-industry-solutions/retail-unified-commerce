@@ -14,23 +14,36 @@ import {
     TableBody,
     TableHead,
 } from '@leafygreen-ui/table';
+import InfoWizard from '../InfoWizard/InfoWizard';
 
 const calculateStockLevel = (shelfQuantity = 0, backroomQuantity = 0) => {
     const amount = Number(shelfQuantity) + Number(backroomQuantity);
-    const text = amount < 0 ? 'Out of Stock' : amount <= 10 ? 'Low In Stock' : 'In Stock';    
+    const text = amount < 0 ? 'Out of Stock' : amount <= 10 ? 'Low In Stock' : 'In Stock';
     const color = amount < 0 ? 'red' : amount <= 40 ? 'yellow' : 'green';
-    return {color, text}
+    return { color, text }
+}
+
+const getStoreDistance = (stores, storeObjectId) => {
+    const distance = stores.find(store => store._id === storeObjectId)?.distanceInKM;
+    return distance ? `${distance.toFixed(2)} km` : 'N/A';
 }
 
 const LocationsContainer = () => {
-    const { selectedStore } = useSelector(state => state.Global);
+    const { selectedStore, stores } = useSelector(state => state.Global);
     const { productInventory: inventory } = useSelector(state => state.ProductInventory);
-    const {otherStoreInventory} = inventory || [];
-        const {
+    const { otherStoreInventory } = inventory || [];
+    // Sort otherStoreInventory by distance
+    const sortedOtherStoreInventory = [...(otherStoreInventory || [])].sort((a, b) => {
+        const distA = parseFloat(getStoreDistance(stores, a.storeObjectId)) || Infinity;
+        const distB = parseFloat(getStoreDistance(stores, b.storeObjectId)) || Infinity;
+        return distA - distB
+    });
+    const {
         sectionId = 'N/A',
         aisleId = 'N/A',
         shelfId = 'N/A',
     } = inventory.selectedStoreInventory?.[0] || {};
+    const [openHelpModal, setOpenHelpModal] = useState(false);
 
     const [loading, setLoading] = useState(true)
 
@@ -70,11 +83,11 @@ const LocationsContainer = () => {
                     <strong>Store Map</strong>
                 </p>
                 <Description className='medium-text mt-0'>See product location on the store map</Description>
-                    {
-                        inventory.storeInventory
-                            ? 'MAP'
-                            : 'N/A'
-                    }
+                {
+                    inventory.storeInventory
+                        ? 'MAP'
+                        : 'N/A'
+                }
             </Card>
             <Card className='mb-4'>
                 <p className='medium-text text-dark'>
@@ -82,7 +95,7 @@ const LocationsContainer = () => {
                     <strong>Other Store Availability</strong>
                     {/* Esta seccion se toma de la collection Inventory */}
                 </p>
-                <Table>
+                <Table shouldAlternateRowColor={true} shouldTruncate={false} >
                     <TableHead>
                         <HeaderRow>
                             <HeaderCell>Distance</HeaderCell>
@@ -92,14 +105,31 @@ const LocationsContainer = () => {
                         </HeaderRow>
                     </TableHead>
                     <TableBody>
-                        {otherStoreInventory && otherStoreInventory?.map((store, rowIndex) => (
+                        {sortedOtherStoreInventory && sortedOtherStoreInventory?.map((store, rowIndex) => (
                             <Row key={store.storeObjectId}>
-                                <Cell>TODO</Cell>
+                                <Cell>
+                                    <div className='d-flex align-items-center justify-content-between gap-1'>
+                                        {getStoreDistance(stores, store.storeObjectId)}
+                                        <InfoWizard
+                                            open={openHelpModal}
+                                            setOpen={setOpenHelpModal}
+                                            tooltipText="Learn more!"
+                                            iconGlyph="Wizard"
+                                            tabs={[
+                                                {
+                                                    heading: '',
+                                                    content: <LocationLearnMore />
+                                                }
+                                            ]}
+                                            openModalIsButton={false}
+                                        />
+                                    </div>
+                                </Cell>
                                 <Cell>{store.storeName}</Cell>
                                 <Cell>
                                     <Badge variant={calculateStockLevel(store.shelfQuantity, store.backroomQuantity).color} className="my-badge">
                                         {calculateStockLevel(store.shelfQuantity, store.backroomQuantity).text}
-                                    </Badge>                                    
+                                    </Badge>
                                 </Cell>
                                 <Cell>{Number(store.shelfQuantity || 0) + Number(store.backroomQuantity || 0)}</Cell>
                             </Row>

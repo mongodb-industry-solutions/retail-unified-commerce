@@ -17,3 +17,6 @@
 .progress-bar{
   background-color: #00a35c;
 }
+[aria-label="Close modal"] {
+  display: none !important;
+}
