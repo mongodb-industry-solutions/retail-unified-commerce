@@ -1,0 +1,89 @@
+import { createSlice } from "@reduxjs/toolkit";
+ 
+const ProductInventorySlice = createSlice({
+    name: "ProductInventory",
+    initialState: {
+        searchResults: [],
+        totalItems: 0, // Total number of items for pagination
+        pagination_page: 0,
+        productDetails: null, // the product from the product collection
+        productInventory: null, // the product from the inventory collection
+        searchType: 'search', // 'search' or 'vector-search'
+        loading: false,
+        error: null,
+        query: null, // The search query string
+    },
+    reducers: {
+        setSearchResults(state, action) {
+            return {
+                ...state,
+                searchResults: action.payload.results, // Assuming results is an array of products
+                totalItems: action.payload.totalItems || 0, // Assuming totalItems is provided
+                loading: false,
+                error: null,
+            };
+        },
+        searchIsLoading(state, action) {
+            return {
+                ...state,
+                searchResults: [], // Assuming results is an array of products
+                loading: true,
+                error: null,
+            }
+        },
+        searchProductError(state, action) {
+            return {
+                ...state,
+                searchResults: [],
+                loading: false,
+                error: action.payload.error, // Assuming error is an object with error details
+            };
+        },
+        setProductDetails(state, action) {
+            let newState =  {
+                ...state,
+                productDetails: action.payload.product, // Assuming product is an object with product details
+                loading: false,
+                error: null,
+            };
+
+            if(action.payload.product === null) newState.productInventory = null; // Reset productInventory if productDetails is null
+
+            return newState;
+        },
+        setProductInventory(state, action) {
+            return {
+                ...state,
+                productInventory: action.payload.inventory, // Assuming product is an object with product details
+                loading: false,
+                error: null,
+            };
+        },
+        setProductQuery(state, action) {
+            return {
+                ...state,
+                query: action.payload.query, // Assuming query is a string
+                loading: false,
+                error: null,
+            };
+        },
+        setCurrentPage: (state, action) => {
+            return {
+                ...state,
+                pagination_page: action.payload
+            }
+        },
+    }
+})
+
+export const {
+    setSearchResults,
+    searchIsLoading,
+    searchProductError,
+    setProductDetails,
+    setProductInventory,
+    setProductQuery,
+    setCurrentPage,
+} = ProductInventorySlice.actions
+
+export default ProductInventorySlice.reducer

@@ -1,0 +1,9 @@
+.product-search{
+    display: flex;
+    flex-direction: row;
+}
+.search-input{
+    min-width: 200px;
+    width: 340px;
+    max-width: 340px;
+}

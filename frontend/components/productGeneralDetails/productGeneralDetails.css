@@ -1,0 +1,14 @@
+.image-container {
+    position: relative;
+
+  background: #f8f9fa;         /* Light gray background */
+  border: 2px solid #e0e0e0;   /* Subtle border */
+  border-radius: 12px;         /* Rounded corners */
+  padding: 16px;               /* Space around the image */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+    min-width: 250px;
+    min-height: 250px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04); /* Optional: subtle shadow */
+}
