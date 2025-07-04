@@ -3,10 +3,22 @@ import './businessIntelligenceContainer.css';
 import { useSelector, useDispatch } from 'react-redux';
 import Icon from '@leafygreen-ui/icon';
 
+function prettyDate(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month - 1, day); // JS months are 0-based
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
 const BusinessIntelligenceContainer = () => {
     const { productInventory } = useSelector(state => state.ProductInventory);
     const {
-        predictedConsumptionPerWeek
+        predictedConsumptionPerWeek,
+        restockFrequencyDays,
+        predictedStockDepletion
     } = productInventory.selectedStoreInventory[0] || {};
 
     return (
@@ -22,7 +34,7 @@ const BusinessIntelligenceContainer = () => {
             </div>
             <div className='mb-3'>
                 <p className='medium-text text-dark mb-0'>
-                    <strong>Restock Frequency: </strong> X
+                    <strong>Restock Frequency: </strong> {restockFrequencyDays} a day
                 </p>
                 <p className='medium-text text-dark'>
                     Based on the last 12 months of data
@@ -35,7 +47,7 @@ const BusinessIntelligenceContainer = () => {
             </div>
             <div className='mb-3'>
                 <p className='medium-text text-dark  mb-0'>
-                    <strong>Predicted Stock Depletion: </strong> X
+                    <strong>Predicted Stock Depletion: </strong> {prettyDate(predictedStockDepletion)}
                 </p>
                 <p className='medium-text text-dark'>
                     Based on current inventory and historical sales data.

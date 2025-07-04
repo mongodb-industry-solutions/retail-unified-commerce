@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Container } from "react-bootstrap";
 import { useSelector, useDispatch } from 'react-redux';
 
-import { H1, H3, Subtitle } from '@leafygreen-ui/typography';
+import { H1, Subtitle } from '@leafygreen-ui/typography';
 import ProductSearch from "@/components/productSearch/ProductSearch";
 import EnterSearchBanner from "@/components/enterSearchBanner/EnterSearchBannet";
 import { getProductsWithSearch, getProductsWithVectorSearch } from '@/lib/api';
@@ -14,6 +14,7 @@ import ProductList from '@/components/productList/ProductList';
 import LoadingSearchBanner from '@/components/loadingSearchBanner/LoadingSearchBanner';
 import InfoWizard from '@/components/InfoWizard/InfoWizard';
 import Icon from '@leafygreen-ui/icon';
+import { SEARCH_OPTIONS } from '@/lib/constant';
 
 export default function ProductInventoryPage() {
   const router = useRouter();
@@ -33,9 +34,15 @@ export default function ProductInventoryPage() {
     dispatch(searchIsLoading());
     try {
       let results;
-      if (searchType === 'search') {
+      if (searchType === SEARCH_OPTIONS.search.id) { // Assuming 0 is for 'search'  
         results = await getProductsWithSearch(query);
-      } else if (searchType === 'vector-search') {
+      } else if (searchType === SEARCH_OPTIONS.vectorSearch.id) {
+        results = await getProductsWithVectorSearch(query);
+      } else if (searchType === SEARCH_OPTIONS.hybridSearch.id) {
+        results = await getProductsWithVectorSearch(query);
+      } else if (searchType === SEARCH_OPTIONS.rerank.id) {
+        results = await getProductsWithVectorSearch(query);
+      } else if (searchType === SEARCH_OPTIONS.regex.id) {
         results = await getProductsWithVectorSearch(query);
       } else {
         alert('Unknown search type');

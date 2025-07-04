@@ -12,9 +12,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={GeistSans.className}>
       <body>
-        <ClientProvider>
-          {children}
-        </ClientProvider>
+          <ClientProvider>
+            {children}
+          </ClientProvider>
       </body>
     </html>
   );

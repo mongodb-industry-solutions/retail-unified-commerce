@@ -11,7 +11,10 @@ import Button from "@leafygreen-ui/button";
 import Badge from "@leafygreen-ui/badge";
 import Image from "next/image";
 import { productInventoryURL } from "@/lib/constant";
-
+import { useState } from "react";
+import InfoWizard from "../InfoWizard/InfoWizard";
+import { Container } from "react-bootstrap";
+import Code from "@leafygreen-ui/code";
 
 const ProductCard = (props) => {
   const router = useRouter();
@@ -26,59 +29,84 @@ const ProductCard = (props) => {
     shelfId: shelfNumber,
     aisleId: aisleNumber = 'N/A',
   } = props.product.inventorySummary[0] || {};
-
+  const [openHelpModal, setOpenHelpModal] = useState(false);
 
   return (
-    <Card onClick={() => console.log(props.product)} className='product-card'>
-      <div className={'score-container'}>
+    <>
+      <Card onClick={() => console.log(props.product)} className='product-card'>
+        <div className='score-container'>
           <Badge className={'scorebadge'} variant="yellow">
             <Icon glyph="Favorite" />
             {score.toFixed(5)}
           </Badge>
-      </div>
-      <div className="image-container" style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 12 }}>
-        {imageUrlS3 ? (
-          <Image
-            src={imageUrlS3}
-            alt={title}
-            width={80}
-            height={80}
-            style={{ objectFit: "contain", borderRadius: 8 }}
+        </div>
+        <div className='document-container'>
+          {/* <IconButton aria-label="Some Menu">
+            <CurlyBraces />
+          </IconButton> */}
+          <InfoWizard
+            open={openHelpModal}
+            setOpen={setOpenHelpModal}
+            tooltipText="See Document"
+            iconGlyph="CurlyBraces"
+            tabs={[
+              {
+                heading: 'Product Document',
+                content: <Container>
+                  <Code language="json" className="mb-0 mt-3">
+                    {JSON.stringify(props.product, null, 2)}
+                  </Code>
+                  <p><strong>Note:</strong> The <code>inventorySummary</code> field was pre filtered with the <code>$project</code> operator inside the find query to return only the summary of the current selected store. </p>
+                </Container>
+              }
+            ]}
+            openModalIsButton={false}
           />
-        ) : (
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              background: "#f0f0f0",
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#bbb",
-              fontSize: 32
-            }}
-          >
-            🖼️
-          </div>
-        )}
-      </div>
-      <Subtitle className="mb-1">{title}</Subtitle>
-      <Body className="mb-2"><strong>SKU: </strong>{sku}</Body>
-      <div className="w-100 d-flex flex-column" style={{ marginBottom: 8 }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Icon glyph="Pin" size="large" /> {/* Aisle icon */}
-          <span style={{ fontSize: 13 }}>Aisle: {aisleNumber}</span>
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Icon glyph="Package" size="large" /> {/* Shelf icon */}
-          <span style={{ fontSize: 13 }}>Shelf: {shelfNumber ?? 'N/A'}</span>
-        </span>
-      </div>
-      <Button className="w-100 mt-auto" onClick={() => router.push(productInventoryURL + '/' + _id)}>
-        View details
-      </Button>
-    </Card>
+        </div>
+        <div className="image-container" style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 12 }}>
+          {imageUrlS3 ? (
+            <Image
+              src={imageUrlS3}
+              alt={title}
+              width={80}
+              height={80}
+              style={{ objectFit: "contain", borderRadius: 8 }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                background: "#f0f0f0",
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#bbb",
+                fontSize: 32
+              }}
+            >
+              🖼️
+            </div>
+          )}
+        </div>
+        <Subtitle className="mb-1">{title}</Subtitle>
+        <Body className="mb-2"><strong>SKU: </strong>{sku}</Body>
+        <div className="w-100 d-flex flex-column" style={{ marginBottom: 8 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Icon glyph="Pin" size="large" /> {/* Aisle icon */}
+            <span style={{ fontSize: 13 }}>Aisle: {aisleNumber}</span>
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Icon glyph="Package" size="large" /> {/* Shelf icon */}
+            <span style={{ fontSize: 13 }}>Shelf: {shelfNumber ?? 'N/A'}</span>
+          </span>
+        </div>
+        <Button className="w-100 mt-auto" onClick={() => router.push(productInventoryURL + '/' + _id)}>
+          View details
+        </Button>
+      </Card>
+    </>
   );
 };
 ProductCard.propTypes = {
