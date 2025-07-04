@@ -17,6 +17,9 @@
 .progress-bar{
   background-color: #00a35c;
 }
-[aria-label="Close modal"] {
-  display: none !important;
+.modal-backdrop{
+  background-color: #00000010;
+}
+.myMap{
+  position: relative;
 }

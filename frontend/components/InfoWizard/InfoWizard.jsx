@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Modal from "@leafygreen-ui/modal";
+
 import { H3, Body } from "@leafygreen-ui/typography";
 import Tooltip from "@leafygreen-ui/tooltip";
 import Icon from "@leafygreen-ui/icon";
@@ -10,6 +10,7 @@ import PropTypes from "prop-types";
 import styles from "./InfoWizard.module.css";
 import Button from "@leafygreen-ui/button";
 import { Tabs, Tab } from "@leafygreen-ui/tabs";
+import { Modal } from "react-bootstrap";
 
 const InfoWizard = ({
   open,
@@ -42,7 +43,13 @@ const InfoWizard = ({
           </Tooltip>
       }
 
-      <Modal open={open} setOpen={setOpen} className={styles.modal}>
+      <Modal 
+        show={open} 
+        onHide={() => setOpen(false)}
+        size="lg"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+      >
         <div className={styles.modalContent}>
           <IconButton
             aria-label="Close"
@@ -62,9 +69,9 @@ const InfoWizard = ({
           </IconButton>
           {
             tabs.length > 0
-              ? <Tabs aria-label="info wizard tabs" setSelected={setSelected} selected={selected}>
+              ? <Tabs id="wizard-tabs" aria-label="info wizard tabs" setSelected={setSelected} selected={selected}>
                 {tabs.map((tab, tabIndex) => (
-                  <Tab key={tabIndex} name={tab.heading}>
+                  <Tab className="wizard-tabs" key={tabIndex} name={tab.heading}>
                     {tab.content}
                   </Tab>
                 ))}

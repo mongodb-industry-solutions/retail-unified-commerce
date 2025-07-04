@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useState } from 'react'
 import './locationsContainer.css';
 import { useSelector, useDispatch } from 'react-redux';
@@ -15,6 +16,8 @@ import {
     TableHead,
 } from '@leafygreen-ui/table';
 import InfoWizard from '../InfoWizard/InfoWizard';
+import LocationLearnMore from './LocationLearnMore';
+import LocationInMap from './LocationInMap';
 
 const calculateStockLevel = (shelfQuantity = 0, backroomQuantity = 0) => {
     const amount = Number(shelfQuantity) + Number(backroomQuantity);
@@ -117,9 +120,19 @@ const LocationsContainer = () => {
                                             iconGlyph="Wizard"
                                             tabs={[
                                                 {
-                                                    heading: '',
+                                                    heading: 'Map',
+                                                    content: <LocationInMap marker={
+                                                        {
+                                                            lat: stores.find(store => store._id === selectedStore).location.coordinates[1],
+                                                            lng: stores.find(store => store._id === selectedStore).location.coordinates[0]
+                                                        }
+
+                                                    } />
+                                                },
+                                                {
+                                                    heading: 'Geospatial queries',
                                                     content: <LocationLearnMore />
-                                                }
+                                                },
                                             ]}
                                             openModalIsButton={false}
                                         />
