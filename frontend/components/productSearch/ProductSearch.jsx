@@ -7,8 +7,12 @@ import Icon from '@leafygreen-ui/icon';
 import Button from '@leafygreen-ui/button';
 import { Option, Select, Size } from '@leafygreen-ui/select';
 import { SearchInput } from '@leafygreen-ui/search-input';
-import { setProductQuery } from '@/redux/slices/ProductInventorySlice';
+import { setProductQuery, setSearchType } from '@/redux/slices/ProductInventorySlice';
 import ProductScan from '../productScan/ProductScan';
+import AtlasSearchLearnMore from './AtlasSearchLearnMore';
+import VectorSearchLearnMore from './VectorSearchLearnMore';
+import RegexSearchLearnMore from './RegexSearchLearnMore';
+import { SEARCH_OPTIONS } from '@/lib/constant';
 
 
 const ProductSearch = (props) => {
@@ -16,7 +20,7 @@ const ProductSearch = (props) => {
     const [openHelpModal, setOpenHelpModal] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [show, setShow] = useState(false);
-    const query = useSelector(state => state.ProductInventory.query);
+    const { query, searchType } = useSelector(state => state.ProductInventory);
 
     const handleSearch = () => {
         // Placeholder: implement search logic here
@@ -28,32 +32,46 @@ const ProductSearch = (props) => {
         dispatch(setProductQuery({ query: searchValue.trim() }));
     };
 
+    
+
+    const onKeyDownInput = (e) => {
+        if(e.key === 'Enter' && searchValue.length > 0)
+            handleSearch()
+    }
+    
     return (
         <div className="product-search mt-5 mb-5 justify-content-between">
-            <ProductScan show={show} setShow={setShow}/>
+            <ProductScan show={show} setShow={setShow} />
             <div className='d-flex flex-row '>
                 <Select
                     className={'me-2'}
                     aria-label="Search type"
                     name="Search Type"
-                    size={Size.Default}
-                    defaultValue={"search"}
+                    defaultValue={searchType || 1}
+                    value={searchType}
+                    onChange={value => {
+                        if (value === '') return; // Prevent setting empty value
+                        console.log('Selected search type:', value);
+                        dispatch(setSearchType({ searchType: value }));
+                    }}
                 >
-                    <Option value="search" description="Exact match">
-                        Exact match
-                    </Option>
-                    <Option value="search" description="Full-text search">
-                        Atlas Search
-                    </Option>
-                    <Option value="vector-search" description="Semantic search with vector embeddings">
-                        Atlas Vector Search
-                    </Option>
+                    {
+                        Object.values(SEARCH_OPTIONS).map(option => (
+                            <Option
+                                key={option.id}
+                                value={option.id}
+                                description={option.description}
+                            >
+                                {option.label}
+                            </Option>))
+                    }
                 </Select>
                 <SearchInput
                     className={'search-input'}
                     defaultValue={query || ''} // Use query from Redux state or empty string
                     value={searchValue} // Controlled value
                     onChange={e => setSearchValue(e.target.value)} // Update state
+                    onKeyDown={(e) => onKeyDownInput(e)}
                     aria-label="some label"
                     placeholder='Search product by name, SKU or description'
                 ></SearchInput>
@@ -68,14 +86,35 @@ const ProductSearch = (props) => {
                 <InfoWizard
                     open={openHelpModal}
                     setOpen={setOpenHelpModal}
-                    tooltipText="Talk track!"
+                    tooltipText="Learn more!"
                     iconGlyph="Wizard"
-                    sections={[]}
+                    tabs={[
+                        {
+                            heading: "Atlas Search",
+                            content: <AtlasSearchLearnMore />
+                        },
+                        {
+                            heading: "Vector Search",
+                            content: <VectorSearchLearnMore />
+                        },
+                                                {
+                            heading: "Hybrid Search",
+                            content: <VectorSearchLearnMore />
+                        },
+                                                {
+                            heading: "Hybrid Search + Rerank",
+                            content: <VectorSearchLearnMore />
+                        },
+                        {
+                            heading: "Regex Search",
+                            content: <RegexSearchLearnMore />
+                        }
+                    ]}
                     openModalIsButton={false}
                 />
             </div>
             <div>
-                <Button 
+                <Button
                     leftGlyph={<Icon glyph={"Stitch"} />}
                     onClick={() => setShow(true)}
                 >

@@ -1,5 +1,6 @@
 
 import { setStores } from "@/redux/slices/GlobalSlice";
+import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
 
 export async function getProductsWithSearch(query = '', filters = {}) {
@@ -45,6 +46,36 @@ export async function getProductsWithVectorSearch(query, filters = {}) {
   const data = await response.json();
   console.log('data: ', Object.keys(data.products).length, data)
   return { products: data.products, totalItems: data.totalItems };
+}
+
+export async function getProductWithScanner(_id) {
+
+  const response = await fetch(`/api/findDocuments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      filter: { _id: _id },
+      // projection: {
+      //   _id: 1,
+      //   productName: 1,
+      //   brand: 1,
+      //   price: 1,
+      //   imageUrlS3: 1,
+      //   aboutTheProduct: 1,
+      //   category: 1,
+      //   subCategory: 1
+      // },
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching product details: ${response.status}`);
+  }
+  let data = await response.json();
+  store.dispatch(setSearchResults({ results: data.result || [], totalItems: data.result?.length || 0 }));
+  
 }
 
 export async function getProductDetails(_id) {
