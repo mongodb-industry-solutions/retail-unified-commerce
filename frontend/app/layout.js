@@ -1,4 +1,7 @@
 import { GeistSans } from "geist/font/sans";
+import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import './global.css';
+import ClientProvider from "./ClientProvider";
 
 export const metadata = {
   title: "Home",
@@ -8,7 +11,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={GeistSans.className}>
-      <body>{children}</body>
+      <body>
+        <ClientProvider>
+          {children}
+        </ClientProvider>
+      </body>
     </html>
   );
 }
