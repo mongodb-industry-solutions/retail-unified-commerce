@@ -1,9 +1,8 @@
 import React from 'react'
 import './inventoryContainer.css';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Description } from '@leafygreen-ui/typography';
 import Icon from '@leafygreen-ui/icon';
-import ProgressBar from 'react-bootstrap/ProgressBar';
 
 function prettyDate(dateStr) {
   const [year, month, day] = dateStr.split('-').map(Number);

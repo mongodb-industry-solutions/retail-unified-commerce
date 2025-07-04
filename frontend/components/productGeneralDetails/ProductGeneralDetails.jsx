@@ -23,7 +23,7 @@ const ProductGeneralDetails = () => {
         <Description className="medium-text">{product.aboutTheProduct}</Description>
       </div>
       <div className="d-flex align-items-center justify-content-center">
-        <div className="image-container" >
+        <div className="image-container-details" >
           <Image
             src={product.imageUrlS3}
             alt={product.productName}
