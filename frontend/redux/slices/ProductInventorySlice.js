@@ -1,3 +1,4 @@
+import { SEARCH_OPTIONS } from "@/lib/constant";
 import { createSlice } from "@reduxjs/toolkit";
  
 const ProductInventorySlice = createSlice({
@@ -8,7 +9,7 @@ const ProductInventorySlice = createSlice({
         pagination_page: 0,
         productDetails: null, // the product from the product collection
         productInventory: null, // the product from the inventory collection
-        searchType: 'search', // 'search' or 'vector-search'
+        searchType: SEARCH_OPTIONS.search.id, // 'search' or 'vector-search'
         loading: false,
         error: null,
         query: null, // The search query string
@@ -67,6 +68,9 @@ const ProductInventorySlice = createSlice({
                 error: null,
             };
         },
+        setSearchType(state, action) {
+            state.searchType = action.payload.searchType; // Assuming searchType is an int
+        },
         setCurrentPage: (state, action) => {
             return {
                 ...state,
@@ -83,6 +87,7 @@ export const {
     setProductDetails,
     setProductInventory,
     setProductQuery,
+    setSearchType,
     setCurrentPage,
 } = ProductInventorySlice.actions
 

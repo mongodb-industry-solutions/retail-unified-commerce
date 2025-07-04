@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import './locationsContainer.css';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Description } from '@leafygreen-ui/typography';
 import Icon from '@leafygreen-ui/icon';
 import Card from '@leafygreen-ui/card';
@@ -15,9 +15,8 @@ import {
     TableBody,
     TableHead,
 } from '@leafygreen-ui/table';
-import InfoWizard from '../InfoWizard/InfoWizard';
-import LocationLearnMore from './LocationLearnMore';
-import LocationInMap from './LocationInMap';
+import StoreDistanceContainer from './StoreDistanceContainer';
+
 
 const calculateStockLevel = (shelfQuantity = 0, backroomQuantity = 0) => {
     const amount = Number(shelfQuantity) + Number(backroomQuantity);
@@ -46,7 +45,6 @@ const LocationsContainer = () => {
         aisleId = 'N/A',
         shelfId = 'N/A',
     } = inventory.selectedStoreInventory?.[0] || {};
-    const [openHelpModal, setOpenHelpModal] = useState(false);
 
     const [loading, setLoading] = useState(true)
 
@@ -112,30 +110,7 @@ const LocationsContainer = () => {
                             <Row key={store.storeObjectId}>
                                 <Cell>
                                     <div className='d-flex align-items-center justify-content-between gap-1'>
-                                        {getStoreDistance(stores, store.storeObjectId)}
-                                        <InfoWizard
-                                            open={openHelpModal}
-                                            setOpen={setOpenHelpModal}
-                                            tooltipText="Learn more!"
-                                            iconGlyph="Wizard"
-                                            tabs={[
-                                                {
-                                                    heading: 'Map',
-                                                    content: <LocationInMap marker={
-                                                        {
-                                                            lat: stores.find(store => store._id === selectedStore).location.coordinates[1],
-                                                            lng: stores.find(store => store._id === selectedStore).location.coordinates[0]
-                                                        }
-
-                                                    } />
-                                                },
-                                                {
-                                                    heading: 'Geospatial queries',
-                                                    content: <LocationLearnMore />
-                                                },
-                                            ]}
-                                            openModalIsButton={false}
-                                        />
+                                        <StoreDistanceContainer store={store} getStoreDistance={getStoreDistance}/>
                                     </div>
                                 </Cell>
                                 <Cell>{store.storeName}</Cell>
