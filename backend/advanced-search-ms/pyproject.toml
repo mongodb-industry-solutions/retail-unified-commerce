@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "advanced-search-ms"
+version = "0.1.0"
+description = "Clean Architecture microservice for vector search and rerank"
+authors = ["Your Name <you@example.com>"]
+package-mode = false  # Disables packaging mode; this project is not a library
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.110.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+motor = "^3.3.1"
+httpx = "^0.24.0"
+tenacity = "^8.2.0"
+pydantic = "^2.0.0"
+pydantic-settings = "^2.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+flake8 = "^6.0.0"
+black = "^24.0.0"
