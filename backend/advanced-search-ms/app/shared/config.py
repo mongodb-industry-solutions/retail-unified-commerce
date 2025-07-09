@@ -14,14 +14,14 @@ class Settings(BaseSettings):
     MONGODB_URI: str
     MONGODB_DATABASE: str
     PRODUCTS_COLLECTION: str
-    SEARCH_INDEX_NAME: str = "default"
-    EMBEDDING_FIELD_NAME: str = "textEmbeddingVector"
+    SEARCH_TEXT_INDEX: str
+    SEARCH_VECTOR_INDEX: str
+    EMBEDDING_FIELD_NAME: str
 
     # Voyage AI
-    VOYAGE_API_URL: str = "https://api.voyage.ai"
+    VOYAGE_API_URL: str
     VOYAGE_API_KEY: str
-    VOYAGE_MODEL: str = "voyage-2"  # Embedding/rerank model ID: str
-    VOYAGE_API_URL: str = "https://api.voyage.ai"
+    VOYAGE_MODEL: str
 
     class Config:
         env_file = ".env"
