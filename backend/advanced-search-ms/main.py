@@ -1,87 +1,93 @@
 # main.py
 """
-Entry-point for the FastAPI application.
+FastAPI bootstrap.
 
-Purpose: Bootstraps the web server, mounts routers, and manages startup/shutdown events.
-Why: Centralizes configuration, connection lifecycle, and route inclusion to keep app modular.
+* Creates singletons (Mongo, Search-repository, VoyageAI embedder).
+* Exposes them through FastAPI dependency-injection.
+* Mounts the router and handles graceful shutdown.
 """
 
 import logging
-
 from fastapi import FastAPI, Depends, HTTPException
 
 from app.shared.config import get_settings
 from app.infrastructure.mongodb.client import MongoClient
+from app.infrastructure.mongodb.search_repository import MongoSearchRepository
 from app.infrastructure.voyage_ai.client import VoyageClient
+from app.shared import dependencies
 
-# ───────────────────── logging ────────────────────────────────────────────────
+# ───── logging ──────────────────────────────────────────────────────────────
 logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s – %(message)s",
     level=logging.INFO,
 )
 logger = logging.getLogger("advanced-search-ms")
 
-# ───────────────────── app instance & singletons ─────────────────────────────
+# ───── FastAPI instance ─────────────────────────────────────────────────────
 app = FastAPI()
 
-mongo_client: MongoClient | None = None
-voyage_client: VoyageClient | None = None
+# ───── import router *after* dependencies exist ─────────────────────────────
+from app.interfaces.routes import router as search_router  # noqa: E402
 
-# ───────────────────── dependency helpers ────────────────────────────────────
-def get_mongo() -> MongoClient:
-    """Return the singleton Mongo client (injected by FastAPI)."""
-    return mongo_client  # type: ignore[return-value]
-
-def get_voyage() -> VoyageClient:
-    """Return the singleton Voyage AI client (injected by FastAPI)."""
-    return voyage_client  # type: ignore[return-value]
-
-# ───────────────────── import router *after* deps are defined ────────────────
-from app.interfaces.routes import router as search_router  # noqa: E402  (late import)
-
-# ───────────────────── lifecycle events ──────────────────────────────────────
+# ───── lifecycle hooks ──────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_resources() -> None:
-    """Initialize shared resources once at service start."""
+    """Create shared resources once at service start-up."""
     settings = get_settings()
-    logger.info(f"VOYAGE_API_URL loaded ▶ {settings.VOYAGE_API_URL!r}")
-    global mongo_client, voyage_client
+    logger.info("Bootstrapping resources…")
 
-    mongo_client = MongoClient(
-        settings.MONGODB_URI,
-        settings.MONGODB_DATABASE,
-        settings.PRODUCTS_COLLECTION,
-        settings.SEARCH_INDEX_NAME,
-        settings.EMBEDDING_FIELD_NAME,
+    # Mongo connection -------------------------------------------------------
+    dependencies.mongo_client = MongoClient(
+        uri=settings.MONGODB_URI,
+        database=settings.MONGODB_DATABASE,
+        collection=settings.PRODUCTS_COLLECTION,
+        index_name=settings.SEARCH_VECTOR_INDEX,
+        embedding_field=settings.EMBEDDING_FIELD_NAME,
     )
-    voyage_client = VoyageClient(
-        settings.VOYAGE_API_KEY,
-        settings.VOYAGE_API_URL,
-        settings.VOYAGE_MODEL,
+
+    # Repository combines all four search strategies -------------------------
+    dependencies.search_repo = MongoSearchRepository(
+        collection=dependencies.mongo_client.collection,
+        mongo_client_helper=dependencies.mongo_client,
+        index_name_text=settings.SEARCH_TEXT_INDEX,
+        index_name_vector=settings.SEARCH_VECTOR_INDEX,
+        embedding_field=settings.EMBEDDING_FIELD_NAME,
     )
-    logger.info("Initialized MongoDB and Voyage AI clients")
+
+    # VoyageAI embedder ------------------------------------------------------
+    dependencies.voyage_client = VoyageClient(
+        api_key=settings.VOYAGE_API_KEY,
+        base_url=settings.VOYAGE_API_URL,
+        model=settings.VOYAGE_MODEL,
+    )
+
+    logger.info("✅  MongoDB, SearchRepository and VoyageAI clients ready")
 
 @app.on_event("shutdown")
 async def shutdown_resources() -> None:
-    """Clean up resources on shutdown."""
-    if mongo_client:
-        mongo_client.client.close()
-    logger.info("Closed MongoDB client connection")
+    """Close network connections gracefully."""
+    if dependencies.mongo_client:
+        dependencies.mongo_client.client.close()
+    logger.info("MongoDB connection closed")
 
-# ───────────────────── mount router ──────────────────────────────────────────
+# ───── mount router ─────────────────────────────────────────────────────────
 app.include_router(
     search_router,
     prefix="/api/v1",
-    dependencies=[Depends(get_mongo), Depends(get_voyage)],
+    dependencies=[
+        Depends(dependencies.get_repo),
+        Depends(dependencies.get_embedder),
+    ],
 )
 
-# ───────────────────── health check ──────────────────────────────────────────
+# ───── health check ─────────────────────────────────────────────────────────
 @app.get("/health", tags=["health"])
 async def health_check():
-    """Simple ping-pong DB check."""
+    """Ping MongoDB cluster; used by liveness/readiness probes."""
     try:
-        mongo_client.client.admin.command("ping")  # type: ignore[attr-defined]
+        dependencies.mongo_client.client.admin.command("ping")
         return {"status": "ok"}
     except Exception:
-        logger.error("Health check failed: cannot ping MongoDB")
+        logger.exception("Health check failed – cannot ping MongoDB")
         raise HTTPException(status_code=503, detail="DB connection failed")
+ 

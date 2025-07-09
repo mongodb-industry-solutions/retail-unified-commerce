@@ -1,19 +1,79 @@
 # app/application/ports.py
 """
-Application-level interfaces (ports).
+Application-level abstraction interfaces (“ports”).
 
-Purpose: Define abstraction contracts for external services.
-Why: Decouples use cases from concrete implementations, enabling testing and flexibility.
-How: Use Python `Protocol` for method signatures.
+Why?
+-----
+Ports define the contracts the *application* layer relies on.  
+Concrete adapters in the *infrastructure* layer (Mongo, Elastic, etc.)
+implement these contracts, so business logic remains I/O-agnostic.
+
+Conventions
+-----------
+Every search method returns:
+    Tuple[List[Dict], int]  →  (documents, total_count)
+
+Shared parameters:
+    store_object_id • page • page_size
 """
 
-from typing import List, Tuple, Protocol, Dict
+from typing import Protocol, List, Dict, Tuple
 
+# Readability alias for return types
+SearchResult = Tuple[List[Dict], int]
+
+
+# ─────────────────────────── Embeddings ────────────────────────────────────
 class EmbeddingProvider(Protocol):
+    """Generate embeddings from free-text input."""
     async def create_embedding(self, text: str) -> List[float]: ...
-    async def rerank(self, query: str, documents: List[Dict]) -> List[Dict]: ...
 
+
+# ───────────────────── Product-search repository ───────────────────────────
 class SearchRepository(Protocol):
+    """
+    Hides persistence details behind semantically rich operations.
+
+    Strategies match the `option` parameter used by the HTTP API:
+        1 → keyword / regex search
+        2 → Atlas `$search` text index
+        3 → Lucene `$vectorSearch`
+        4 → hybrid Reciprocal-Rank-Fusion (text + vector)
+    """
+
+    # option 1 – keyword / regex
+    async def search_keyword(
+        self,
+        query: str,
+        store_object_id: str,
+        page: int,
+        page_size: int,
+    ) -> SearchResult: ...
+
+    # option 2 – Atlas text index
+    async def search_atlas_text(
+        self,
+        query: str,
+        store_object_id: str,
+        page: int,
+        page_size: int,
+    ) -> SearchResult: ...
+
+    # option 3 – Lucene k-NN vector search
     async def search_by_vector(
-        self, embedding: List[float], page: int, page_size: int
-    ) -> Tuple[List[Dict], int]: ...
+        self,
+        embedding: List[float],
+        store_object_id: str,
+        page: int,
+        page_size: int,
+    ) -> SearchResult: ...
+
+    # option 4 – Hybrid RRF (text + vector)
+    async def search_hybrid_rrf(
+        self,
+        query: str,
+        embedding: List[float],
+        store_object_id: str,
+        page: int,
+        page_size: int,
+    ) -> SearchResult: ...

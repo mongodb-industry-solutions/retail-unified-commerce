@@ -25,11 +25,20 @@ class MongoClient:
         self,
         uri: str,
         database: str,
-        collection: str = "products",
-        index_name: str = "product_text_vector_index",
-        embedding_field: str = "textEmbeddingVector",
+        collection: str,
+        embedding_field: str,
+        index_name: str,
     ):
-        # ---- connection pool (singleton) ----
+        """
+        Initializes the MongoDB async client with a connection pool.
+
+        Args:
+            uri: MongoDB connection string.
+            database: Target database name.
+            collection: Target collection name.
+            embedding_field: Field name for vector embeddings.
+            index_name: Lucene vector search index name.
+        """
         self.client = AsyncIOMotorClient(
             uri,
             maxPoolSize=50,
@@ -38,8 +47,8 @@ class MongoClient:
             tls=True,
         )
         self.collection = self.client[database][collection]
-        self.index_name = index_name
         self.embedding_field = embedding_field
+        self.index_name = index_name
 
     # ---------- Vector search ---------- #
 
@@ -57,9 +66,8 @@ class MongoClient:
         """
         Execute a vector search and return (page_results, total_hits).
 
-        • `score` is injected via `$addFields`.
-        • Two pipelines are required because `$vectorSearch` can't share
-          a `$count` stage.
+        • Uses $vectorSearch for k-NN semantic retrieval.
+        • Two pipelines: one for paginated results with score, one for total count.
         """
         skip = (page - 1) * page_size
 
@@ -74,7 +82,6 @@ class MongoClient:
                     "limit": skip + page_size,      # fetch enough docs, then page
                 }
             },
-            # Expose similarity score so upper layers can return it
             {"$addFields": {"score": {"$meta": "vectorSearchScore"}}},
             {"$skip": skip},
             {"$limit": page_size},
@@ -96,11 +103,11 @@ class MongoClient:
 
         try:
             # ---------- page results ----------
-            page_cursor = self.collection.aggregate(results_pipeline, maxTimeMS=4_000)
+            page_cursor = self.collection.aggregate(results_pipeline, maxTimeMS=4000)
             results = await page_cursor.to_list(length=page_size)
 
             # ---------- total hits ----------
-            total_cursor = self.collection.aggregate(total_pipeline, maxTimeMS=4_000)
+            total_cursor = self.collection.aggregate(total_pipeline, maxTimeMS=4000)
             total_doc = await total_cursor.to_list(length=1)
             total = total_doc[0]["total"] if total_doc else 0
 
