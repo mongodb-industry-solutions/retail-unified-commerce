@@ -148,7 +148,7 @@ POST /api/v1/search
 Content-Type: application/json
 {
   "query": "organic onions",
-  "storeId": "64efd523c8c0a5d13ba4fd12",
+  "storeObjectId": "64efd523c8c0a5d13ba4fd12",
   "option": 4,
   "page": 1,
   "page_size": 20

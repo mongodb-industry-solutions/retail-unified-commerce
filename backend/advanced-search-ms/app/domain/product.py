@@ -1,18 +1,20 @@
 """
 Domain model for a Product.
 
-• `InventoryItem` incluye `storeObjectId`.
-• Únicamente usamos `imageUrlS3` para la imagen del producto.
-• La fábrica `from_mongo` valida y asigna dicho campo
-  (falla si está ausente, de modo que el pipeline debe incluirlo).
+• `InventoryItem` includes `storeObjectId`.
+• Only `imageUrlS3` is used for the product image.
+• The `from_mongo` factory validates and assigns fields
+  (it fails if `imageUrlS3` is missing, ensuring pipeline consistency).
 """
 
 from __future__ import annotations
 
+import logging
 from typing import List, Optional, Dict
 
 from pydantic import BaseModel, Field
 
+logger = logging.getLogger("advanced-search-ms.domain")
 
 # ---------------------------------------------------------------------------#
 # 📦  Nested models
@@ -36,7 +38,7 @@ class Price(BaseModel):
 # 🛒  Root model
 # ---------------------------------------------------------------------------#
 class Product(BaseModel):
-    # DB id is exposed as plain string
+    # DB id is exposed as a plain string
     id: str = Field(..., alias="_id")
 
     productName: str
@@ -48,7 +50,7 @@ class Product(BaseModel):
     absoluteUrl: Optional[str] = None
     aboutTheProduct: Optional[str] = None
 
-    # ✅ only this image field is kept
+    # ✅ Only this image field is kept
     imageUrlS3: str
 
     inventorySummary: List[InventoryItem]
@@ -62,14 +64,29 @@ class Product(BaseModel):
     @classmethod
     def from_mongo(cls, doc: Dict) -> "Product":
         """
-        Convert a MongoDB document (possibly enriched by an aggregate
-        pipeline) into a Product domain object.
+        Converts a MongoDB document (possibly enriched via aggregation)
+        into a Product domain object.
         """
-        # Mandatory S3 image URL
+
+        logger.info("🔍 [DOMAIN] Mapping MongoDB document to Product domain model")
+
+        # Validate mandatory S3 image URL
         if not doc.get("imageUrlS3"):
+            logger.error("❌ [DOMAIN] Missing required field: imageUrlS3")
             raise ValueError("Field 'imageUrlS3' missing in product document")
 
-        inv_items = [InventoryItem(**item) for item in doc.get("inventorySummary", [])]
+        inv_items = []
+        for item in doc.get("inventorySummary", []):
+            # Convert storeObjectId to string if it's a Mongo ObjectId
+            if "storeObjectId" in item and not isinstance(item["storeObjectId"], str):
+                item["storeObjectId"] = str(item["storeObjectId"])
+            inv_items.append(InventoryItem(**item))
+
+        logger.info(
+            "✅ [DOMAIN] Created Product '%s' with %d inventory items",
+            doc.get("productName"),
+            len(inv_items),
+        )
 
         return cls(
             _id=str(doc.get("_id")),

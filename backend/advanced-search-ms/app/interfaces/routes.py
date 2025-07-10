@@ -1,5 +1,4 @@
 # app/interfaces/routes.py
-# app/interfaces/routes.py
 """
 API layer (FastAPI router).
 
@@ -33,7 +32,6 @@ from app.application.use_cases.hybrid_rrf_use_case import HybridRRFSearchUseCase
 from app.infrastructure.mongodb.search_repository import MongoSearchRepository
 from app.infrastructure.voyage_ai.client import VoyageClient
 
-# ✅ UPDATED: Import dependencies from shared.dependencies
 from app.shared import dependencies
 
 logger = logging.getLogger("advanced-search-ms.api")
@@ -43,7 +41,7 @@ router = APIRouter()
 # ─────────────────────────  Schema  ────────────────────────────────────
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, example="organic onions")
-    storeId: str = Field(..., description="MongoDB ObjectId of the target store")
+    storeObjectId: str = Field(..., description="MongoDB ObjectId of the target store")
     option: int = Field(
         ...,
         ge=1,
@@ -63,8 +61,8 @@ class SearchRequest(BaseModel):
 @router.post("/search", summary="Product search (4 strategies)")
 async def search(
     req: SearchRequest,
-    repo: MongoSearchRepository = Depends(dependencies.get_repo),  # ✅ inject repo
-    voyage: VoyageClient = Depends(dependencies.get_embedder),     # ✅ inject embedder
+    repo: MongoSearchRepository = Depends(dependencies.get_repo),  # inject repo
+    voyage: VoyageClient = Depends(dependencies.get_embedder),     # inject embedder
 ) -> Dict[str, Any]:
     """
     Executes one of four search strategies, controlled by `option`.
@@ -76,10 +74,10 @@ async def search(
     """
     t0 = time.perf_counter()
     logger.info(
-        "Search | q=%r opt=%d store=%s page=%d size=%d",
+        "🚀 [ROUTE] Received request in API layer | query=%r option=%d storeObjectId=%s page=%d page_size=%d",
         req.query,
         req.option,
-        req.storeId,
+        req.storeObjectId,
         req.page,
         req.page_size,
     )
@@ -87,17 +85,23 @@ async def search(
     # ------------------------------------------------------------------ #
     # Pick use-case based on requested option
     # ------------------------------------------------------------------ #
+    logger.info("📌 [ROUTE] Selecting use-case based on option=%d", req.option)
+
     match req.option:
         case 1:
             use_case = KeywordSearchUseCase(repo)
+            logger.info("✅ [ROUTE] KeywordSearchUseCase initialized")
         case 2:
             use_case = AtlasTextSearchUseCase(repo)
+            logger.info("✅ [ROUTE] AtlasTextSearchUseCase initialized")
         case 3:
             use_case = VectorSearchUseCase(repo, voyage)
+            logger.info("✅ [ROUTE] VectorSearchUseCase initialized")
         case 4:
             use_case = HybridRRFSearchUseCase(repo, voyage)
+            logger.info("✅ [ROUTE] HybridRRFSearchUseCase initialized")
         case _:
-            # Should be unreachable thanks to Pydantic validation.
+            logger.error("❌ [ROUTE] Invalid option received, raising HTTPException")
             raise HTTPException(status_code=400, detail="Invalid option")
 
     # ------------------------------------------------------------------ #
@@ -105,25 +109,26 @@ async def search(
     # ------------------------------------------------------------------ #
     status = 500
     try:
+        logger.info("▶️ [ROUTE] Calling use-case.execute() to enter application layer")
         result = await use_case.execute(
             query=req.query,
-            store_id=req.storeId,
+            store_object_id=req.storeObjectId,
             page=req.page,
             page_size=req.page_size,
         )
+        logger.info("✅ [ROUTE] Use-case execution completed, returned to route handler")
+
         status = 200
         return {
-            "page": req.page,
-            "page_size": req.page_size,
             "total_results": result["total"],
             "total_pages": ceil(result["total"] / req.page_size) if result["total"] else 0,
             "products": [p.dict() for p in result["products"]],
         }
 
     except Exception as exc:
-        logger.exception("Search failed: %s", exc)
+        logger.exception("💥 [ROUTE] Search failed with exception: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     finally:
         elapsed = (time.perf_counter() - t0) * 1000
-        logger.info("Search completed | status=%d latency=%.1f ms", status, elapsed)
+        logger.info("🏁 [ROUTE] Search completed | status=%d latency=%.1f ms", status, elapsed)

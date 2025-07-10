@@ -44,7 +44,7 @@ class SearchUseCase(ABC):
     async def execute(
         self,
         query: str,
-        store_id: str,
+        store_object_id: str,  # 🔧 changed to store_object_id for consistency
         page: int,
         page_size: int,
     ) -> Dict:
@@ -52,18 +52,28 @@ class SearchUseCase(ABC):
         Orchestrates the full search flow and returns a serialisable dict
         with `products` (domain objects) and `total` hit count.
         """
+        logger.info("🔍 [USECASE base] Starting execute() in base use-case")
+        logger.info("📥 [USECASE base] Inputs: query=%r store_object_id=%s page=%d page_size=%d",
+                    query, store_object_id, page, page_size)
+
         try:
+            logger.info("▶️ [USECASE base] Calling _run_repo_query() to enter infrastructure layer")
             raw_docs, total = await self._run_repo_query(
                 query=query,
-                store_id=store_id,
+                store_object_id=store_object_id,
                 page=page,
                 page_size=page_size,
             )
+            logger.info("✅ [USECASE base] Repository query completed successfully")
+
         except InfrastructureError as exc:
-            logger.error("Infrastructure error: %s", exc)
+            logger.error("💥 [USECASE base] Infrastructure error: %s", exc)
             raise UseCaseError(str(exc)) from exc
 
+        logger.info("🔄 [USECASE base] Mapping raw MongoDB docs to Product domain objects")
         products: List[Product] = [Product.from_mongo(d) for d in raw_docs]
+        logger.info("🏁 [USECASE base] Mapping completed, returning results to route")
+
         return {"products": products, "total": total}
 
     # --------------------------------------------------------------------- #
@@ -71,11 +81,11 @@ class SearchUseCase(ABC):
     # --------------------------------------------------------------------- #
 
     @abstractmethod
-    async def _run_repo_query(  # noqa: D401
+    async def _run_repo_query(
         self,
         *,
         query: str,
-        store_id: str,
+        store_object_id: str,
         page: int,
         page_size: int,
     ) -> Tuple[List[Dict], int]:
