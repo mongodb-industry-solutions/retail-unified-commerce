@@ -31,25 +31,49 @@ const indexDefinition = `
   }
 }`
 
-const searchQuery = `db.products.aggregate([
-  {
-    $search: {
-        index: process.env.SEARCH_INDEX, // Use your index name
-        compound: {
-            should: [
-                {
-                    text: {
-                        query: query,
-                        path: ['productName', 'brand', 'category', 'subCategory'],
-                        fuzzy: { maxEdits: 2 }
-                    }
-                }
-            ]
-        }
-    }
-  },
-  { $limit: 10 }
-])`
+const searchQuery = `
+pipeline = [
+      {
+          "$search": {
+              "index": self.text_index,
+              "compound": {
+                  "should": [
+                      {
+                          "text": {
+                              "query": query,
+                              "path": "productName",
+                              "score": {"boost": {"value": 3}},
+                              "fuzzy": {"maxEdits": 2},
+                              "synonyms": "default_synonyms",
+                          }
+                      },
+                      {
+                          "text": {
+                              "query": query,
+                              "path": ["brand", "category", "subCategory"],
+                              "score": {"boost": {"value": 1}},
+                              "fuzzy": {"maxEdits": 2},
+                              "synonyms": "default_synonyms",
+                          }
+                      }
+                  ]
+              }
+          }
+      },
+      {"$match": {"inventorySummary.storeObjectId": ObjectId(store_object_id)}},
+      {"$project": {**PRODUCT_FIELDS, "score": {"$meta": "searchScore"}}},
+      {"$facet": {
+          "docs": [
+              {"$skip": skip},
+              {"$limit": page_size},
+          ],
+          "count": [{"$count": "total"}],
+      }},
+      {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
+      {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
+  ]
+  agg = self.col.aggregate(pipeline, maxTimeMS=4000)
+  `
 
 const VectorSearchLearnMore = () => {
   return (

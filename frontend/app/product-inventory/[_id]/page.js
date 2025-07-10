@@ -10,14 +10,16 @@ import { useRouter } from 'next/navigation';
 import InfoWizard from '@/components/InfoWizard/InfoWizard';
 import { productInventoryURL } from '@/lib/constant';
 import { getDistancesForOtherStores, getProductDetails, getProductInventory } from '@/lib/api';
-import { setDistancesFromOtherStores, setProductDetails, setProductInventory } from '@/redux/slices/ProductInventorySlice';
+import { setProductDetails, setProductInventory } from '@/redux/slices/ProductInventorySlice';
 import LoadingSearchBanner from '@/components/loadingSearchBanner/LoadingSearchBanner';
 import ProductGeneralDetails from '@/components/productGeneralDetails/ProductGeneralDetails';
 import InventoryContainer from '@/components/iventoryContainer/InventoryContainer';
 import LocationsContainer from '@/components/locationsContainer/LocationsContainer';
 import BusinessIntelligenceContainer from '@/components/businessIntelligence/BusinessIntelligenceContainer';
-import store from '@/redux/store';
 import { setStores } from '@/redux/slices/GlobalSlice';
+import HowToInventoryPage from '@/components/talkTracks/HowToInventoryPage';
+import BehindTheScenes from '@/components/talkTracks/BehindTheScenes';
+import ProductInventoryWyMDB from '@/components/talkTracks/ProductInventoryWyMDB';
 
 export default function ProductInventoryDetailePage({ params }) {
     const router = useRouter();
@@ -42,28 +44,25 @@ export default function ProductInventoryDetailePage({ params }) {
             getProductDetails(_id),
             getProductInventory(_id, selectedStore)
         ])
-        .then(([product, inventory]) => {
-            console.log('Product details:', product);
-            console.log('Product inventory:', inventory);
-            if (product) dispatch(setProductDetails({ product }));
-            if (inventory) dispatch(setProductInventory({ inventory }));
-            if(inventory){
-                getDistancesForOtherStores().then((distances) => {
-                    console.log('Distances for other stores:', distances);
-                    if (distances) dispatch(setStores({ stores: distances }));
-                })
-                
-
-            }
-           
-        })
-        .catch((e) => {
-            // Optionally handle error
-            console.log('Error fetching product details or inventory:', e);
-        })
-        .finally(() => {
-            setLoadingDetails(false);
-        });
+            .then(([product, inventory]) => {
+                console.log('Product details:', product);
+                console.log('Product inventory:', inventory);
+                if (product) dispatch(setProductDetails({ product }));
+                if (inventory) dispatch(setProductInventory({ inventory }));
+                if (inventory) {
+                    getDistancesForOtherStores().then((distances) => {
+                        console.log('Distances for other stores:', distances);
+                        if (distances) dispatch(setStores({ stores: distances }));
+                    })
+                }
+            })
+            .catch((e) => {
+                // Optionally handle error
+                console.log('Error fetching product details or inventory:', e);
+            })
+            .finally(() => {
+                setLoadingDetails(false);
+            });
     }, [_id, dispatch, router]);
 
 
@@ -88,7 +87,20 @@ export default function ProductInventoryDetailePage({ params }) {
                         setOpen={setOpenHelpModal}
                         tooltipText="Talk track!"
                         iconGlyph="Wizard"
-                        sections={[]}
+                        tabs={[
+                            {
+                                heading: 'How to demo',
+                                content: <HowToInventoryPage isSearchPage={false} />
+                            },
+                            {
+                                heading: 'Behind the scenes',
+                                content: <BehindTheScenes />
+                            },
+                            {
+                                heading: 'Why MongoDB?',
+                                content: <ProductInventoryWyMDB />
+                            }
+                        ]}
                         openModalIsButton={true}
                     />
                 </div>
@@ -98,16 +110,16 @@ export default function ProductInventoryDetailePage({ params }) {
                 loadingDetails
                     ? <LoadingSearchBanner title={'Loading details...'} />
                     : product
-                    ? 
-                    <div className='mt-5'>
-                        <ProductGeneralDetails />
-                        <Tabs  aria-label="Product details tabs" className='mt-4' setSelected={setSelected} selected={selected}>
-                            <Tab name="Inventory"><InventoryContainer/></Tab>
-                            <Tab name="Locations"><LocationsContainer/></Tab>
-                            <Tab name="AI Business Intelligence"><BusinessIntelligenceContainer selectedStore={selectedStore}/></Tab>
-                        </Tabs>
-                    </div>
-                    : null
+                        ?
+                        <div className='mt-5'>
+                            <ProductGeneralDetails />
+                            <Tabs aria-label="Product details tabs" className='mt-4' setSelected={setSelected} selected={selected}>
+                                <Tab name="Inventory"><InventoryContainer /></Tab>
+                                <Tab name="Locations"><LocationsContainer /></Tab>
+                                <Tab name="AI Business Intelligence"><BusinessIntelligenceContainer selectedStore={selectedStore} /></Tab>
+                            </Tabs>
+                        </div>
+                        : null
             }
 
         </Container>

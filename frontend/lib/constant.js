@@ -8,28 +8,28 @@ export const PAGINATION_PER_PAGE = 20
 
 export const SEARCH_OPTIONS = {
     search: {
-        id: 1,
+        id: 2,
         label: 'Atlas Search',
         description: 'Full-text search'
     },
     vectorSearch: {
-        id: 2,
+        id: 3,
         label: 'Vector Search',
         description: 'Semantic search with vector embeddings'
     },
     hybridSearch: {
-        id: 3,
+        id: 4,
         label: 'Hybrid Search',
         description: 'Hybrid search'
+    },
+    regex: {
+        id: 1,
+        label: 'Regex Search',
+        description: 'Regular expression'
     },
     // rerank: {
     //     id: 4,
     //     label: 'Hybrid Search + Rerank',
     //     description: 'Re rank results after the search'
     // },
-    regex: {
-        id: 5,
-        label: 'Regex Search',
-        description: 'Regular expression'
-    }
 }

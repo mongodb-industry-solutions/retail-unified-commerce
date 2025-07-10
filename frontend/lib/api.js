@@ -2,50 +2,32 @@
 import { setStores } from "@/redux/slices/GlobalSlice";
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
+import { PAGINATION_PER_PAGE } from "./constant";
 
-export async function getProductsWithSearch(query = '', filters = {}) {
-  console.log('getProductsWithSearch')
-  const response = await fetch(`/api/search`, {
+export async function getProductsWithSearchInput(query = '') {
+  const searchType = store.getState('ProductInventory').ProductInventory.searchType;
+  const storeObjectId = store.getState('Global').Global.selectedStore;
+  console.log('getProductsWithSearch', searchType)
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
-      storeObjectId: store.getState('Global').Global.selectedStore,
-      query,
-      facets: filters,
-      pagination_page: store.getState('ProductInventory').ProductInventory.pagination_page
+        query: query,
+        storeObjectId: storeObjectId,
+        option: searchType,
+        page: store.getState('ProductInventory').ProductInventory.pagination_page + 1,
+        page_size: PAGINATION_PER_PAGE
     }),
-  });
-  if (!response.ok) {
-    console.log(response)
-    throw new Error(`Error fetching products: ${response.status}`);
-  }
-  const data = await response.json();
-  console.log('data: ', Object.keys(data.products).length, data)
-  return { products: data.products, totalItems: data.totalItems };
+});
+if (!response.ok) {
+  console.log(response)
+  throw new Error(`Error fetching products: ${response.status}`);
 }
-
-export async function getProductsWithVectorSearch(query, filters = {}) {
-  console.log('getProductsWithVectorSearch')
-  const response = await fetch(`/api/vectorSearch`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      query,
-      facets: filters,
-      pagination_page: store.getState('ProductInventory').ProductInventory.pagination_page
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`Error fetching cart: ${response.status}`);
-  }
-  const data = await response.json();
-  console.log('data: ', Object.keys(data.products).length, data)
-  return { products: data.products, totalItems: data.totalItems };
+const data = await response.json();
+console.log('data: ', Object.keys(data.products).length, data)
+return { products: data.products, totalItems: data.totalItems };
 }
 
 export async function getProductWithScanner(_id) {
@@ -56,7 +38,7 @@ export async function getProductWithScanner(_id) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      filter: { 'inventorySummary.storeObjectId': store.getState().Global.selectedStore},
+      filter: { 'inventorySummary.storeObjectId': store.getState().Global.selectedStore },
       projection: {
         _id: 1,
         productName: 1,
@@ -69,7 +51,7 @@ export async function getProductWithScanner(_id) {
         'inventorySummary.inStock': 1,
         'inventorySummary.nearToReplenishmentInShelf': 1
       },
-      options: {limit: 1},
+      options: { limit: 1 },
       collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
     }),
   });
@@ -78,9 +60,9 @@ export async function getProductWithScanner(_id) {
   }
   let data = await response.json();
   console.log('getProductWithScanner', data)
-  store.dispatch(setSearchResults({ 
-    results: [{...data.result[0]}] || [], 
-    totalItems: data.result? 1 : 0,
+  store.dispatch(setSearchResults({
+    results: [{ ...data.result[0] }] || [],
+    totalItems: data.result ? 1 : 0,
     scanProductSearch: 1
   }));
 }
@@ -159,15 +141,15 @@ export async function getProductInventory(_id, storeObjectId) {
 
 export async function getDistancesForOtherStores(mainPoint = null) {
   let selectedStoreId = store.getState().Global.selectedStore;
-  if(store.getState().Global.stores.length === 0) {
+  if (store.getState().Global.stores.length === 0) {
     console.log('No stores available in the state. Cannot fetch distances.');
     const stores = await getStores()
-      if (stores) {
-        store.dispatch(setStores({ stores }));
-      }
+    if (stores) {
+      store.dispatch(setStores({ stores }));
+    }
 
   }
-  if (!mainPoint) mainPoint = store.getState().Global.stores.find(store => store._id === selectedStoreId )?.location.coordinates;
+  if (!mainPoint) mainPoint = store.getState().Global.stores.find(store => store._id === selectedStoreId)?.location.coordinates;
   console.log('getDistancesForOtherStores', mainPoint)
   const response = await fetch(`/api/getDistances`, {
     method: "POST",

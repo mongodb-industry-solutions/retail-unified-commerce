@@ -4,12 +4,47 @@ import Code from '@leafygreen-ui/code'
 
 const indexDefinition = `
 {
-TODO
+  "fields": [
+    {
+      "numDimensions": 1024,
+      "path": "textEmbeddingVector",
+      "similarity": "cosine",
+      "type": "vector"
+    }
+  ]
 }`
 
 const vectorSearchQuery = `
-TODO
+results_pipeline = [
+  {
+      "$vectorSearch": {
+          "index": self.index_name,
+          "path": self.embedding_field,
+          "queryVector": embedding,
+          "numCandidates": 200,           # tune for recall / latency
+          "limit": skip + page_size,      # fetch enough docs, then page
+      }
+  },
+  {"$addFields": {"score": {"$meta": "vectorSearchScore"}}},
+  {"$skip": skip},
+  {"$limit": page_size},
+]
 
+# -- pipeline for total-hit count --
+total_pipeline = [
+  {
+      "$vectorSearch": {
+          "index": self.index_name,
+          "path": self.embedding_field,
+          "queryVector": embedding,
+          "numCandidates": 200,
+          "limit": 1,
+      }
+  },
+  {"$count": "total"},
+]
+page_cursor = self.collection.aggregate(results_pipeline, maxTimeMS=4000)
+results = await page_cursor.to_list(length=page_size)
 `
 
 const AtlasVectorSearchLearnMore = () => {
