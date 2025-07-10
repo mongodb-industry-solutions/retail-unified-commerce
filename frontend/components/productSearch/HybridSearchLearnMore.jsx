@@ -1,51 +1,12 @@
 import React from 'react'
-import { Container, Table } from 'react-bootstrap'
+import { Container } from 'react-bootstrap'
 import Code from '@leafygreen-ui/code'
 
 const indexDefinition = `
-{
-  "mappings": {
-    "dynamic": false,
-    "fields": {
-      "productName": { "type": "string" },
-      "brand": { "type": "string" },
-      "category": { "type": "string" },
-      "subCategory": { "type": "string" },
-      "embedding": {
-        "type": "knnVector",
-        "dimensions": 384, // Example: adjust to your embedding size
-        "similarity": "cosine"
-      }
-    }
-  }
-}`
+TODO
+`
 
-const hybridSearchQuery = `db.products.aggregate([
-  {
-    $search: {
-      index: process.env.HYBRID_INDEX, // Use your hybrid index name
-      compound: {
-        should: [
-          {
-            text: {
-              query: "<user search input>",
-              path: ["productName", "brand", "category", "subCategory"],
-              fuzzy: {}
-            }
-          },
-          {
-            knnBeta: {
-              vector: <your_query_embedding>,
-              path: "embedding",
-              k: 10
-            }
-          }
-        ]
-      }
-    }
-  },
-  { $limit: 10 }
-])`
+const hybridSearchQuery = `TODO`
 
 const HybridSearchLearnMore = () => {
   return (
@@ -85,39 +46,6 @@ const HybridSearchLearnMore = () => {
       <Code language="javascript" showLineNumbers>
         {hybridSearchQuery}
       </Code>
-
-      <h4 className="mt-2">Key Hybrid Search Operators</h4>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Operator</th>
-            <th>Description</th>
-            <th>Example</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>compound</code></td>
-            <td>Combines multiple search clauses (e.g., text and vector) using logical operators like <code>should</code>, <code>must</code>, and <code>mustNot</code>.</td>
-            <td><code>{`compound: { should: [ ... ] }`}</code></td>
-          </tr>
-          <tr>
-            <td><code>text</code></td>
-            <td>Performs full-text search on specified fields.</td>
-            <td><code>{`text: { query: "chips", path: ["productName"] }`}</code></td>
-          </tr>
-          <tr>
-            <td><code>knnBeta</code></td>
-            <td>Performs vector similarity search using embeddings.</td>
-            <td><code>{`knnBeta: { vector: <query_embedding>, path: "embedding", k: 10 }`}</code></td>
-          </tr>
-          <tr>
-            <td><code>limit</code></td>
-            <td>Limits the number of results returned.</td>
-            <td><code>{`{ $limit: 10 }`}</code></td>
-          </tr>
-        </tbody>
-      </Table>
 
       <h4 className="mt-2">Learn more</h4>
       <a href='https://www.mongodb.com/company/blog/innovation/top-use-cases-for-text-vector-and-hybrid-search?utm_source=chatgpt.com' target='_blank'>

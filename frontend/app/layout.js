@@ -4,9 +4,20 @@ import './global.css';
 import ClientProvider from "./ClientProvider";
 
 export const metadata = {
-  title: "Home",
-  description: "",
+  title: "Lefy Associate",
+  description: "Unified Commerce tool to empower store associates",
+  icons: [
+    {
+      url: "/favicon_light.png",
+      media: "(prefers-color-scheme: light)",
+    },
+    {
+      url: "/favicon_dark.png",
+      media: "(prefers-color-scheme: dark)",
+    },
+  ],
 };
+
 
 export default function RootLayout({ children }) {
   return (

@@ -13,7 +13,8 @@ const ProductInventorySlice = createSlice({
         loading: false,
         error: null,
         query: null, // The search query string
-        scanProductSearch: 0
+        scanProductSearch: 0,
+        forceSearchWithEnterToggle: 0
     },
     reducers: {
         setSearchResults(state, action) {
@@ -40,6 +41,12 @@ const ProductInventorySlice = createSlice({
                 searchResults: [],
                 loading: false,
                 error: action.payload.error, // Assuming error is an object with error details
+            };
+        },
+        toggleForceSearchWithEnter(state, action) {
+            return {
+                ...state,
+                forceSearchWithEnterToggle: !state.forceSearchWithEnterToggle
             };
         },
         setProductDetails(state, action) {
@@ -91,6 +98,7 @@ export const {
     setProductQuery,
     setSearchType,
     setCurrentPage,
+    toggleForceSearchWithEnter
 } = ProductInventorySlice.actions
 
 export default ProductInventorySlice.reducer

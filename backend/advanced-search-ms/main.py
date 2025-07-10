@@ -9,6 +9,7 @@ FastAPI bootstrap.
 
 import logging
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware  # <-- Add this line
 
 from app.shared.config import get_settings
 from app.infrastructure.mongodb.client import MongoClient
@@ -25,7 +26,13 @@ logger = logging.getLogger("advanced-search-ms")
 
 # ───── FastAPI instance ─────────────────────────────────────────────────────
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify your frontend URL(s)
+    allow_credentials=True,
+    allow_methods=["*"],  # Or ["POST", "GET", ...]
+    allow_headers=["*"],
+)
 # ───── import router *after* dependencies exist ─────────────────────────────
 from app.interfaces.routes import router as search_router  # noqa: E402
 

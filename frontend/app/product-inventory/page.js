@@ -7,14 +7,16 @@ import { useSelector, useDispatch } from 'react-redux';
 import { H1, Subtitle } from '@leafygreen-ui/typography';
 import ProductSearch from "@/components/productSearch/ProductSearch";
 import EnterSearchBanner from "@/components/enterSearchBanner/EnterSearchBannet";
-import { getProductsWithSearch, getProductsWithVectorSearch } from '@/lib/api';
+import { getProductsWithSearchInput } from '@/lib/api';
 import { searchIsLoading, searchProductError, setSearchResults } from '@/redux/slices/ProductInventorySlice';
 import ErrorSearchBanner from '@/components/errorSearchBanner/EnterSearchBannet';
 import ProductList from '@/components/productList/ProductList';
 import LoadingSearchBanner from '@/components/loadingSearchBanner/LoadingSearchBanner';
 import InfoWizard from '@/components/InfoWizard/InfoWizard';
 import Icon from '@leafygreen-ui/icon';
-import { SEARCH_OPTIONS } from '@/lib/constant';
+import HowToInventoryPage from '@/components/talkTracks/HowToInventoryPage';
+import BehindTheScenes from '@/components/talkTracks/BehindTheScenes';
+import ProductInventoryWyMDB from '@/components/talkTracks/ProductInventoryWyMDB';
 
 export default function ProductInventoryPage() {
   const router = useRouter();
@@ -24,7 +26,7 @@ export default function ProductInventoryPage() {
     error,
     searchResults,
     query,
-    searchType, // 'search' or 'vector-search'
+    forceSearchWithEnterToggle
   } = useSelector(state => state.ProductInventory);
   const [openHelpModal, setOpenHelpModal] = useState(false);
 
@@ -33,20 +35,7 @@ export default function ProductInventoryPage() {
 
     dispatch(searchIsLoading());
     try {
-      let results;
-      if (searchType === SEARCH_OPTIONS.search.id) { // Assuming 0 is for 'search'  
-        results = await getProductsWithSearch(query);
-      } else if (searchType === SEARCH_OPTIONS.vectorSearch.id) {
-        results = await getProductsWithVectorSearch(query);
-      } else if (searchType === SEARCH_OPTIONS.hybridSearch.id) {
-        results = await getProductsWithVectorSearch(query);
-      } else if (searchType === SEARCH_OPTIONS.rerank.id) {
-        results = await getProductsWithVectorSearch(query);
-      } else if (searchType === SEARCH_OPTIONS.regex.id) {
-        results = await getProductsWithVectorSearch(query);
-      } else {
-        alert('Unknown search type');
-      }
+      let results = await getProductsWithSearchInput(query);
       dispatch(setSearchResults({ results: results.products || [], totalItems: results.totalItems || 0 }));
     } catch (err) {
       dispatch(searchProductError({ error: err }));
@@ -55,7 +44,7 @@ export default function ProductInventoryPage() {
 
   useEffect(() => {
     fetchResults();
-  }, [query, dispatch]);
+  }, [query, forceSearchWithEnterToggle, dispatch]);
 
   return (
     <Container>
@@ -78,7 +67,20 @@ export default function ProductInventoryPage() {
             setOpen={setOpenHelpModal}
             tooltipText="Talk track!"
             iconGlyph="Wizard"
-            sections={[]}
+            tabs={[
+              {
+                heading: 'How to demo',
+                content: <HowToInventoryPage />
+              },
+              {
+                heading: 'Behind the scenes',
+                content: <BehindTheScenes/>
+              },
+              {
+                heading: 'Why MongoDB?',
+                content: <ProductInventoryWyMDB/>
+              }
+            ]}
             openModalIsButton={true}
           />
         </div>
