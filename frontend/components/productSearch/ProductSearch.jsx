@@ -7,7 +7,7 @@ import Icon from '@leafygreen-ui/icon';
 import Button from '@leafygreen-ui/button';
 import { Option, Select, Size } from '@leafygreen-ui/select';
 import { SearchInput } from '@leafygreen-ui/search-input';
-import { setProductQuery, setSearchType } from '@/redux/slices/ProductInventorySlice';
+import { setProductQuery, setSearchType, toggleForceSearchWithEnter } from '@/redux/slices/ProductInventorySlice';
 import ProductScan from '../productScan/ProductScan';
 import AtlasSearchLearnMore from './AtlasSearchLearnMore';
 import VectorSearchLearnMore from './VectorSearchLearnMore';
@@ -31,11 +31,14 @@ const ProductSearch = (props) => {
             return;
         }
         dispatch(setProductQuery({ query: searchValue.trim() }));
+        dispatch(toggleForceSearchWithEnter());
     };
 
     const onKeyDownInput = (e) => {
-        if(e.key === 'Enter' && searchValue.length > 0)
-            handleSearch()
+        if(e.key === 'Enter' && searchValue.trim() !== ''){
+            dispatch(setProductQuery({ query: searchValue.trim() }));
+            dispatch(toggleForceSearchWithEnter());
+        }
     }
     
     return (

@@ -21,10 +21,11 @@ const ProductCard = (props) => {
   const router = useRouter();
   const {
     _id,
+    id,
     productName: title,
     _id: sku,
     imageUrlS3,
-    score = 0
+    score = null
   } = props.product;
   const selectedStore = useSelector(state => state.Global.selectedStore)
   const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
@@ -34,22 +35,18 @@ const ProductCard = (props) => {
   } = props.product.inventorySummary.length === 1 
     ? props.product.inventorySummary[0] 
     : props.product.inventorySummary.find(store => store.storeObjectId === selectedStore)  || {};
-
   const [openHelpModal, setOpenHelpModal] = useState(false);
 
   return (
     <>
       <Card onClick={() => console.log(props.product)} className='product-card'>
         <div className='score-container'>
-          <Badge className={'scorebadge'} variant="yellow">
+          {score && <Badge className={'scorebadge'} variant="yellow">
             <Icon glyph="Favorite" />
-            {score.toFixed(5)}
-          </Badge>
+            {score?.toFixed(5)}
+          </Badge>}
         </div>
         <div className='document-container'>
-          {/* <IconButton aria-label="Some Menu">
-            <CurlyBraces />
-          </IconButton> */}
           <InfoWizard
             open={openHelpModal}
             setOpen={setOpenHelpModal}
@@ -100,7 +97,7 @@ const ProductCard = (props) => {
           )}
         </div>
         <Subtitle className="mb-1">{title}</Subtitle>
-        <Body className="mb-2"><strong>SKU: </strong>{sku}</Body>
+        <Body className="mb-2"><strong>SKU: </strong>{sku || id}</Body>
         <div className="w-100 d-flex flex-column" style={{ marginBottom: 8 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <Icon glyph="Pin" size="large" /> {/* Aisle icon */}
@@ -111,7 +108,7 @@ const ProductCard = (props) => {
             <span style={{ fontSize: 13 }}>Shelf: {shelfNumber ?? 'N/A'}</span>
           </span>
         </div>
-        <Button className="w-100 mt-auto" onClick={() => router.push(productInventoryURL + '/' + _id)}>
+        <Button className="w-100 mt-auto" onClick={() => router.push(productInventoryURL + '/' + (_id || id))}>
           View details
         </Button>
       </Card>
