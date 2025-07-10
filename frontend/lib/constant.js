@@ -22,11 +22,11 @@ export const SEARCH_OPTIONS = {
         label: 'Hybrid Search',
         description: 'Hybrid search'
     },
-    rerank: {
-        id: 4,
-        label: 'Hybrid Search + Rerank',
-        description: 'Re rank results after the search'
-    },
+    // rerank: {
+    //     id: 4,
+    //     label: 'Hybrid Search + Rerank',
+    //     description: 'Re rank results after the search'
+    // },
     regex: {
         id: 5,
         label: 'Regex Search',

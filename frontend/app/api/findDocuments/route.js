@@ -24,6 +24,8 @@ export async function POST(request) {
         filter['productId'] = new ObjectId(filter['productId'])
         projection['selectedStoreInventory'].$filter.cond.$eq[1] = new ObjectId(projection['selectedStoreInventory'].$filter.cond.$eq[1]);    
         projection['otherStoreInventory'].$filter.cond.$ne[1] = new ObjectId(projection['otherStoreInventory'].$filter.cond.$ne[1]);    
+    } else if(filter['inventorySummary.storeObjectId']){
+        filter['inventorySummary.storeObjectId'] = new ObjectId(filter['inventorySummary.storeObjectId'])
     }
 
     const result = await collection

@@ -15,6 +15,7 @@ import { useState } from "react";
 import InfoWizard from "../InfoWizard/InfoWizard";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
+import { useSelector } from "react-redux";
 
 const ProductCard = (props) => {
   const router = useRouter();
@@ -25,10 +26,15 @@ const ProductCard = (props) => {
     imageUrlS3,
     score = 0
   } = props.product;
+  const selectedStore = useSelector(state => state.Global.selectedStore)
+  const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
   const {
     shelfId: shelfNumber,
     aisleId: aisleNumber = 'N/A',
-  } = props.product.inventorySummary[0] || {};
+  } = props.product.inventorySummary.length === 1 
+    ? props.product.inventorySummary[0] 
+    : props.product.inventorySummary.find(store => store.storeObjectId === selectedStore)  || {};
+
   const [openHelpModal, setOpenHelpModal] = useState(false);
 
   return (
@@ -56,7 +62,10 @@ const ProductCard = (props) => {
                   <Code language="json" className="mb-0 mt-3">
                     {JSON.stringify(props.product, null, 2)}
                   </Code>
-                  <p><strong>Note:</strong> The <code>inventorySummary</code> field was pre filtered with the <code>$project</code> operator inside the find query to return only the summary of the current selected store. </p>
+                  {
+                    scanProductSearch !== 1 &&
+                    <p><strong>Note:</strong> The <code>inventorySummary</code> field was pre filtered with the <code>$project</code> operator inside the find query to return only the summary of the current selected store. </p>
+                  }
                 </Container>
               }
             ]}
