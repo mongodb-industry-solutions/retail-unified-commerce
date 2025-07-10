@@ -56,17 +56,20 @@ export async function getProductWithScanner(_id) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      filter: { _id: _id },
-      // projection: {
-      //   _id: 1,
-      //   productName: 1,
-      //   brand: 1,
-      //   price: 1,
-      //   imageUrlS3: 1,
-      //   aboutTheProduct: 1,
-      //   category: 1,
-      //   subCategory: 1
-      // },
+      filter: { 'inventorySummary.storeObjectId': store.getState().Global.selectedStore},
+      projection: {
+        _id: 1,
+        productName: 1,
+        imageUrlS3: 1,
+        'inventorySummary.storeObjectId': 1,
+        'inventorySummary.storeId': 1,
+        'inventorySummary.sectionId': 1,
+        'inventorySummary.aisleId': 1,
+        'inventorySummary.shelfId': 1,
+        'inventorySummary.inStock': 1,
+        'inventorySummary.nearToReplenishmentInShelf': 1
+      },
+      options: {limit: 1},
       collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
     }),
   });
@@ -74,8 +77,12 @@ export async function getProductWithScanner(_id) {
     throw new Error(`Error fetching product details: ${response.status}`);
   }
   let data = await response.json();
-  store.dispatch(setSearchResults({ results: data.result || [], totalItems: data.result?.length || 0 }));
-  
+  console.log('getProductWithScanner', data)
+  store.dispatch(setSearchResults({ 
+    results: [{...data.result[0]}] || [], 
+    totalItems: data.result? 1 : 0,
+    scanProductSearch: 1
+  }));
 }
 
 export async function getProductDetails(_id) {

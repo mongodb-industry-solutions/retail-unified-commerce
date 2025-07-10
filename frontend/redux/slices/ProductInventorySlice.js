@@ -13,6 +13,7 @@ const ProductInventorySlice = createSlice({
         loading: false,
         error: null,
         query: null, // The search query string
+        scanProductSearch: 0
     },
     reducers: {
         setSearchResults(state, action) {
@@ -22,6 +23,7 @@ const ProductInventorySlice = createSlice({
                 totalItems: action.payload.totalItems || 0, // Assuming totalItems is provided
                 loading: false,
                 error: null,
+                scanProductSearch: action.payload.scanProductSearch || 0, // Assuming scanProductSearch is an int
             };
         },
         searchIsLoading(state, action) {

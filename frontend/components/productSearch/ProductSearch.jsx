@@ -13,6 +13,7 @@ import AtlasSearchLearnMore from './AtlasSearchLearnMore';
 import VectorSearchLearnMore from './VectorSearchLearnMore';
 import RegexSearchLearnMore from './RegexSearchLearnMore';
 import { SEARCH_OPTIONS } from '@/lib/constant';
+import HybridSearchLearnMore from './HybridSearchLearnMore';
 
 
 const ProductSearch = (props) => {
@@ -31,8 +32,6 @@ const ProductSearch = (props) => {
         }
         dispatch(setProductQuery({ query: searchValue.trim() }));
     };
-
-    
 
     const onKeyDownInput = (e) => {
         if(e.key === 'Enter' && searchValue.length > 0)
@@ -97,14 +96,14 @@ const ProductSearch = (props) => {
                             heading: "Vector Search",
                             content: <VectorSearchLearnMore />
                         },
-                                                {
+                        {
                             heading: "Hybrid Search",
-                            content: <VectorSearchLearnMore />
+                            content: <HybridSearchLearnMore />
                         },
-                                                {
-                            heading: "Hybrid Search + Rerank",
-                            content: <VectorSearchLearnMore />
-                        },
+                        //                         {
+                        //     heading: "Hybrid Search + Rerank",
+                        //     content: <VectorSearchLearnMore />
+                        // },
                         {
                             heading: "Regex Search",
                             content: <RegexSearchLearnMore />
