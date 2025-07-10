@@ -16,6 +16,7 @@ import {
     TableHead,
 } from '@leafygreen-ui/table';
 import StoreDistanceContainer from './StoreDistanceContainer';
+import Image from 'next/image';
 
 
 const calculateStockLevel = (shelfQuantity = 0, backroomQuantity = 0) => {
@@ -84,11 +85,16 @@ const LocationsContainer = () => {
                     <strong>Store Map</strong>
                 </p>
                 <Description className='medium-text mt-0'>See product location on the store map</Description>
-                {
-                    inventory.storeInventory
-                        ? 'MAP'
-                        : 'N/A'
-                }
+                <div className='d-flex justify-content-center align-items-center mb-2'>
+                    <Image
+                        src={`/images/florMap/${!aisleId || aisleId === 'N/A' ? 'floorMap' : aisleId}.png`}
+                        alt="floor map"
+                        width={400}
+                        height={250}
+                        priority
+                        onError={() => setMapSrc('/images/florMap/floorMap.png')}
+                    ></Image>
+                </div>
             </Card>
             <Card className='mb-4'>
                 <p className='medium-text text-dark'>
@@ -110,7 +116,7 @@ const LocationsContainer = () => {
                             <Row key={store.storeObjectId}>
                                 <Cell>
                                     <div className='d-flex align-items-center justify-content-between gap-1'>
-                                        <StoreDistanceContainer store={store} getStoreDistance={getStoreDistance}/>
+                                        <StoreDistanceContainer store={store} getStoreDistance={getStoreDistance} />
                                     </div>
                                 </Cell>
                                 <Cell>{store.storeName}</Cell>
