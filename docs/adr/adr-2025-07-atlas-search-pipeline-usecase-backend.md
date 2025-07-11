@@ -1,108 +1,157 @@
-# ADR: Implementing Atlas Search Pipeline in Product Search Use Case
+# ADR: Implementing Rich Full-Text Search Use Case with Atlas Search
 
-- **ID**: adr-2025-07-atlas-search-pipeline-usecase-backend
-- **Date**: July 2025
-- **Status**: Accepted
-- **Context**: Backend – advanced-search-ms
 
-## 🎯 Context
+Showcase **MongoDB Atlas Search** capabilities in Option 2 by delivering:
 
-We needed to implement **robust, typo-tolerant, semantically rich product search** within the advanced search microservice. Requirements included:
-
-- Tolerance to user typos (fuzzy search).
-- Synonyms support for multilingual and alternate keyword searches.
-- Boosting relevance of product name over other fields (brand, category, subCategory).
-- Efficient retrieval scoped to the selected store only.
-
-MongoDB Atlas Search provides a powerful `$search` aggregation stage enabling these features without external search engines.
+- **Relevance** (boost key fields)  
+- **Typo tolerance** (fuzzy matching)  
+- **Scoped results** (filter by store)  
+- **Consistent paging** (same API shape as other options)  
 
 ---
 
-## 💡 Decision
+## 🔍 Background
 
-We implemented **Option 2** (`search_atlas_text`) in `MongoSearchRepository` using an Atlas Search pipeline with:
+Our demo’s Option 1 used simple regex. While it works, it doesn’t:
 
-✅ **Compound query** to combine boosted relevance across fields.  
-✅ **Fuzzy search (`maxEdits=2`)** for typo tolerance.  
-✅ **Synonyms mapping** (`"default_synonyms"`) to expand user queries with predefined synonyms.  
-✅ **Boost configuration** giving:
-- **High weight (3x)** to `productName`.
-- **Lower weight (1x)** to `brand`, `category`, and `subCategory`.
+- Rank by field importance  
+- Handle user typos gracefully  
+- Leverage Atlas’s text-indexing power  
 
-### Pipeline snippet
+Option 2 will use Atlas Search to unlock these features.
+---
 
+## 📑 Aggregation Pipeline Explained
 
 pipeline = [
-    {
-        "$search": {
-            "index": self.text_index,
-            "compound": {
-                "should": [
-                    {
-                        "text": {
-                            "query": query,
-                            "path": "productName",
-                            "score": {"boost": {"value": 3}},
-                            "fuzzy": {"maxEdits": 2},
-                            "synonyms": "default_synonyms",
-                        }
-                    },
-                    {
-                        "text": {
-                            "query": query,
-                            "path": ["brand", "category", "subCategory"],
-                            "score": {"boost": {"value": 1}},
-                            "fuzzy": {"maxEdits": 2},
-                            "synonyms": "default_synonyms",
-                        }
-                    }
-                ]
+  {
+    $search: {
+      index: self.text_index,
+      compound: {
+        should: [
+          // 1) Exact product name matches, highest weight
+          {
+            text: {
+              query:   query,
+              path:    "productName",
+              score:   { boost: { value: 3 } },
+              fuzzy:   { maxEdits: 2 }
             }
-        }
-    },
-    {"$match": {"inventorySummary.storeObjectId": ObjectId(store_object_id)}},
-    {"$project": {**PRODUCT_FIELDS, "score": {"$meta": "searchScore"}}},
-    ...
-]
+          },
+          // 2) Secondary fields (brand, category…), lower weight
+          {
+            text: {
+              query:   query,
+              path:    ["brand", "category", "subCategory"],
+              score:   { boost: { value: 1 } },
+              fuzzy:   { maxEdits: 2 }
+            }
+          }
+        ]
+      }
+    }
+  },
+  // Filter to the requested store inside the inventorySummary array
+  {
+    $match: {
+      inventorySummary: {
+        $elemMatch: { storeObjectId: ObjectId(store_object_id) }
+      }
+    }
+  },
+  // Split into “docs” (paginated results) and “count” (total hits)
+  {
+    $facet: {
+      docs: [
+        { $project: { **PRODUCT_FIELDS, score: { $meta: "searchScore" } } },
+        { $skip: skip },
+        { $limit: page_size }
+      ],
+      count: [ { $count: "total" } ]
+    }
+  },
+  // Unwind and default total to zero if no hits
+  { $unwind:     { path: "$count", preserveNullAndEmptyArrays: true } },
+  { $addFields:  { total: { $ifNull: ["$count.total", 0] } } }
+];
+
+
+### Why this Pipeline?
+* **Relevance** – Boosting `productName` ensures customer-facing names dominate ranking, while secondary fields still contribute matches.  
+* **Typo Tolerance** – `fuzzy.maxEdits 2` lets users misspell (“milkk”) yet retrieve correct items.  
+* **Store Scoping** – `$elemMatch` mirrors Option 1’s logic, preventing cross-store leakage.  
+* **Stable Contract** – Retaining `$facet` keeps the API response shape unchanged, simplifying frontend logic.  
+* **Operational Simplicity** – No synonym mappings or custom analyzers required, minimising Atlas admin tasks.
+
+### Stage-by-Stage
+
+1- $search
+
+What? Runs Atlas Search over your collection.
+
+Why? Leverages inverted indexes for lightning-fast, relevance-scored text queries.
+
+Key Options:
+
+*compound.should: Try multiple match strategies, whichever scores highest wins.
+
+*text.path: Choose which fields to search (productName vs. metadata).
+
+*score.boost: Weight productName higher so “organic milk” outranks “milk jug.”
+
+*fuzzy.maxEdits: Tolerate up to two typos (“milkk” still matches “milk”).
+
+2- $match + $elemMatch
+
+What? Filters the array inventorySummary.
+
+Why? Ensure we only show products available in the specific store. This mirrors Option 1 logic but in a post-search filter.
+
+3- $facet
+
+What? Creates two parallel pipelines:
+
+docs: Your paginated product slice.
+
+count: Total number of matching documents.
+
+Why? Keeps API response shape consistent:
+{
+  "products": [...],
+  "total_results": 42,
+  "total_pages": 3
+}
+
+Benefit: Frontend doesn’t need special casing for Option 2.
+
+4- $unwind + $addFields
+
+What? Turns the count array into a single field and defaults to 0 if empty.
+
+Why? Guarantee total is always a number, even when there are no hits.
+
 ---
 
-## ✨ Rationale
+Atlas Search Demo: Highlights built-in full-text power of MongoDB Atlas without third-party search services.
 
-This approach:
+Business Value: Better UX → higher conversion. Typo tolerance and intelligent ranking keep customers engaged.
 
-- **Improves UX** by forgiving minor typos in search terms.
-- **Expands results intelligently** with synonyms (e.g. "chips" ~ "crisps").
-- **Prioritises productName** to show direct matches first.
-- **Avoids external dependencies**, keeping search native within MongoDB Atlas.
+Operational Simplicity: No custom analyzers, no external synonym configs, no extra services.
 
----
+Integrate vector search in hybrid mode (Option 4) to showcase semantic discovery.
 
-## 🔍 Consequences
+### Why We Excluded `aboutTheProduct` from `$search`
 
-✅ More relevant results with minimal user frustration.  
-✅ No infrastructure complexity (Atlas Search is fully managed).  
-⚠️ Slightly higher resource usage per query due to fuzzy matching and synonyms expansion (acceptable given the business value).
+We deliberately chose **not** to include the `aboutTheProduct` field in our Atlas `$search` pipeline.
 
----
+**Reason:**  
+This field typically contains long, descriptive marketing text or explanatory content. Including it in the full-text search index would shift our search results toward matches on generic phrases instead of precise product names, brands, or categories.
 
-## 👩‍🏫 Didactic Note
+For this specific use case — where shoppers expect **precise, clear matches** on product names or key attributes — adding `aboutTheProduct` would introduce noise and unexpected hits, making the ranking less predictable.
 
-This design follows the **Repository Pattern** (hiding database details) combined with the **Template Method Pattern** in use cases, ensuring clean separation of concerns while supporting multiple search strategies with minimal duplication.
+Instead, we keep this field for:
+- Display in the product details,
+- Semantic search later (Option 3 & 4) where vector embeddings make sense,
+- Contextual enrichments, but not for strict keyword-driven lookups.
 
----
 
-## 🔗 Related
-
-- MongoDB Atlas Search documentation: [Compound + Fuzzy + Synonyms](https://www.mongodb.com/docs/atlas/atlas-search/compound/)
-
----
-
-## ❓ Additional Notes on Indexes
-
-✔️ **Atlas Search does not use standard MongoDB indexes** (`db.collection.createIndex`). It uses **Atlas Search Indexes**, Lucene-based indexes managed within Atlas.  
-✔️ The index must exist with configured synonyms if used, and it is selected in the query with `"index": self.text_index`.  
-✔️ Fuzzy queries are more computationally expensive than exact text matches, but Atlas manages scalability.  
-✔️ Reindexing is required when changing index configurations (paths, synonyms).  
-✔️ Performance and cost depend on pipeline complexity and data volume indexed.
-
----
