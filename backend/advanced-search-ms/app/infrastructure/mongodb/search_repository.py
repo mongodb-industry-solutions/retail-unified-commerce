@@ -1,4 +1,5 @@
 # app/infrastructure/mongodb/search_repository.py
+
 """
 MongoSearchRepository
 ---------------------
@@ -12,7 +13,8 @@ independent search strategies:
 4. Hybrid Reciprocal-Rank-Fusion (RRF) using `$rankFusion`.
 
 All queries are scoped to a single store by filtering
-`inventorySummary.storeObjectId == <store_object_id>`.
+`inventorySummary.storeObjectId == <store_object_id>` and
+return only that store's inventorySummary object.
 
 Key implementation notes:
 * This repository **never maps docs → domain objects**; use-cases handle that.
@@ -31,14 +33,14 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 
 from app.application.ports import SearchRepository
-from app.shared.exceptions import InfrastructureError
 from app.infrastructure.mongodb.client import MongoClient
+from app.shared.exceptions import InfrastructureError
 
 logger = logging.getLogger("advanced-search-ms.mongo-repo")
 
-# ---------------------------------------------------------------------------#
-# 🎯 Projection: exclude embeddings to reduce payload
-# ---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------- #
+# 🎯 Projection: exclude embeddings to reduce payload                        #
+# --------------------------------------------------------------------------- #
 PRODUCT_FIELDS = {
     "_id": 1,
     "productName": 1,
@@ -51,8 +53,26 @@ PRODUCT_FIELDS = {
     "aboutTheProduct": 1,
     "imageUrlS3": 1,
     "inventorySummary": 1,
-    # ❌ embeddings intentionally excluded
 }
+
+
+def filter_inventory_summary(doc: Dict, store_object_id: str) -> Dict:
+    """
+    Filters the inventorySummary array to include only the entry for the given store_object_id.
+    """
+    logger.info(
+        "[infra/search_repository] Filtering inventorySummary for storeObjectId=%s",
+        store_object_id,
+    )
+    if "inventorySummary" in doc:
+        filtered = [
+            inv
+            for inv in doc["inventorySummary"]
+            if str(inv.get("storeObjectId")) == str(store_object_id)
+        ]
+        doc["inventorySummary"] = filtered
+    return doc
+
 
 class MongoSearchRepository(SearchRepository):
     """MongoDB Atlas implementation of the SearchRepository port."""
@@ -76,9 +96,10 @@ class MongoSearchRepository(SearchRepository):
             "vectorPipeline": rrf_weight_vector,
             "textPipeline": rrf_weight_text,
         }
+        logger.info("[infra/search_repository] MongoSearchRepository initialized.")
 
     # --------------------------------------------------------------------- #
-    # OPTION 1 – Simple keyword / regex                                     #
+    # OPTION 1 – Simple keyword / prefix regex                              #
     # --------------------------------------------------------------------- #
 
     async def search_keyword(
@@ -88,8 +109,11 @@ class MongoSearchRepository(SearchRepository):
         page: int,
         page_size: int,
     ) -> Tuple[List[Dict], int]:
-        logger.info("🔎 [search_keyword] Starting keyword search | Query=%r StoreObjectId=%s", query, store_object_id)
-
+        logger.info(
+            "[infra/search_repository] search_keyword | Query=%r StoreObjectId=%s",
+            query,
+            store_object_id,
+        )
         skip = (page - 1) * page_size
 
         pipeline = [
@@ -100,17 +124,19 @@ class MongoSearchRepository(SearchRepository):
                             "storeObjectId": ObjectId(store_object_id)
                         }
                     },
-                    "productName": {"$regex": query, "$options": "i"},
+                    "productName": {"$regex": f"^{query}", "$options": "i"},
                 }
             },
             {"$project": PRODUCT_FIELDS},
-            {"$facet": {
-                "docs": [
-                    {"$skip": skip},
-                    {"$limit": page_size},
-                ],
-                "count": [{"$count": "total"}],
-            }},
+            {
+                "$facet": {
+                    "docs": [
+                        {"$skip": skip},
+                        {"$limit": page_size},
+                    ],
+                    "count": [{"$count": "total"}],
+                }
+            },
             {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
             {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
         ]
@@ -118,24 +144,18 @@ class MongoSearchRepository(SearchRepository):
         try:
             agg = self.col.aggregate(pipeline, maxTimeMS=4000)
             root_doc = (await agg.to_list(length=1))[0] if agg else {}
-            logger.info("✅ [search_keyword] Total results: %d", root_doc.get("total", 0))
-            if root_doc.get("docs"):
-                logger.info("📄 [search_keyword] First returned doc: %r", root_doc["docs"][0])
-            else:
-                logger.warning("⚠️ [search_keyword] No documents found.")
-            return root_doc.get("docs", []), int(root_doc.get("total", 0))
-
+            docs = [
+                filter_inventory_summary(d, store_object_id)
+                for d in root_doc.get("docs", [])
+            ]
+            return docs, int(root_doc.get("total", 0))
         except Exception as exc:
-            logger.error("💥 [search_keyword] Keyword search failed: %s", exc)
+            logger.error("[infra/search_repository] search_keyword failed: %s", exc)
             raise InfrastructureError(exc) from exc
 
-    # --------------------------------------------------------------------- #
-    # OPTION 2 – Atlas full-text `$search`                                  #
-    # --------------------------------------------------------------------- #
-
-        # --------------------------------------------------------------------- #
-    # OPTION 2 – Atlas full-text `$search` with fuzzy, synonyms, boosting   #
-    # --------------------------------------------------------------------- #
+    # ------------------------------------------------------------------ #
+    # OPTION 2 – Atlas full-text `$search`                               #
+    # ------------------------------------------------------------------ #
 
     async def search_atlas_text(
         self,
@@ -144,8 +164,11 @@ class MongoSearchRepository(SearchRepository):
         page: int,
         page_size: int,
     ) -> Tuple[List[Dict], int]:
-        logger.info("🔎 [search_atlas_text] Starting Atlas text search | Query=%r StoreObjectId=%s", query, store_object_id)
-
+        logger.info(
+            "[infra/search_repository] search_atlas_text | Query=%r StoreObjectId=%s",
+            query,
+            store_object_id,
+        )
         skip = (page - 1) * page_size
 
         pipeline = [
@@ -158,57 +181,66 @@ class MongoSearchRepository(SearchRepository):
                                 "text": {
                                     "query": query,
                                     "path": "productName",
-                                    "score": {"boost": {"value": 3}},  # 🔥 High boost
-                                    "fuzzy": {"maxEdits": 2},  # ✅ Typo tolerance
-                                    "synonyms": "default_synonyms",  # 📝 Your defined synonyms mapping
+                                    "score": {"boost": {"value": 3}},
+                                    "fuzzy": {"maxEdits": 2},
                                 }
                             },
                             {
                                 "text": {
                                     "query": query,
                                     "path": ["brand", "category", "subCategory"],
-                                    "score": {"boost": {"value": 1}},  # Lower boost
+                                    "score": {"boost": {"value": 1}},
                                     "fuzzy": {"maxEdits": 2},
-                                    "synonyms": "default_synonyms",
                                 }
-                            }
+                            },
                         ]
+                    },
+                }
+            },
+            {
+                "$match": {  # ← filtra por la tienda exacta dentro del array
+                    "inventorySummary": {
+                        "$elemMatch": {
+                            "storeObjectId": ObjectId(store_object_id)
+                        }
                     }
                 }
             },
-            {"$match": {"inventorySummary.storeObjectId": ObjectId(store_object_id)}},
-            {"$project": {**PRODUCT_FIELDS, "score": {"$meta": "searchScore"}}},
-            {"$facet": {
-                "docs": [
-                    {"$skip": skip},
-                    {"$limit": page_size},
-                ],
-                "count": [{"$count": "total"}],
-            }},
+            {
+                "$facet": {
+                    "docs": [
+                        {
+                            "$project": {
+                                **PRODUCT_FIELDS,
+                                "score": {"$meta": "searchScore"},
+                            }
+                        },
+                        {"$skip": skip},
+                        {"$limit": page_size},
+                    ],
+                    "count": [{"$count": "total"}],
+                }
+            },
             {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
             {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
         ]
 
         try:
-            logger.info("▶️ [search_atlas_text] Executing aggregation pipeline in MongoDB")
             agg = self.col.aggregate(pipeline, maxTimeMS=4000)
             root_doc = (await agg.to_list(length=1))[0] if agg else {}
-
-            logger.info("✅ [search_atlas_text] Aggregation completed | Total results: %d", root_doc.get("total", 0))
-            if root_doc.get("docs"):
-                logger.info("📄 [search_atlas_text] First returned doc: %r", root_doc["docs"][0])
-            else:
-                logger.warning("⚠️ [search_atlas_text] No documents found for this query.")
-
-            return root_doc.get("docs", []), int(root_doc.get("total", 0))
-
+            docs = [
+                filter_inventory_summary(d, store_object_id)
+                for d in root_doc.get("docs", [])
+            ]
+            return docs, int(root_doc.get("total", 0))
         except Exception as exc:
-            logger.error("💥 [search_atlas_text] Atlas text search failed: %s", exc)
+            logger.error("[infra/search_repository] search_atlas_text failed: %s", exc)
             raise InfrastructureError(exc) from exc
 
-    # --------------------------------------------------------------------- #
-    # OPTION 3 – Lucene `$vectorSearch` (delegated to MongoClient helper)   #
-    # --------------------------------------------------------------------- #
+
+       # ------------------------------------------------------------------ #
+    # OPTION 3 – Lucene `$vectorSearch`                                  #
+    # ------------------------------------------------------------------ #
 
     async def search_by_vector(
         self,
@@ -217,28 +249,63 @@ class MongoSearchRepository(SearchRepository):
         page: int,
         page_size: int,
     ) -> Tuple[List[Dict], int]:
-        logger.info("🔎 [search_by_vector] Starting vector search | StoreObjectId=%s", store_object_id)
-
-        raw_docs, total = await self._vec_helper.search_by_vector(
-            embedding, page, page_size
+        logger.info(
+            "[infra/search_repository] search_by_vector | StoreObjectId=%s",
+            store_object_id,
         )
-        logger.info("✅ [search_by_vector] Raw docs retrieved: %d Total hits: %d", len(raw_docs), total)
 
-        # Filter by store_object_id
-        docs = [
-            {k: v for k, v in d.items() if k in PRODUCT_FIELDS}
-            for d in raw_docs
-            if any(
-                inv.get("storeObjectId") == store_object_id
-                for inv in d.get("inventorySummary", [])
-            )
+        skip = (page - 1) * page_size
+
+        pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": self.vector_index,
+                    "path":  self.vector_field,
+                    "queryVector": embedding,
+                    "numCandidates": 200,  # recall
+                    "limit":        200   # initial cut
+                    # "similarity": "cosine"  # if cluster >= 7.2
+                }
+            },
+            {
+                "$match": {  # Filtra productos realmente disponibles en la tienda
+                    "inventorySummary": {
+                        "$elemMatch": {
+                            "storeObjectId": ObjectId(store_object_id)
+                        }
+                    }
+                }
+            },
+            {
+                "$facet": {
+                    "docs": [
+                        {
+                            "$project": {
+                                **PRODUCT_FIELDS,
+                                "score": {"$meta": "searchScore"},
+                            }
+                        },
+                        {"$skip": skip},
+                        {"$limit": page_size},
+                    ],
+                    "count": [ { "$count": "total" } ]
+                }
+            },
+            { "$unwind":   { "path": "$count", "preserveNullAndEmptyArrays": True } },
+            { "$addFields": { "total": { "$ifNull": ["$count.total", 0] } } },
         ]
-        logger.info("🔄 [search_by_vector] Filtered docs (matching store): %d", len(docs))
-        if docs:
-            logger.info("📄 [search_by_vector] First filtered doc: %r", docs[0])
-        else:
-            logger.warning("⚠️ [search_by_vector] No docs after store filter.")
-        return docs, total
+
+        try:
+            agg = self.col.aggregate(pipeline, maxTimeMS=4500)
+            root_doc = (await agg.to_list(length=1))[0] if agg else {}
+            docs = [
+                filter_inventory_summary(d, store_object_id)
+                for d in root_doc.get("docs", [])
+            ]
+            return docs, int(root_doc.get("total", 0))
+        except Exception as exc:
+            logger.error("[infra/search_repository] search_by_vector failed: %s", exc)
+            raise InfrastructureError(exc) from exc
 
     # --------------------------------------------------------------------- #
     # OPTION 4 – Hybrid RRF search                                          #
@@ -252,8 +319,11 @@ class MongoSearchRepository(SearchRepository):
         page: int,
         page_size: int,
     ) -> Tuple[List[Dict], int]:
-        logger.info("🔎 [search_hybrid_rrf] Starting hybrid RRF search | Query=%r StoreObjectId=%s", query, store_object_id)
-
+        logger.info(
+            "[infra/search_repository] search_hybrid_rrf | Query=%r StoreObjectId=%s",
+            query,
+            store_object_id,
+        )
         skip = (page - 1) * page_size
 
         pipeline = [
@@ -278,7 +348,11 @@ class MongoSearchRepository(SearchRepository):
                                         "index": self.text_index,
                                         "text": {
                                             "query": query,
-                                            "path": ["productName", "brand", "aboutTheProduct"],
+                                            "path": [
+                                                "productName",
+                                                "brand",
+                                                "aboutTheProduct",
+                                            ],
                                         },
                                     }
                                 },
@@ -290,15 +364,26 @@ class MongoSearchRepository(SearchRepository):
                     "scoreDetails": True,
                 }
             },
-            {"$match": {"inventorySummary.storeObjectId": ObjectId(store_object_id)}},
-            {"$project": {**PRODUCT_FIELDS, "score": {"$meta": "searchScore"}}},
-            {"$facet": {
-                "docs": [
-                    {"$skip": skip},
-                    {"$limit": page_size},
-                ],
-                "count": [{"$count": "total"}],
-            }},
+            {
+                "$match": {
+                    "inventorySummary.storeObjectId": ObjectId(store_object_id)
+                }
+            },
+            {
+                "$project": {
+                    **PRODUCT_FIELDS,
+                    "score": {"$meta": "searchScore"},
+                }
+            },
+            {
+                "$facet": {
+                    "docs": [
+                        {"$skip": skip},
+                        {"$limit": page_size},
+                    ],
+                    "count": [{"$count": "total"}],
+                }
+            },
             {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
             {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
         ]
@@ -306,13 +391,11 @@ class MongoSearchRepository(SearchRepository):
         try:
             agg = self.col.aggregate(pipeline, maxTimeMS=6000)
             root_doc = (await agg.to_list(length=1))[0] if agg else {}
-            logger.info("✅ [search_hybrid_rrf] Total results: %d", root_doc.get("total", 0))
-            if root_doc.get("docs"):
-                logger.info("📄 [search_hybrid_rrf] First returned doc: %r", root_doc["docs"][0])
-            else:
-                logger.warning("⚠️ [search_hybrid_rrf] No documents found.")
-            return root_doc.get("docs", []), int(root_doc.get("total", 0))
-
+            docs = [
+                filter_inventory_summary(d, store_object_id)
+                for d in root_doc.get("docs", [])
+            ]
+            return docs, int(root_doc.get("total", 0))
         except Exception as exc:
-            logger.error("💥 [search_hybrid_rrf] Hybrid RRF search failed: %s", exc)
+            logger.error("[infra/search_repository] search_hybrid_rrf failed: %s", exc)
             raise InfrastructureError(exc) from exc
