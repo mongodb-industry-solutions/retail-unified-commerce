@@ -38,3 +38,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# --- backend (Python) ---
+/__pycache__/
+/*.py[cod]
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# --- system/local ---
+.DS_Store
+Icon?
+Thumbs.db
+.vscode/
