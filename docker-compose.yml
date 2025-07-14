@@ -1,25 +1,30 @@
+version: "3.9"
+
 services:
-  demoname-backend:
+  advanced-search-ms:
     build:
-      context: .
-      no_cache: true
-      dockerfile: Dockerfile.backend
-    image: imagename-backend:latest
+      context: ./backend/advanced-search-ms
+      dockerfile: Dockerfile
+      # no_cache: true  # Uncomment if needed for fresh build
+    image: advanced-search-ms:latest
+    container_name: advanced-search-ms
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/advanced-search-ms/.env
+    restart: unless-stopped
     volumes:
       - ~/.aws/credentials:/root/.aws/credentials:ro
       - ~/.aws/config:/root/.aws/config:ro
-      - ~/.aws/sso/cache:/root/.aws/sso/cache:rw  # Only make cache writable
-    ports:
-      - "8000:8000"
-    restart: always
-    container_name: demoname-backend
-  demoname-frontend:
+      - ~/.aws/sso/cache:/root/.aws/sso/cache:rw
+
+  nextjs-app:
     build:
-      context: .
-      no_cache: true
-      dockerfile: Dockerfile.frontend
-    image: imagename-frontend:latest
+      context: ./frontend
+      dockerfile: Dockerfile
+      # no_cache: true
+    image: nextjs-app:latest
+    container_name: nextjs-app
     ports:
-      - "8000:8000"
-    restart: always
-    container_name: demoname-frontend
+      - "3000:3000"
+    restart: unless-stopped
