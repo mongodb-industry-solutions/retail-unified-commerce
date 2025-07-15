@@ -10,6 +10,7 @@ const ProductInventorySlice = createSlice({
         productDetails: null, // the product from the product collection
         productInventory: null, // the product from the inventory collection
         searchType: SEARCH_OPTIONS.search.id, // 'search' or 'vector-search'
+        initialLoad: true, // Used to determine if the page is loading for the first time
         loading: false,
         error: null,
         query: null, // The search query string
@@ -24,6 +25,7 @@ const ProductInventorySlice = createSlice({
                 totalItems: action.payload.totalItems || 0, // Assuming totalItems is provided
                 loading: false,
                 error: null,
+                initialLoad: false,
                 scanProductSearch: action.payload.scanProductSearch || 0, // Assuming scanProductSearch is an int
             };
         },
