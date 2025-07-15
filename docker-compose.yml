@@ -1,30 +1,40 @@
 version: "3.9"
 
 services:
+  # ──────────────────────────────────────────── #
+  # 🐍  Backend – FastAPI + Poetry
+  # ──────────────────────────────────────────── #
   advanced-search-ms:
     build:
-      context: ./backend/advanced-search-ms
+      context: ./backend/advanced-search-ms     # ruta al Dockerfile del back
       dockerfile: Dockerfile
-      # no_cache: true  # Uncomment if needed for fresh build
-    image: advanced-search-ms:latest
+    image: retail-unified-commerce-back:latest # nombre/tag unificado
     container_name: advanced-search-ms
     ports:
-      - "8000:8000"
+      - "8000:8000"                             # host:container
     env_file:
-      - ./backend/advanced-search-ms/.env
+      - ./backend/advanced-search-ms/.env       # se vuelve a montar por si querés
     restart: unless-stopped
-    volumes:
+    volumes:                                    # AWS creds (solo lectura)
       - ~/.aws/credentials:/root/.aws/credentials:ro
       - ~/.aws/config:/root/.aws/config:ro
       - ~/.aws/sso/cache:/root/.aws/sso/cache:rw
 
+  # ──────────────────────────────────────────── #
+  # ⚛️  Frontend – Next.js
+  # ──────────────────────────────────────────── #
   nextjs-app:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      # no_cache: true
-    image: nextjs-app:latest
+    image: retail-unified-commerce-front:latest
     container_name: nextjs-app
     ports:
       - "3000:3000"
+    # El frontend fue compilado con .env, pero si querés
+    # sobreescribir variables de *servidor* en runtime, agrégalas aquí:
+    # environment:
+    #   - SOME_SERVER_ONLY_VAR=foo
     restart: unless-stopped
+    depends_on:
+      - advanced-search-ms                      # arranca después del backend

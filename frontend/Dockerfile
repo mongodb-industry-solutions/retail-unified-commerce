@@ -1,39 +1,44 @@
-# ----------------------------- #
+#############################
 # 1️⃣ Build Stage
-# ----------------------------- #
+#############################
 FROM node:20-alpine AS builder
-
 WORKDIR /app
 
-# Copy package.json and lockfile
+# ── Copy manifest files first to leverage Docker cache
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# ── Install all dependencies (prod + dev) deterministically
+RUN npm ci --legacy-peer-deps
 
-# Copy app source
+# ── Bring in environment variables used during the build
+COPY .env .env
+
+# ── Copy the full application source
 COPY . .
 
-# Build Next.js app
+# ── Compile / bundle the Next.js app (env vars are “baked in” here)
 RUN npm run build
 
-# ----------------------------- #
-# 2️⃣ Production Image
-# ----------------------------- #
-FROM node:20-alpine
 
+#############################
+# 2️⃣ Runtime Stage
+#############################
+FROM node:20-alpine
 WORKDIR /app
 
-ENV NODE_ENV=production
-
-# Copy only necessary files
+# ── Copy only the artifacts needed to run the app
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.next .next
 COPY --from=builder /app/public ./public
 
-# Install only production dependencies
-RUN npm install --production --legacy-peer-deps
+# ── Copy the same .env so `next start` can read server-side vars
+COPY --from=builder /app/.env .env
 
+# ── Install *production-only* dependencies
+RUN npm ci --production --legacy-peer-deps
+
+# ── Expose the Next.js default port
 EXPOSE 3000
 
+# ── Start the production server
 CMD ["npm", "start"]
