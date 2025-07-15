@@ -26,6 +26,7 @@ export default function ProductInventoryPage() {
     error,
     searchResults,
     query,
+    initialLoad,
     forceSearchWithEnterToggle
   } = useSelector(state => state.ProductInventory);
   const [openHelpModal, setOpenHelpModal] = useState(false);
@@ -74,11 +75,11 @@ export default function ProductInventoryPage() {
               },
               {
                 heading: 'Behind the scenes',
-                content: <BehindTheScenes/>
+                content: <BehindTheScenes />
               },
               {
                 heading: 'Why MongoDB?',
-                content: <ProductInventoryWyMDB/>
+                content: <ProductInventoryWyMDB />
               }
             ]}
             openModalIsButton={true}
@@ -89,13 +90,15 @@ export default function ProductInventoryPage() {
       {
         error !== null
           ? <ErrorSearchBanner error={error} />
-          : searchResults.length === 0 && !loading
+          : initialLoad
             ? <EnterSearchBanner />
-            : searchResults.length > 0
-              ? <ProductList onCurrentPageChange={fetchResults} />
-              : loading
-                ? <LoadingSearchBanner />
-                : null
+            : searchResults.length === 0 && !initialLoad && !loading
+              ? <div className='text-center'>No results found for "{query}". Please try a different search term.</div>
+              : searchResults.length > 0 && !loading
+                ? <ProductList onCurrentPageChange={fetchResults} />
+                : loading
+                  ? <LoadingSearchBanner />
+                  : null
       }
 
     </Container>
