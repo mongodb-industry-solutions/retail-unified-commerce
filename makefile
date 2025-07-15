@@ -1,53 +1,50 @@
-# --------------------------------------------------
-# 🛠️ Build & Run Services with Docker Compose
-# --------------------------------------------------
+# ------------------------------------------------------------------
+# 🐳  Docker Compose shortcuts
+# ------------------------------------------------------------------
+DC := docker compose        # alias para abreviar
 
-# Build both frontend and backend containers
+## 🔄  Build & (re)create everything
 build:
-	docker-compose up --build -d
+	$(DC) up --build -d
 
-# Start existing containers (without rebuilding)
+## ▶️  Start (no rebuild)
 start:
-	docker-compose start
+	$(DC) start
 
-# Stop running containers
+## ⏹️  Stop containers
 stop:
-	docker-compose stop
+	$(DC) stop
 
-# Remove containers, volumes, and images
+## 🧹  Tear down + clean images & volumes
 clean:
-	docker-compose down --rmi all -v
+	$(DC) down --rmi all -v
 
-# View real-time logs from all containers
+## 📜  Tail all logs
 logs:
-	docker-compose logs -f
+	$(DC) logs -f
 
-# View logs only from the frontend service
-logs_frontend:
-	docker-compose logs -f frontend
+# ---------- Frontend shortcuts ----------
+front-build:
+	$(DC) build nextjs-app
 
-# View logs only from the backend service
-logs_backend:
-	docker-compose logs -f advanced-search-ms
+front-up:
+	$(DC) up -d nextjs-app
 
-# --------------------------------------------------
-# 🐍 Poetry Setup (for local backend development)
-# --------------------------------------------------
+front-stop:
+	$(DC) stop nextjs-app
 
-# Install Poetry globally using pipx (for Mac users)
-install_poetry:
-	brew install pipx
-	pipx ensurepath
-	pipx install poetry==1.8.4
+front-logs:
+	$(DC) logs -f nextjs-app
 
-# Set Poetry to use local virtual environments (within backend folder)
-poetry_start:
-	cd backend && poetry config virtualenvs.in-project true
+# ---------- Backend shortcuts ----------
+back-build:
+	$(DC) build advanced-search-ms
 
-# Install all Python dependencies
-poetry_install:
-	cd backend && poetry install --no-interaction -v --no-cache --no-root
+back-up:
+	$(DC) up -d advanced-search-ms
 
-# Update Python dependencies
-poetry_update:
-	cd backend && poetry update
+back-stop:
+	$(DC) stop advanced-search-ms
+
+back-logs:
+	$(DC) logs -f advanced-search-ms
