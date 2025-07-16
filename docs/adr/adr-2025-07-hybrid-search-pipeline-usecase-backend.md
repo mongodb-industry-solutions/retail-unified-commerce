@@ -57,7 +57,7 @@ This ensures:
 2. **MongoDB Hybrid RRF**
 
     The repository runs:
-
+```js
         $rankFusion:
           input:
             pipelines:
@@ -70,7 +70,7 @@ This ensures:
               vectorPipeline: 0.7
               textPipeline: 0.3
           scoreDetails: true
-
+```
 ✅ This fuses the two result sets using **weighted reciprocal ranks**, combining:
 
 - **Semantic similarity** (vector pipeline)  
@@ -81,12 +81,12 @@ This ensures:
 3. **Filter by store**
 
     Filters results to only include products in the requested store:
-
+```js
         $match:
           inventorySummary:
             $elemMatch:
               storeObjectId: ObjectId(store_object_id)
-
+```
 ---
 
 4. **Pagination and count**

@@ -23,6 +23,9 @@ Option 2 will use Atlas Search to unlock these features.
 
 ## 📑 Aggregation Pipeline Explained
 
+### 🧩 MongoDB Atlas Search Pipeline – Weighted Text Search + Store Filter
+
+```js
 pipeline = [
   {
     $search: {
@@ -74,7 +77,7 @@ pipeline = [
   { $unwind:     { path: "$count", preserveNullAndEmptyArrays: true } },
   { $addFields:  { total: { $ifNull: ["$count.total", 0] } } }
 ];
-
+```
 
 ### Why this Pipeline?
 * **Relevance** – Boosting `productName` ensures customer-facing names dominate ranking, while secondary fields still contribute matches.  

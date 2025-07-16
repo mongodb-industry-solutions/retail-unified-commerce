@@ -46,7 +46,7 @@ We designed a pipeline with these stages:
    After retrieving results from MongoDB, the repository filters each document’s `inventorySummary` array to include only the entry matching the requested `storeObjectId`, ensuring responses remain minimal and store-scoped.
 
 Example (simplified) pipeline snippet:
-
+```js
 pipeline = [
     {
         "$match": {
@@ -70,7 +70,7 @@ pipeline = [
     {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
     {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
 ]
-
+```
 ---
 
 ### Rationale

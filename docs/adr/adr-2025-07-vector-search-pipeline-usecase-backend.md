@@ -72,14 +72,14 @@ Returns a dense vector (e.g. 768 floats).
 # Vector Search in MongoDB
 
 The repository runs:
-
+```js
     $vectorSearch:
       index: product_text_vector_index
       path: textEmbeddingVector
       queryVector: <embedding>
       numCandidates: 200
       limit: 200
-
+```
 ✅ Finds top 200 products by semantic similarity.
 
 ---
@@ -87,12 +87,12 @@ The repository runs:
 # Filter by Store
 
 Ensures results only include products available in the requested store:
-
+```js
     $match:
       inventorySummary:
         $elemMatch:
           storeObjectId: ObjectId(store_object_id)
-
+```
 ---
 
 # Pagination and Count
