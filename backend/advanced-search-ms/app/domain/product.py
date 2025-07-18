@@ -82,11 +82,6 @@ class Product(BaseModel):
                 item["storeObjectId"] = str(item["storeObjectId"])
             inv_items.append(InventoryItem(**item))
 
-        logger.info(
-            "✅ [DOMAIN] Created Product '%s' with %d inventory items",
-            doc.get("productName"),
-            len(inv_items),
-        )
 
         return cls(
             _id=str(doc.get("_id")),

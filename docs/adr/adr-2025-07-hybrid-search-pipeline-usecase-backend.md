@@ -1,4 +1,6 @@
-# ADR-014: Hybrid Search with Reciprocal Rank Fusion (Option 4)
+# ADR: Hybrid Search with Reciprocal Rank Fusion (Option 4)
+
+**Date:** July 2025
 
 
 Our demo microservice showcases four search options.  
