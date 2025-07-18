@@ -25,7 +25,8 @@ const ProductCard = (props) => {
     productName: title,
     _id: sku,
     imageUrlS3,
-    score = null
+    score = null,
+    quantity
   } = props.product;
   const selectedStore = useSelector(state => state.Global.selectedStore)
   const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
@@ -106,6 +107,10 @@ const ProductCard = (props) => {
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <Icon glyph="Package" size="large" /> {/* Shelf icon */}
             <span style={{ fontSize: 13 }}>Shelf: {shelfNumber ?? 'N/A'}</span>
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Icon glyph="Package" size="large" /> {/* Shelf icon */}
+            <span style={{ fontSize: 13 }}>Quantity: {quantity ?? 'N/A'}</span>
           </span>
         </div>
         <Button className="w-100 mt-auto" onClick={() => router.push(productInventoryURL + '/' + (_id || id))}>
