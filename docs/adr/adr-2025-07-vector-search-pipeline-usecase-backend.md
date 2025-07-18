@@ -1,8 +1,6 @@
-# ADR-013: Vector Search Use Case with Voyage AI Embeddings
+# ADR: Vector Search Use Case with Voyage AI Embeddings
 
-**Status:** Accepted  
-**Date:** 11 Jul 2025  
-**Author:** Florence / Demo Team
+**Date:** July 2025
 
 ---
 
