@@ -4,7 +4,7 @@ import './global.css';
 import ClientProvider from "./ClientProvider";
 
 export const metadata = {
-  title: "Lefy Associate",
+  title: "Leafy Associate",
   description: "Unified Commerce tool to empower store associates",
   icons: [
     {
