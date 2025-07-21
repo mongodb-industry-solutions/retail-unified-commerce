@@ -1,26 +1,16 @@
 # app/infrastructure/mongodb/pipelines/vector_pipeline.py
-
 """
 MongoDB aggregation‑pipeline builder for *option 3* – Lucene k‑NN **vector search**.
 ==============================================================================
 
-✱ What changed & why?
----------------------
-* **NEW `$set` stage just after `$vectorSearch`**  
-  We copy the similarity score returned by Atlas Search into a regular
-  field (`score`) before running `$facet`.  `$meta: "searchScore"` *cannot* be
-  referenced inside the sub‑pipelines of a `$facet`, so the old version
-  silently dropped it.
-* The `$facet → docs` bucket now simply keeps that `score` field
-  instead of trying to re‑inject the meta‑operator.
+This pipeline:
+• Performs a k‑NN vector search using the Lucene engine ($vectorSearch).
+• Projects only the needed fields via PRODUCT_FIELDS (+ score).
+• Filters products by target store and optionally by stock status.
+• Paginates results and returns total count using $facet.
 
-The rest of the pipeline (filter, pagination, optional `in_stock`, etc.)
-is unchanged.
-
-Author  / Maintainer
---------------------
-Data & Search team – July 2025
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,12 +21,7 @@ from bson import ObjectId
 from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())  # library‑style logging (no handler by default)
-
-
-# ---------------------------------------------------------------------------
-# Public helper
-# ---------------------------------------------------------------------------
+logger.addHandler(logging.NullHandler())
 
 
 def build_vector_pipeline(
@@ -50,44 +35,53 @@ def build_vector_pipeline(
     in_stock: Optional[bool] = None,
     num_candidates: int = 200,
     knn_limit: int = 200,
+    projection_fields: Optional[Dict[str, int]] = None,
 ) -> List[Dict[str, Any]]:
-    """Create an aggregation pipeline for vector search with pagination.
+    """
+    Build aggregation pipeline for Lucene vector search with optional in‑stock filter.
 
     Parameters
     ----------
-    (See previous version – signature unchanged)
+    embedding         : Vector embedding to search with.
+    store_object_id   : Target store's ObjectId or string.
+    vector_index      : Lucene index name.
+    vector_field      : Field name containing the embedding.
+    skip              : Pagination offset.
+    limit             : Pagination limit.
+    in_stock          : Optional filter to only return in‑stock products.
+    num_candidates    : Number of candidates to retrieve before limiting.
+    knn_limit         : Maximum number of k‑NN results.
+    projection_fields : Optional projection dict; defaults to PRODUCT_FIELDS.
     """
 
-    # ---------------------------------------------------------------------
-    # Normalise and validate input
-    # ---------------------------------------------------------------------
+    # ── Validation ─────────────────────────────────────────────────────────
     if not isinstance(store_object_id, ObjectId):
         store_object_id = ObjectId(store_object_id)
+
     if skip < 0 or limit <= 0:
         raise ValueError("'skip' must be ≥ 0 and 'limit' must be > 0")
 
-    logger.debug(
-        "Building vector pipeline | store=%s skip=%d limit=%d in_stock=%s",
-        store_object_id,
-        skip,
-        limit,
-        in_stock,
+    logger.info(
+        "[PIPELINE] 🔎 Vector search | store=%s | skip=%d | limit=%d | in_stock=%s",
+        store_object_id, skip, limit, in_stock
     )
 
-    # ------------------------------------------------------------------
-    # Dynamic filter (store + optional stock level)
-    # ------------------------------------------------------------------
+    # ── Dynamic filter (store + optional stock) ────────────────────────────
     filter_conditions: Dict[str, Any] = {
-        "inventorySummary.storeObjectId": store_object_id,
+        "inventorySummary.storeObjectId": store_object_id
     }
     if in_stock is not None:
         filter_conditions["inventorySummary.inStock"] = in_stock
 
-    # ------------------------------------------------------------------
-    # Aggregation pipeline
-    # ------------------------------------------------------------------
+    logger.info("[PIPELINE] 🧩 Filter conditions: %s", filter_conditions)
+
+    # ── Projection dict (single source of truth) ───────────────────────────
+    projection = {**(projection_fields or PRODUCT_FIELDS), "score": 1}
+    logger.info("[PIPELINE] 🧾 Final projection fields: %s", list(projection.keys()))
+
+    # ── Aggregation pipeline stages ───────────────────────────────────────
     pipeline: List[Dict[str, Any]] = [
-        # 1) Lucene k‑NN search with in‑pipeline filter
+        # 1) Lucene k‑NN search with optional filter
         {
             "$vectorSearch": {
                 "index": vector_index,
@@ -98,29 +92,24 @@ def build_vector_pipeline(
                 "filter": filter_conditions,
             }
         },
-        # 2) Promote the meta‑score to a *real* field so it survives `$facet`
-        {"$set": {"score": {"$meta": "searchScore"}}},
+        # 2) Promote similarity score (correct meta for $vectorSearch)
+        {"$set": {"score": {"$meta": "vectorSearchScore"}}},
         # 3) Facet: paginated docs + total count
         {
             "$facet": {
                 "docs": [
-                    {
-                        "$project": {
-                            **PRODUCT_FIELDS,
-                            "score": 1,  # already materialised
-                        }
-                    },
+                    {"$project": projection},
                     {"$skip": skip},
                     {"$limit": limit},
                 ],
                 "count": [{"$count": "total"}],
             }
         },
-        # 4) Flatten the result: { docs: [...], total: <int> }
+        # 4) Flatten: add total field and drop internal count
         {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
         {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
         {"$project": {"count": 0}},
     ]
 
-    logger.debug("Vector pipeline built successfully – %d stage(s)", len(pipeline))
+    logger.info("[PIPELINE] ✅ Vector pipeline built with %d stages", len(pipeline))
     return pipeline
