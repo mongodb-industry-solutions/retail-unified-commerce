@@ -22,32 +22,6 @@ const ProductList = (props) => {
       pagination_page: currentPage,
       totalItems
     } = useSelector(state => state.ProductInventory);  
-  //const filters = useSelector(state => state.Products.filters)
-
-
-  // const getProducts = async () => {
-  //   console.log('- FILTERS CHANGED', filters)
-  //   try {
-  //     dispatch(setLoading(true))
-  //     let response;
-  //     dispatch(setLoading(true))
-  //     if(searchType === 'search')
-  //         response = await getProductsWithSearch(query, filters)
-  //     else if (searchType === 'vector-search')
-  //         response = await getProductsWithVectorSearch(query, filters)
-  //     if(response){
-  //         console.log('getAllProducts result', Object.keys(response).length)
-  //         dispatch(
-  //           setProducts({
-  //               products: response.products, 
-  //               totalItems: response.totalItems
-  //           }
-  //         ))        
-  //       }
-  //   } catch (err) {
-  //       console.log(`Error getting all products, ${err}`)
-  //   }
-  // }
 
   return (
     <div>
