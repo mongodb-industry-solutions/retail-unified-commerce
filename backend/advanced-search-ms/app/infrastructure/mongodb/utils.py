@@ -1,4 +1,4 @@
-# app/infrastructure/mongodb/
+# app/infrastructure/mongodb/utils.py
 """
 Shared MongoDB‑infrastructure helpers.
 
