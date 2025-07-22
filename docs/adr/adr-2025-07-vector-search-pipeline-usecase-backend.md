@@ -1,8 +1,6 @@
-# ADR-013: Vector Search Use Case with Voyage AI Embeddings
+# ADR: Vector Search Use Case with Voyage AI Embeddings
 
-**Status:** Accepted  
-**Date:** 11 Jul 2025  
-**Author:** Florence / Demo Team
+**Date:** July 2025
 
 ---
 
@@ -41,77 +39,121 @@ They may not use exact product names or categories. We need:
 
 ---
 
-### 🔑 Why Clean Architecture matters here
+## 🧠 Lucene k-NN Vector Search Pipeline — Step-by-Step Guide
 
-✅ **Separation of Concerns**
+## 🔍 Overview
 
-By isolating **embedding logic in the Infrastructure layer**, our Application layer (use cases) stays agnostic to *which AI provider we use*.
+This pipeline powers **option 3** of our advanced search API using **MongoDB Atlas Lucene Vector Search**. It efficiently returns relevant product results based on semantic similarity, filters by store and optional stock status, and paginates responses.
 
-✔️ If in the future we:
+It is defined in:
 
-- **Change provider** (e.g. from Voyage AI to OpenAI or Bedrock)  
-- **Use multiple embedding services** (e.g. one for short text, another for images)  
-- **Implement an in-house embedding service**
-
-👉 **We only swap or extend the adapter**, without touching the application orchestration or business logic.
-
----
-
-### 📝 Detailed Pipeline (Option 3)
-
-# Embedding Step
-
-Calls `VoyageClient.create_embedding()`
-
-Returns a dense vector (e.g. 768 floats).
-
-📖 *This happens in the **Infrastructure layer**, called by the **Application layer (use case)**.*
-
----
-
-# Vector Search in MongoDB
-
-The repository runs:
-```js
-    $vectorSearch:
-      index: product_text_vector_index
-      path: textEmbeddingVector
-      queryVector: <embedding>
-      numCandidates: 200
-      limit: 200
 ```
-✅ Finds top 200 products by semantic similarity.
+app/infrastructure/mongodb/pipelines/vector_pipeline.py
+```
+### 🔧 Aggregation Pipeline for Vector Search
 
----
+This pipeline powers semantic product search using MongoDB Atlas' `$vectorSearch` stage and returns paginated results with total hits.
 
-# Filter by Store
-
-Ensures results only include products available in the requested store:
 ```js
-    $match:
-      inventorySummary:
-        $elemMatch:
-          storeObjectId: ObjectId(store_object_id)
+pipeline = [
+  // 1. Lucene k-NN search with optional store and stock filter
+  {
+    $vectorSearch: {
+      index: vector_index,
+      path: vector_field,
+      queryVector: embedding,
+      numCandidates: num_candidates,
+      limit: knn_limit,
+      filter: filter_conditions,
+    }
+  },
+
+  // 2. Promote the Lucene similarity score as a normal field
+  { $set: { score: { $meta: "vectorSearchScore" } } },
+
+  // 3. Use $facet to paginate and count in parallel
+  {
+    $facet: {
+      docs: [
+        { $project: projection },
+        { $skip: skip },
+        { $limit: limit },
+      ],
+      count: [{ $count: "total" }]
+    }
+  },
+
+  // 4. Flatten count result and clean up output
+  { $unwind: { path: "$count", preserveNullAndEmptyArrays: true } },
+  { $addFields: { total: { $ifNull: ["$count.total", 0] } } },
+  { $project: { count: 0 } }
+]
 ```
 ---
 
-# Pagination and Count
+## ⚙️ Pipeline Breakdown
 
-A `$facet` stage:
+| Stage     | Description                           | Details |
+| --------- | ------------------------------------- | ------- |
+| **1. **`` | Performs Lucene vector k-NN retrieval |         |
 
-- Returns `docs` (paged slice)
-- Calculates `count` for total hits
-
-✅ Keeps the API response identical to Options 1 and 2.
+````jsonc
+{
+  index: "<vector_index>",
+  path: "<vector_field>",
+  queryVector: <embedding>,
+  numCandidates: 200,
+  limit: 200,
+  filter: {
+    "inventorySummary.storeObjectId": ObjectId("<store_id>"),
+    "inventorySummary.inStock": <optional_bool>
+  }
+}
+``` |
+| **2. `$set` (`score`)** | Promotes the Lucene similarity score to a regular field so it survives `$facet` |
+| **3. `$facet`** | Splits the pipeline into two branches: one paginates results, the other counts total hits |
+| **4. `$unwind` + `$addFields`** | Flattens the result and ensures `total = 0` if no hits |
+| **5. `$project` (`count`=0)** | Hides the internal `count` doc, output is clean: `{ docs: [...], total: <int> }` |
 
 ---
 
-### 📈 Consequences
+## 🧹 Projection Strategy
 
-| ✅ Pros | ⚠️ Cons |
-|---------|--------|
-| Real semantic search UX. | Adds embedding latency (300-500ms). |
-| Easy to swap AI providers (Clean Architecture). | Requires external API management. |
-| Supports multiple embedding strategies in the future. | Slight cost per embedding call. |
+All pipelines share a **centralized projection definition**:  
+```python
+from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+````
+
+At runtime, it is merged with:
+
+```python
+{"score": 1}
+```
+
+to preserve Lucene relevance scores in the final results.
 
 ---
+
+## ⚖️ Configurable Parameters
+
+| Parameter                     | Purpose                                 | Default  |
+| ----------------------------- | --------------------------------------- | -------- |
+| `embedding`                   | The 1024-dimensional query vector       | —        |
+| `vector_index`                | Lucene index to use                     | required |
+| `vector_field`                | Field in documents holding embeddings   | required |
+| `store_object_id`             | Filter results to a specific store      | required |
+| `in_stock`                    | Optional filter on product availability | None     |
+| `skip`, `limit`               | Pagination controls                     | 0, 20    |
+| `num_candidates`, `knn_limit` | Control recall vs performance trade-off | 200, 200 |
+
+---
+
+## 🌟 Highlights
+
+- ⚡ **Fast similarity search** over millions of embeddings
+- 🧼 **Clean, reusable output** with pagination & total hits
+- 🧩 **Composable**: works with hybrid pipelines and re-ranking
+- 🧠 Designed for real-time retail use cases
+
+---
+

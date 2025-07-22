@@ -1,9 +1,22 @@
 # app/infrastructure/mongodb/client.py
+
 """
-MongoDB Atlas Vector Search client (Lucene engine).
+MongoDB Client Adapter for Infrastructure Layer
+===============================================
 
-• Keeps a singleton `AsyncIOMotorClient` with tuned pool sizes.
+This module wraps the Motor async MongoDB client.
 
+🧩 Responsibilities:
+--------------------
+• Establishes and maintains a connection pool to MongoDB Atlas
+• Exposes the main product collection for search
+• Stores index and embedding configuration metadata
+• Performs early health validation on startup
+
+🏗️ Clean Architecture Role:
+---------------------------
+Acts as an **infrastructure adapter**, consumed by repositories
+in the infrastructure layer and injected into application services.
 """
 
 import logging
@@ -16,10 +29,12 @@ from app.shared.exceptions import InfrastructureError
 
 logger = logging.getLogger("advanced-search-ms.infra")
 
-# --------------------------------------------------------------------------- #
-# ⚙️ MongoClient – Infrastructure Adapter
-# --------------------------------------------------------------------------- #
+
 class MongoClient:
+    """
+    Infrastructure adapter for MongoDB Atlas access and configuration.
+    """
+
     def __init__(
         self,
         uri: str,
@@ -29,48 +44,43 @@ class MongoClient:
         index_name: str,
     ):
         """
-        Initializes the MongoDB async client with a connection pool.
-
-        Clean Architecture:
-        • This is the **Infrastructure Layer Adapter**, isolated from domain logic.
-        • Called by Repositories in Infrastructure Layer, used by Application Layer Use Cases.
+        Initializes the async MongoDB client and verifies connectivity.
 
         Args:
-            uri: MongoDB connection string.
-            database: Target database name.
-            collection: Target collection name.
-            embedding_field: Field name for vector embeddings.
-            index_name: Lucene vector search index name.
+            uri: MongoDB connection string (with credentials and cluster info)
+            database: Target database name
+            collection: Name of the collection containing product documents
+            embedding_field: Field used for Atlas Vector Search
+            index_name: Atlas Search index used for Lucene k-NN queries
         """
-        logger.info(
-            "[infra/mongo_client] 🔧 Initializing MongoClient | "
-            "Database=%s Collection=%s Index=%s",
-            database,
-            collection,
-            index_name,
-        )
+        logger.info("🔧 [mongo_client] Initializing MongoClient...")
+        logger.info("📦 Connecting to MongoDB: db='%s' collection='%s' index='%s'",
+                    database, collection, index_name)
 
+        # Create async client with connection pool
         self.client = AsyncIOMotorClient(
             uri,
             maxPoolSize=50,
             minPoolSize=10,
-            serverSelectionTimeoutMS=5_000,
+            serverSelectionTimeoutMS=5000,
             tls=True,
         )
-        self.collection = self.client[database][collection]
+
+        # Store references
+        self.database = self.client[database]
+        self.collection = self.database[collection]
         self.embedding_field = embedding_field
         self.index_name = index_name
 
-        logger.info(
-            "[infra/mongo_client] ✅ MongoClient initialized successfully | "
-            "Connected to database=%s collection=%s",
-            database,
-            collection,
-        )
+        # Health check (fail fast if cluster unreachable)
+        try:
+            self.client.admin.command("ping")
+            logger.info("✅ [mongo_client] Connection to MongoDB verified")
+        except Exception as e:
+            logger.error("❌ [mongo_client] MongoDB ping failed: %s", e)
+            raise InfrastructureError("MongoDB connection failed at startup") from e
 
-        logger.info(
-            "[infra/mongo_client] 📦 Ready to perform vector search operations "
-            "with embedding field '%s' and index '%s'",
-            embedding_field,
-            index_name,
-        )
+        # Final metadata log
+        logger.info("✅ [mongo_client] Ready to perform vector search with:")
+        logger.info("   ├─ Embedding field: '%s'", self.embedding_field)
+        logger.info("   └─ Search index:    '%s'", self.index_name)

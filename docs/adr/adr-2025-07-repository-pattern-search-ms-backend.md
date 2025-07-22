@@ -1,5 +1,6 @@
 # ADR: Repository Pattern Implementation in Advanced Search Microservice
 
+**Date:** July 2025
 
 ## Context
 

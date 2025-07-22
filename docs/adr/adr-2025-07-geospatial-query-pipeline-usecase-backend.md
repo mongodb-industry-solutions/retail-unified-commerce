@@ -1,5 +1,8 @@
 # ADR: Implementing Geospatial Query for Store Proximity
 
+**Date:** July 2025
+
+
 Our demo enhances the user experience by showing **how close other stores are** to the one currently selected.  
 This is achieved using MongoDB’s **geospatial querying capabilities**, powered by the `$geoNear` aggregation stage.
 
