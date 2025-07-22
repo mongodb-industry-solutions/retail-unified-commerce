@@ -53,7 +53,7 @@ async def search(
     """
     t0 = time.perf_counter()
     logger.info(
-        "🚀 [ROUTE] Received request in API layer | query=%r option=%d storeObjectId=%s page=%d page_size=%d",
+        "🚀 [INTERFACES/routes] Received request in API layer | query=%r option=%d storeObjectId=%s page=%d page_size=%d",
         req.query,
         req.option,
         req.storeObjectId,
@@ -61,28 +61,28 @@ async def search(
         req.page_size,
     )
 
-    logger.info("📌 [ROUTE] Selecting use-case based on option=%d", req.option)
+    logger.info("📌 [INTERFACES/routes] Selecting use-case based on option=%d", req.option)
 
     match req.option:
         case 1:
             use_case = KeywordSearchUseCase(repo)
-            logger.info("✅ [ROUTE] KeywordSearchUseCase initialized")
+            logger.info("✅ [INTERFACES/routes] KeywordSearchUseCase initialized")
         case 2:
             use_case = AtlasTextSearchUseCase(repo)
-            logger.info("✅ [ROUTE] AtlasTextSearchUseCase initialized")
+            logger.info("✅ [INTERFACES/routes] AtlasTextSearchUseCase initialized")
         case 3:
             use_case = VectorSearchUseCase(repo, voyage)
-            logger.info("✅ [ROUTE] VectorSearchUseCase initialized")
+            logger.info("✅ [INTERFACES/routes] VectorSearchUseCase initialized")
         case 4:
             use_case = HybridRRFSearchUseCase(repo, voyage)
-            logger.info("✅ [ROUTE] HybridRRFSearchUseCase initialized")
+            logger.info("✅ [INTERFACES/routes] HybridRRFSearchUseCase initialized")
         case _:
-            logger.error("❌ [ROUTE] Invalid option received, raising HTTPException")
+            logger.error("❌ [INTERFACES/routes] Invalid option received, raising HTTPException")
             raise HTTPException(status_code=400, detail="Invalid option")
 
     status = 500
     try:
-        logger.info("▶️ [ROUTE] Calling use-case.execute() to enter application layer")
+        logger.info("▶️ [INTERFACES/routes] Calling use-case.execute() to enter application layer")
 
         match req.option:
             case 4:
@@ -102,7 +102,7 @@ async def search(
                     page_size=req.page_size,
                 )
 
-        logger.info("✅ [ROUTE] Use-case execution completed, returned to route handler")
+        logger.info("✅ [INTERFACES/routes] Use-case execution completed, returned to route handler")
 
         status = 200
         return SearchResponse(
@@ -112,9 +112,9 @@ async def search(
         )
 
     except Exception as exc:
-        logger.exception("💥 [ROUTE] Search failed with exception: %s", exc)
+        logger.exception("💥 [INTERFACES/routes] Search failed with exception: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     finally:
         elapsed = (time.perf_counter() - t0) * 1000
-        logger.info("🌟 [ROUTE] Search completed | status=%d latency=%.1f ms", status, elapsed)
+        logger.info("🌟 [INTERFACES/routes] Search completed | status=%d latency=%.1f ms", status, elapsed)

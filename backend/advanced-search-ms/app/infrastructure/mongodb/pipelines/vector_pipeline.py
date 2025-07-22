@@ -62,7 +62,7 @@ def build_vector_pipeline(
         raise ValueError("'skip' must be ≥ 0 and 'limit' must be > 0")
 
     logger.info(
-        "[PIPELINE] 🔎 Vector search | store=%s | skip=%d | limit=%d | in_stock=%s",
+        "[infra/mongodb/pipelines/VECTOR] 🔎 Vector search | store=%s | skip=%d | limit=%d | in_stock=%s",
         store_object_id, skip, limit, in_stock
     )
 
@@ -73,11 +73,11 @@ def build_vector_pipeline(
     if in_stock is not None:
         filter_conditions["inventorySummary.inStock"] = in_stock
 
-    logger.info("[PIPELINE] 🧩 Filter conditions: %s", filter_conditions)
+    logger.info("[infra/mongodb/pipelines/VECTOR] 🧩 Filter conditions: %s", filter_conditions)
 
     # ── Projection dict (single source of truth) ───────────────────────────
     projection = {**(projection_fields or PRODUCT_FIELDS), "score": 1}
-    logger.info("[PIPELINE] 🧾 Final projection fields: %s", list(projection.keys()))
+    logger.info("[infra/mongodb/pipelines/VECTOR] 🧾 Final projection fields: %s", list(projection.keys()))
 
     # ── Aggregation pipeline stages ───────────────────────────────────────
     pipeline: List[Dict[str, Any]] = [
@@ -89,7 +89,8 @@ def build_vector_pipeline(
                 "queryVector": embedding,
                 "numCandidates": num_candidates,
                 "limit": knn_limit,
-                "filter": filter_conditions,
+                "filter": filter_conditions, # Dynamic filter used inside $vectorSearch to restrict results to a specific store, and optionally limit to in‑stock products if specified.
+
             }
         },
         # 2) Promote similarity score (correct meta for $vectorSearch)
@@ -111,5 +112,5 @@ def build_vector_pipeline(
         {"$project": {"count": 0}},
     ]
 
-    logger.info("[PIPELINE] ✅ Vector pipeline built with %d stages", len(pipeline))
+    logger.info("[infra/mongodb/pipelines/VECTOR] ✅ Vector pipeline built with %d stages", len(pipeline))
     return pipeline

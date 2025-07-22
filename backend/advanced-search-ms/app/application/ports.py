@@ -5,7 +5,7 @@ Application‑level abstraction interfaces (“ports”).
 Why?
 -----
 Ports define the contracts the *application* layer relies on.
-Concrete adapters in the *infrastructure* layer (MongoDB, Elastic, mocks …)
+Concrete adapters in the *infrastructure* layer (MongoDB, Voyage AI, mocks …)
 implement these contracts, so business logic remains I/O‑agnostic.
 
 Conventions
@@ -23,12 +23,14 @@ from typing import Protocol, List, Dict, Tuple, Optional
 SearchResult = Tuple[List[Dict], int]
 
 # ───────────────────────────── Embeddings ──────────────────────────────
+# Implemented by: app/infrastructure/voyage_ai/client.py → VoyageClient
 class EmbeddingProvider(Protocol):
     """Interface for embedding generation providers."""
 
     async def create_embedding(self, text: str) -> List[float]: ...
 
 # ─────────────────────── Product‑search repository ─────────────────────
+# Implemented by: app/infrastructure/mongodb/search_repository.py → MongoSearchRepository
 class SearchRepository(Protocol):
     """Repository interface for product search strategies."""
 

@@ -10,7 +10,6 @@ Key traits
   (meta‑fields vanish inside sub‑pipelines).
 * Paginates and returns `{ docs: [...], total: N }`.
 
-Author / Maintainer – Data & Search team, July 2025
 """
 
 from __future__ import annotations
@@ -60,12 +59,12 @@ def build_text_pipeline(
         raise ValueError("'skip' must be ≥ 0 and 'limit' must be > 0")
 
     logger.info(
-        "[TEXT] 🔎 Atlas Search | q='%s' | store=%s | skip=%d | limit=%d",
+        "[infra/mongodb/pipelines/TEXT] 🔎 Atlas Search | q='%s' | store=%s | skip=%d | limit=%d",
         query, store_oid, skip, limit
     )
 
     projection = {**(projection_fields or PRODUCT_FIELDS), "score": 1}
-    logger.info("[TEXT] 🧾 Projection fields: %s", list(projection.keys()))
+    logger.info("[infra/mongodb/pipelines/TEXT] 🧾 Projection fields: %s", list(projection.keys()))
 
     # ── Aggregation pipeline ──────────────────────────────────────────────
     pipeline: List[Dict[str, Any]] = [
@@ -88,7 +87,6 @@ def build_text_pipeline(
                                 "query": query,
                                 "path":  "brand",
                                 "score": {"boost": {"value": 0.1}},
-                                "fuzzy": {"maxEdits": 1},
                             }
                         },
                         {   # category – low weight
@@ -96,7 +94,6 @@ def build_text_pipeline(
                                 "query": query,
                                 "path":  "category",
                                 "score": {"boost": {"value": 0.06}},
-                                "fuzzy": {"maxEdits": 1},
                             }
                         },
                         {   # subCategory – very low
@@ -104,7 +101,6 @@ def build_text_pipeline(
                                 "query": query,
                                 "path":  "subCategory",
                                 "score": {"boost": {"value": 0.04}},
-                                "fuzzy": {"maxEdits": 1},
                             }
                         },
                     ]
@@ -142,5 +138,5 @@ def build_text_pipeline(
         {"$project":  {"count": 0}},
     ]
 
-    logger.info("[TEXT] ✅ Text pipeline built with %d stages", len(pipeline))
+    logger.info("[infra/mongodb/pipelines/TEXT] ✅ Text pipeline built with %d stages", len(pipeline))
     return pipeline

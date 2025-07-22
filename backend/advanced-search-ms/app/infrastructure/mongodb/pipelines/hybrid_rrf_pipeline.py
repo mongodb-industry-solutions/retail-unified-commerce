@@ -1,24 +1,21 @@
 # app/infrastructure/mongodb/pipelines/hybrid_rrf_pipeline.py
 """
-Pipeline builder for *option 4* – Hybrid **Reciprocal Rank Fusion** (RRF).
+Pipeline builder for option 4 – Hybrid Reciprocal-Rank Fusion (RRF).
 
 • Mixes Atlas $search (text) and Lucene $vectorSearch with $rankFusion.
-• Exposes the fusion score via $meta:"searchScore" inside the facet‑projection.
+• Exposes full scoreDetails metadata and the final weighted score via searchScore.
 """
 
 from __future__ import annotations
-
 import logging
 from typing import Any, Dict, List, Optional
 from bson import ObjectId
-
 from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-# --------------------------------------------------------------------------- #
 def build_hybrid_rrf_pipeline(
     query: str,
     embedding: List[float],
@@ -31,106 +28,92 @@ def build_hybrid_rrf_pipeline(
     skip: int,
     limit: int,
     projection_fields: Optional[Dict[str, int]] = None,
+    num_candidates: int = 200,
+    knn_limit: int = 200,
 ) -> List[Dict[str, Any]]:
     """
-    Build a Reciprocal‑Rank‑Fusion pipeline that mixes text & vector scores.
+    Build an RRF pipeline that mixes text & vector scores, logs details and
+    returns a flat float `score` for Pydantic.
     """
 
-    # ── Validation ─────────────────────────────────────────────────────────
+    # ── Validation ────────────────────────────────────────────────────
     store_oid = ObjectId(store_object_id)
     if skip < 0 or limit <= 0:
-        raise ValueError("'skip' must be ≥ 0 and 'limit' must be > 0")
+        raise ValueError("'skip' must be >= 0 and 'limit' must be > 0")
+    logger.info("[infra/mongodb/pipelines/RRF] 🔀 Hybrid search | q=%r | store=%s | skip=%d | limit=%d",
+                query, store_oid, skip, limit)
+    logger.info("[infra/mongodb/pipelines/RRF] ⚖️  Weights: %s", weights)
+    logger.info("[infra/mongodb/pipelines/RRF] 🔍 VectorSearch: index=%s | path=%s | candidates=%d | limit=%d",
+                vector_index, vector_field, num_candidates, knn_limit)
+    logger.info("[infra/mongodb/pipelines/RRF] 🔍 AtlasSearch: index=%s | boosted fields productName/brand/category/subCategory",
+                text_index)
 
-    logger.info(
-        "[RRF] 🔀 Hybrid search | q='%s' | store=%s | skip=%d | limit=%d",
-        query, store_oid, skip, limit
-    )
-    logger.info("[RRF] ⚖️  Weights: %s", weights)
-
-    # Shared projection (single source of truth) + score meta
+    # ── Shared projection ─────────────────────────────────────────────
     projection = {
         **(projection_fields or PRODUCT_FIELDS),
-        "score": {"$meta": "searchScore"},   # <-- extract here
+        # metadata completo para inspección/debug
+        "scoreDetails": {"$meta": "scoreDetails"},
+        # el RRF fusionado que queremos mostrar en el front
+        "score": {
+            "$toDouble": {"$ifNull": ["$scoreDetails.details.value", 0]},
+        },
     }
-    logger.info("[RRF] 🧾 Projection fields: %s", list(projection.keys()))
 
-    # ── Aggregation pipeline ──────────────────────────────────────────────
+    # ── Aggregation pipeline ─────────────────────────────────────────
     pipeline: List[Dict[str, Any]] = [
-        # 1) Rank‑fusion of two inline pipelines
+        # 1) Hybrid rank fusion
         {
             "$rankFusion": {
                 "input": {
                     "pipelines": {
                         "vectorPipeline": [
-                            {
-                                "$vectorSearch": {
-                                    "index": vector_index,
-                                    "path":  vector_field,
-                                    "queryVector": embedding,
-                                    "numCandidates": 200,
-                                    "limit": 200,
-                                }
-                            }
+                            {"$vectorSearch": {
+                                "index": vector_index,
+                                "path": vector_field,
+                                "queryVector": embedding,
+                                "numCandidates": num_candidates,
+                                "limit": knn_limit,
+                            }}
                         ],
                         "textPipeline": [
-                            {
-                                "$search": {
-                                    "index": text_index,
-                                    "compound": {
-                                        "should": [
-                                            {
-                                                "text": {
-                                                    "query": query,
-                                                    "path": "productName",
-                                                    "score": {"boost": {"value": 0.8}},
-                                                    "fuzzy": {"maxEdits": 2},
-                                                }
-                                            },
-                                            {
-                                                "text": {
-                                                    "query": query,
-                                                    "path": ["brand", "category", "subCategory"],
-                                                    "score": {"boost": {"value": 0.2}},
-                                                    "fuzzy": {"maxEdits": 2},
-                                                }
-                                            },
-                                        ]
-                                    },
+                            {"$search": {
+                                "index": text_index,
+                                "compound": {
+                                    "should": [
+                                        {"text": {"query": query, "path": "productName", "score": {"boost": {"value": 0.8}}, "fuzzy": {"maxEdits": 2}}},
+                                        {"text": {"query": query, "path": "brand",       "score": {"boost": {"value": 0.1}},}},
+                                        {"text": {"query": query, "path": "category",    "score": {"boost": {"value": 0.06}},}},
+                                        {"text": {"query": query, "path": "subCategory", "score": {"boost": {"value": 0.04}},}},
+                                    ]
                                 }
-                            },
-                            {"$limit": 200},
+                            }},
+                            {"$limit": knn_limit},
                         ],
                     }
                 },
                 "combination": {"weights": weights},
-                "scoreDetails": False,
+                "scoreDetails": True,
             }
         },
 
-        # 2) Filter by store (after fusion)
-        {
-            "$match": {
-                "inventorySummary.storeObjectId": store_oid
-            }
-        },
+        # 2) Filter to our store
+        {"$match": {"inventorySummary.storeObjectId": store_oid}},
 
-        # 3) Facet: paginate results + count total
-        {
-            "$facet": {
-                "docs": [
-                    {"$project": projection},  # score extracted here
-                    {"$skip":   skip},
-                    {"$limit":  limit},
-                ],
-                "count": [{"$count": "total"}],
-            }
-        },
+        # 3) Facet for pagination + total count
+        {"$facet": {
+            "docs": [
+                {"$project": projection},
+                {"$skip":   skip},
+                {"$limit":  limit},
+            ],
+            "count": [{"$count": "total"}],
+        }},
 
-        # 4) Flatten & default total=0
-        {"$unwind":   {"path": "$count", "preserveNullAndEmptyArrays": True}},
+        # 4) Unwind + default total to 0
+        {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
         {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
-        {"$project":  {"count": 0}},
+        {"$project": {"count": 0}},
     ]
 
-    logger.info("[RRF] ✅ Hybrid pipeline built with %d stages", len(pipeline))
+    logger.info("[infra/mongodb/pipelines/RRF] ✅ Hybrid pipeline built with %d stages", len(pipeline))
     return pipeline

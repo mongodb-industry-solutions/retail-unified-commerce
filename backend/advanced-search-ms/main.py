@@ -14,7 +14,7 @@ This script wires together the core infrastructure of the app.
 
 🚦 Key components:
 -------------------
-• MongoClient – MongoDB Atlas connection + helpers
+• MongoClient – MongoDB Atlas connection
 • MongoSearchRepository – delegates to different search pipelines
 • VoyageClient – generates semantic embeddings
 • CORSMiddleware – allows frontend calls
@@ -82,7 +82,6 @@ async def startup_resources() -> None:
     logger.info("⚙️ Initializing SearchRepository...")
     dependencies.search_repo = MongoSearchRepository(
         collection=dependencies.mongo_client.collection,
-        mongo_client_helper=dependencies.mongo_client,
         index_name_text=settings.SEARCH_TEXT_INDEX,
         index_name_vector=settings.SEARCH_VECTOR_INDEX,
         embedding_field=settings.EMBEDDING_FIELD_NAME,

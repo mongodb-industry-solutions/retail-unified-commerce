@@ -8,7 +8,7 @@ Flow
 2. Delegate to `SearchRepository.search_hybrid_rrf()` passing the embedding and RRF weights.
 3. Return a list of products (domain objects) plus total hits.
 
-Business rule: if caller omits `weight_vector` / `weight_text`, default to **5 / 5**.
+Business rule: if caller omits `weight_vector` / `weight_text`, default to **0.5**.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from app.application.use_cases.base import SearchUseCase
 
 logger = logging.getLogger("advanced-search-ms.usecase.hybrid")
 
-DEFAULT_WEIGHT = 5.0  # business default when caller does not specify weights
+DEFAULT_WEIGHT = 0.5  # business default when caller does not specify weights
 
 
 class HybridRRFSearchUseCase(SearchUseCase):
