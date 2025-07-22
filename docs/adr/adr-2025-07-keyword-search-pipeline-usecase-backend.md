@@ -2,6 +2,8 @@
 
 ## Title: Keyword Search Pipeline Design in Product Search Use-Case
 
+**Date:** July 2025
+
 ### Context
 
 In our **Advanced Product Search microservice**, implemented within the **infrastructure/search_repository layer**, we provide a **keyword-based search use-case** to allow users to find products by name efficiently within a specific store’s inventory.

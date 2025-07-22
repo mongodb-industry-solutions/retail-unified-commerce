@@ -1,5 +1,7 @@
 # ADR: Implementing Rich Full-Text Search Use Case with Atlas Search
 
+**Date:** July 2025
+
 
 Showcase **MongoDB Atlas Search** capabilities in Option 2 by delivering:
 

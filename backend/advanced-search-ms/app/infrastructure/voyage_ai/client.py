@@ -58,7 +58,7 @@ class VoyageClient:
         InfrastructureError
             On network issues, HTTP 4xx/5xx, or malformed response bodies.
         """
-        logger.info("[INFRA voyage] ↗️  Embedding request: %r", text[:80])
+        logger.info("[INFRA/voyage_ai] ↗️  Embedding request: %r", text[:80])
 
         try:
             async with httpx.AsyncClient(timeout=5) as client:
@@ -76,9 +76,9 @@ class VoyageClient:
                 if not embedding:
                     raise ValueError("Voyage returned empty embedding")
 
-                logger.info("[INFRA voyage] ✅ Embedding length=%d", len(embedding))
+                logger.info("[INFRA/voyage_ai] ✅ Embedding length=%d", len(embedding))
                 return embedding
 
         except Exception as exc:  # noqa: BLE001
-            logger.error("[INFRA voyage] ❌ Embedding API error: %s", exc)
+            logger.error("[INFRA/voyage_ai] ❌ Embedding API error: %s", exc)
             raise InfrastructureError(f"Embedding API failed: {exc}") from exc

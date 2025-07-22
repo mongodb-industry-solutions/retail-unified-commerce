@@ -1,16 +1,20 @@
 # app/application/use_cases/base.py
 """
-Abstract base class for all search use-cases.
+Abstract base class for all search use‑cases.
 
-Why
-----
-Each concrete use-case does the same three high-level steps:
-
+Responsibilities
+----------------
 1. Validate / massage inputs.
-2. Call the appropriate repository method (and embedder if needed).
+2. Delegate to the infrastructure repository (and embedder when required).
 3. Map raw MongoDB documents → `Product` domain objects.
 
-Keeping the shared logic here removes duplication.
+Keeping this logic here avoids duplication across concrete use‑cases.
+
+Educational Logs
+----------------
+- Logs entry into `execute()` with query and pagination context.
+- Catches and rethrows InfrastructureError as UseCaseError.
+- Allows `**kwargs` for flexibility (e.g., hybrid RRF weights) without impacting other use cases.
 """
 
 from __future__ import annotations
@@ -27,59 +31,50 @@ logger = logging.getLogger("advanced-search-ms.usecase")
 
 
 class SearchUseCase(ABC):
-    """
-    Template Method base class.
+    """Template Method base class for search use‑cases."""
 
-    Concrete subclasses only need to implement `_run_repo_query()`.
-    """
-
-    def __init__(
-        self,
-        repo: SearchRepository,
-        embedder: EmbeddingProvider | None = None,
-    ) -> None:
+    def __init__(self, repo: SearchRepository, embedder: EmbeddingProvider | None = None) -> None:
         self.repo = repo
-        self.embedder = embedder  # optional – not needed for keyword/text
+        self.embedder = embedder  # optional – only needed for vector / hybrid flows
 
     async def execute(
         self,
+        *,
         query: str,
-        store_object_id: str,  # 🔧 changed to store_object_id for consistency
+        store_object_id: str,
         page: int,
         page_size: int,
+        **kwargs,  # Allows optional inputs like weight_vector / weight_text (for hybrid)
     ) -> Dict:
         """
-        Orchestrates the full search flow and returns a serialisable dict
-        with `products` (domain objects) and `total` hit count.
-        """
-        logger.info("🔍 [USECASE base] Starting execute() in base use-case")
-        logger.info("📥 [USECASE base] Inputs: query=%r store_object_id=%s page=%d page_size=%d",
-                    query, store_object_id, page, page_size)
+        Orchestrates the full search flow and returns a serializable response payload.
 
+        Logs:
+        - Entry log showing query, pagination and store context.
+        - Catches infra errors and rethrows them as UseCaseError (clean separation).
+        - Calls `_run_repo_query()` to delegate to the concrete implementation.
+        """
+        logger.info("🔍 [USECASE base] execute() | query=%r store=%s page=%d size=%d",
+                    query, store_object_id, page, page_size)
         try:
-            logger.info("▶️ [USECASE base] Calling _run_repo_query() to enter infrastructure layer")
             raw_docs, total = await self._run_repo_query(
                 query=query,
                 store_object_id=store_object_id,
                 page=page,
                 page_size=page_size,
+                **kwargs,
             )
-            logger.info("✅ [USECASE base] Repository query completed successfully")
-
         except InfrastructureError as exc:
             logger.error("💥 [USECASE base] Infrastructure error: %s", exc)
             raise UseCaseError(str(exc)) from exc
 
-        logger.info("🔄 [USECASE base] Mapping raw MongoDB docs to Product domain objects")
         products: List[Product] = [Product.from_mongo(d) for d in raw_docs]
-        logger.info("🏁 [USECASE base] Mapping completed, returning results to route")
-
+        logger.info("📦 [USECASE base] Parsed %d product(s) from raw documents", len(products))
         return {"products": products, "total": total}
 
-    # --------------------------------------------------------------------- #
-    # Template hook implemented by concrete subclasses
-    # --------------------------------------------------------------------- #
-
+    # ------------------------------------------------------------------ #
+    #            Hook to be implemented by concrete subclasses           #
+    # ------------------------------------------------------------------ #
     @abstractmethod
     async def _run_repo_query(
         self,
@@ -88,5 +83,14 @@ class SearchUseCase(ABC):
         store_object_id: str,
         page: int,
         page_size: int,
+        **kwargs,
     ) -> Tuple[List[Dict], int]:
-        """Run the repository method that corresponds to the strategy."""
+        """
+        Abstract method to be implemented by concrete use-cases.
+        Allows injection of optional fields via `**kwargs` for extensibility.
+
+        Example:
+        - Hybrid RRF use case uses `weight_vector` and `weight_text`.
+        - Other use cases safely ignore extra kwargs.
+        """
+        ...
