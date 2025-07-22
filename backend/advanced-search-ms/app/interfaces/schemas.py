@@ -4,7 +4,12 @@ Pydantic schemas for API layer (request & response).
 
 • Defines strict input/output validation and OpenAPI docs.
 • Keeps FastAPI decoupled from domain logic.
-• Adds structured logging to trace request and response lifecycle.
+
+Note:
+All classes inherit from `pydantic.BaseModel`, which provides:
+• Automatic type validation of inputs and outputs.
+• JSON serialization and OpenAPI generation.
+• A clean and declarative way to define data structures.
 """
 
 import logging
@@ -45,7 +50,7 @@ class SearchRequest(BaseModel):
     )
 
     def __init__(self, **data):
-        logger.info("📥 [SCHEMA] Incoming SearchRequest: %s", data)
+        logger.info("📥 [INTERFACES/schemas] Incoming SearchRequest: %s", data)
         super().__init__(**data)
 
 
@@ -80,7 +85,7 @@ class ProductOut(BaseModel):
     score: Optional[float] = None
 
     def __init__(self, **data):
-        logger.info("📦 [SCHEMA] Serializing ProductOut: %s", data.get("productName", "N/A"))
+        logger.info("📦 [INTERFACESs/schemas] Serializing ProductOut: %s", data.get("productName", "N/A"))
         super().__init__(**data)
 
 
@@ -90,7 +95,7 @@ class SearchResponse(BaseModel):
     products: List[ProductOut]
 
     def __init__(self, **data):
-        logger.info("📤 [SCHEMA] Outgoing SearchResponse: %d products | total_results=%d",
+        logger.info("📤 [INTERFACES/schemas] Outgoing SearchResponse: %d products | total_results=%d",
                     len(data.get("products", [])),
                     data.get("total_results", 0))
         super().__init__(**data)

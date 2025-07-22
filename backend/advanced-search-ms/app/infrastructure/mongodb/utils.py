@@ -13,7 +13,7 @@ from typing import Dict
 
 logger = logging.getLogger("advanced-search-ms.mongo.utils")
 
-# 🔖 Projection used by every pipeline
+# Projection used by every pipeline
 PRODUCT_FIELDS: Dict = {
     "_id": 1,
     "productName": 1,
@@ -41,4 +41,7 @@ def filter_inventory_summary(doc: Dict, store_object_id: str) -> Dict:
             inv for inv in doc["inventorySummary"]
             if str(inv.get("storeObjectId")) == str(store_object_id)
         ]
+        logger.debug(
+            f"[infra/mongodb/utils] Filtered inventorySummary for store '{store_object_id}': "
+        )
     return doc
