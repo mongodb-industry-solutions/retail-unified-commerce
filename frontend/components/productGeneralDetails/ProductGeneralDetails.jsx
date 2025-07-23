@@ -11,14 +11,31 @@ import InfoWizard from "../InfoWizard/InfoWizard";
 import { useState } from "react";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
+import Button from "@leafygreen-ui/button";
+import { getProduct } from "@/lib/api";
 
-const ProductGeneralDetails = () => {
+const ProductGeneralDetails = (props) => {
+  const { productId } = props;
   const {
     productDetails: product,
     productInventory: inventory
   } = useSelector(state => state.ProductInventory);
 
   const [openHelpModal, setOpenHelpModal] = useState(false);
+  const [fullDoc, setFullDoc] = useState(null)
+  const [loadingFullDoc, setLoadingFullDoc] = useState(false)
+
+  const getFullDocument = () => {
+    setLoadingFullDoc(true);
+    getProduct(productId)
+      .then(data => {
+        console.log('Full product document:', data);
+        setFullDoc(data);
+      })
+      .finally(() => {
+        setLoadingFullDoc(false);
+      });
+  }
 
   return (
     <div className="">
@@ -41,6 +58,23 @@ const ProductGeneralDetails = () => {
                   {JSON.stringify(product, null, 2)}
                 </Code>
                 <p><strong>Note: </strong> This document has been simplified with the <code>$project</code> operator, to retrieve only the fields this UI needs.</p>
+                <Button disabled={loadingFullDoc || fullDoc !== null} className="mt-3 mb-2" variant="primary" onClick={() => getFullDocument()}>
+                  Fetch full document inside <code>product</code> collection.
+                </Button>
+                {                  
+                  loadingFullDoc && (
+                    <div className="d-flex justify-content-center">
+                      <span>Fetching data...</span>
+                    </div>
+                  )
+                }
+                {
+                  fullDoc && (
+                    <Code language="json" className="mb-0 mt-3">
+                      {JSON.stringify(fullDoc, null, 2)}
+                    </Code>
+                  )
+                }
               </Container>
             },
             {

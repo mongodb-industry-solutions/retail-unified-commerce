@@ -10,41 +10,50 @@ const indexDefinition = `
       "path": "textEmbeddingVector",
       "similarity": "cosine",
       "type": "vector"
+    },
+    {
+      "path": "inventorySummary.storeObjectId",
+      "type": "filter"
+    },
+    {
+      "path": "inventorySummary.inStock",
+      "type": "filter"
     }
   ]
 }`
 
 const vectorSearchQuery = `
-results_pipeline = [
-  {
-      "$vectorSearch": {
-          "index": self.index_name,
-          "path": self.embedding_field,
-          "queryVector": embedding,
-          "numCandidates": 200,           # tune for recall / latency
-          "limit": skip + page_size,      # fetch enough docs, then page
-      }
-  },
-  {"$addFields": {"score": {"$meta": "vectorSearchScore"}}},
-  {"$skip": skip},
-  {"$limit": page_size},
-]
+[
+        # 1) Lucene k‑NN search with optional filter
+        {
+            "$vectorSearch": {
+                "index": vector_index,
+                "path": vector_field,
+                "queryVector": embedding,
+                "numCandidates": num_candidates,
+                "limit": knn_limit,
+                "filter": filter_conditions, # Dynamic filter used inside $vectorSearch to restrict results to a specific store, and optionally limit to in‑stock products if specified.
 
-# -- pipeline for total-hit count --
-total_pipeline = [
-  {
-      "$vectorSearch": {
-          "index": self.index_name,
-          "path": self.embedding_field,
-          "queryVector": embedding,
-          "numCandidates": 200,
-          "limit": 1,
-      }
-  },
-  {"$count": "total"},
-]
-page_cursor = self.collection.aggregate(results_pipeline, maxTimeMS=4000)
-results = await page_cursor.to_list(length=page_size)
+            }
+        },
+        # 2) Promote similarity score (correct meta for $vectorSearch)
+        {"$set": {"score": {"$meta": "vectorSearchScore"}}},
+        # 3) Facet: paginated docs + total count
+        {
+            "$facet": {
+                "docs": [
+                    {"$project": projection},
+                    {"$skip": skip},
+                    {"$limit": limit},
+                ],
+                "count": [{"$count": "total"}],
+            }
+        },
+        # 4) Flatten: add total field and drop internal count
+        {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
+        {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
+        {"$project": {"count": 0}},
+    ]
 `
 
 const AtlasVectorSearchLearnMore = () => {

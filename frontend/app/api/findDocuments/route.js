@@ -17,6 +17,7 @@ export async function POST(request) {
     convertFieldsToObjectId(projection, objectIdFields);
     
     if(filter['_id']){
+        console.log(`--  filter _id: `, filter['_id'])
         filter['_id'] = new ObjectId(filter['_id'])
     }
     // exception handle
