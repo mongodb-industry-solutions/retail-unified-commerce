@@ -112,7 +112,7 @@ export default function ProductInventoryDetailePage({ params }) {
                     : product
                         ?
                         <div className='mt-5'>
-                            <ProductGeneralDetails />
+                            <ProductGeneralDetails productId={_id} />
                             <Tabs aria-label="Product details tabs" className='mt-4' setSelected={setSelected} selected={selected}>
                                 <Tab name="Inventory"><InventoryContainer /></Tab>
                                 <Tab name="Locations"><LocationsContainer /></Tab>

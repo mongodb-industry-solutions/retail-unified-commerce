@@ -10,6 +10,8 @@ const ProductInventorySlice = createSlice({
         productDetails: null, // the product from the product collection
         productInventory: null, // the product from the inventory collection
         searchType: SEARCH_OPTIONS.search.id, // 'search' or 'vector-search'
+        vectorSearchWeight: 0.5,
+        searchWeight: 0.5,
         initialLoad: true, // Used to determine if the page is loading for the first time
         loading: false,
         error: null,
@@ -88,6 +90,18 @@ const ProductInventorySlice = createSlice({
                 pagination_page: action.payload
             }
         },
+        setSearchWeight: (state, action) => {
+            return {
+                ...state,
+                searchWeight: action.payload.searchWeight // Assuming SearchWeight is a float
+            };
+        },
+        setVectorSearchWeight: (state, action) => {
+            return {
+                ...state,
+                vectorSearchWeight: action.payload.vectorSearchWeight // Assuming vectorSearchWeight is a float
+            };
+        }
     }
 })
 
@@ -100,7 +114,9 @@ export const {
     setProductQuery,
     setSearchType,
     setCurrentPage,
-    toggleForceSearchWithEnter
+    toggleForceSearchWithEnter,
+    setSearchWeight,
+    setVectorSearchWeight
 } = ProductInventorySlice.actions
 
 export default ProductInventorySlice.reducer

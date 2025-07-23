@@ -7,3 +7,9 @@
     width: 340px;
     max-width: 340px;
 }
+.search-selector ul{
+    width: 300px;
+}
+.weight-input input{
+    width: 160px;
+}

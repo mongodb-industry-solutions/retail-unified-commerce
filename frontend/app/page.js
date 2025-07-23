@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { H1, H3, Body, Description } from '@leafygreen-ui/typography';
+import { H1, H3, Description } from '@leafygreen-ui/typography';
 import { Container } from 'react-bootstrap';
 import { MongoDBLogoMark } from '@leafygreen-ui/logo';
 import { Option, Select, Size } from '@leafygreen-ui/select';
@@ -159,7 +159,7 @@ export default function Home() {
               Learn more about how unified commerce is empowering store associates.
             </Description>
             <a
-              href=""
+              href="https://www.mongodb.com/company/blog/innovation/empower-retail-associates-unified-commerce-mongodb-atlas"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center self-center text-blue-600 hover:underline hover:decoration-gray-200 hover:underline-offset-4 hover:decoration-2 mt-1"

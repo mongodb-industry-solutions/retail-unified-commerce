@@ -2,24 +2,29 @@
 import { setStores } from "@/redux/slices/GlobalSlice";
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
-import { PAGINATION_PER_PAGE } from "./constant";
+import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
 
 export async function getProductsWithSearchInput(query = '') {
   const searchType = store.getState('ProductInventory').ProductInventory.searchType;
   const storeObjectId = store.getState('Global').Global.selectedStore;
   console.log('getProductsWithSearch', searchType)
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const body = {
         query: query,
         storeObjectId: storeObjectId,
         option: searchType,
         page: store.getState('ProductInventory').ProductInventory.pagination_page + 1,
         page_size: PAGINATION_PER_PAGE
-    }),
+  }
+  if(searchType === SEARCH_OPTIONS.hybridSearch.id) {
+    body.weightVector = Number(store.getState('ProductInventory').ProductInventory.vectorSearchWeight);
+    body.weightText = Number(store.getState('ProductInventory').ProductInventory.searchWeight);
+  }
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
 });
 if (!response.ok) {
   console.log(response)
@@ -27,7 +32,7 @@ if (!response.ok) {
 }
 const data = await response.json();
 console.log('data: ', Object.keys(data.products).length, data)
-return { products: data.products, totalItems: data.totalItems };
+return { products: data.products, totalItems: data.total_results };
 }
 
 export async function getProductWithScanner(_id) {
@@ -190,4 +195,23 @@ export async function getStores() {
   }
   const data = await response.json();
   return data.result || null;
+}
+
+export async function getProduct(_id) {
+  const response = await fetch(`/api/findDocuments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      filter: { _id: _id },
+      options: { limit: 1 },
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching product details: ${response.status}`);
+  }
+  let data = await response.json();
+  return data.result[0]
 }
