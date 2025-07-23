@@ -33,7 +33,6 @@ export default function ProductInventoryPage() {
 
   const fetchResults = async () => {
     if (!query) return;
-
     dispatch(searchIsLoading());
     try {
       let results = await getProductsWithSearchInput(query);
@@ -90,7 +89,7 @@ export default function ProductInventoryPage() {
       {
         error !== null
           ? <ErrorSearchBanner error={error} />
-          : initialLoad
+          : initialLoad && !loading
             ? <EnterSearchBanner />
             : searchResults.length === 0 && !initialLoad && !loading
               ? <div className='text-center'>No results found for "{query}". Please try a different search term.</div>

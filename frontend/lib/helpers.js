@@ -15,3 +15,12 @@ export const prettifyDateFormat = (timestamp) => {
     });
     return `${datePart} at ${timePart}`;
 }
+
+
+export const validateHybridSearchParameters = (vsWeight, hsWeight) => {
+    if(Number(vsWeight) + Number(hsWeight) !== 1) {
+        toast.error('The sum of Vector Search Weight and Search Weight must equal  to one.');
+        return false; // Return false if validation fails
+    }
+    return true; // Return true if valid, false otherwise
+};

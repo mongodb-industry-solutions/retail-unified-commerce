@@ -87,6 +87,7 @@ VOYAGE_MODEL=voyage-3-large
 ## 4 – Local Setup
 
 ```bash
+cd backend/advanced-search-ms
 brew install python@3.11 poetry   # macOS example
 poetry env use python3.11
 poetry install

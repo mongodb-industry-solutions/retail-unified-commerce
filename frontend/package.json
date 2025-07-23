@@ -19,6 +19,7 @@
     "@leafygreen-ui/leafygreen-provider": "^5.0.1",
     "@leafygreen-ui/loading-indicator": "^4.0.0",
     "@leafygreen-ui/logo": "^11.0.0",
+    "@leafygreen-ui/number-input": "^5.0.4",
     "@leafygreen-ui/pagination": "^4.0.0",
     "@leafygreen-ui/search-input": "^6.0.0",
     "@leafygreen-ui/select": "^15.0.0",
@@ -37,6 +38,7 @@
     "react": "^19.0.0-rc.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.0.0-rc.1",
+    "react-hot-toast": "^2.5.2",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {

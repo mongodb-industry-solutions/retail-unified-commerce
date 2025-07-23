@@ -2,6 +2,7 @@ import { GeistSans } from "geist/font/sans";
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import './global.css';
 import ClientProvider from "./ClientProvider";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   title: "Leafy Associate",
@@ -23,9 +24,17 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={GeistSans.className}>
       <body>
-          <ClientProvider>
-            {children}
-          </ClientProvider>
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: {
+              fontFamily: "Arial, sans-serif",
+            },
+          }}
+        />
+        <ClientProvider>
+          {children}
+        </ClientProvider>
       </body>
     </html>
   );
