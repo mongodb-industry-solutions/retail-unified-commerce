@@ -30,8 +30,6 @@ Powered by MongoDB’s flexible document model, the app unifies product and inve
   - Comming soon...Boost promotions to align with sales goals
   - Comming soon...Image-based product search using multimodal embeddings
 
-![Demo Screenshot](docs/images/demo_screenshot.png)
-
 - **Use clean architecture to structure the advanced search microservice**
     This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns—making the microservice easier to test, extend, and maintain over time. Key benefits include:
       - Swappable AI providers: Easily integrate or replace embedding providers (e.g., switching from Voyage AI to Bedrock, or an internal vector service) by isolating vector generation behind an interface.
