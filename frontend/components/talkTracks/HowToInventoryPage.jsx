@@ -52,7 +52,7 @@ const HowToInventoryPage = (props) => {
                                 <strong>Atlas Vector Search.</strong> Semantic, similarity-based searches over unstructured data (text, images, and audio) using vector embeddings.
                             </li>
                             <li>
-                                <strong>Atlas Hybrid Search.</strong> Combines the power of full-text search and vector (semantic) search in a single query
+                                <strong>Atlas Hybrid Search.</strong> Combines the power of full-text search and vector (semantic) search in a single query. You can use the 'weight' inputs to give a bit more weight to some search type. Depending on your query.
                             </li>
                             <li>
                                 <strong>Regex search.</strong> Looks for exact match pattern in text.
@@ -103,7 +103,7 @@ const HowToInventoryPage = (props) => {
             {
                 isSearchPage && <>
                     <h3>ℹ️ Notes</h3>
-                    <p>The "Scan product" button is just for story telling. Behind the scenes it performs a regular findOne document query. </p>
+                    <p>The "Scan product" button is just for story telling. Behind the scenes it performs a regular findOne document query. The message here is, you could store your unstructured data (such as barcodes) in MongoDB and easily query it.</p>
                 </>
             }
         </Container>

@@ -4,28 +4,29 @@ import Code from '@leafygreen-ui/code'
 
 const indexDefinition = `
 {
+{
   "mappings": {
     "dynamic": false,
     "fields": {
-      "productName": {
-        "type": "string"
-      },
       "brand": {
         "type": "string"
       },
       "category": {
         "type": "string"
       },
-      "subCategory": {
-        "type": "string"
-      },
       "inventorySummary": {
-        "type": "document",
         "fields": {
           "storeObjectId": {
             "type": "objectId"
           }
-        }
+        },
+        "type": "document"
+      },
+      "productName": {
+        "type": "string"
+      },
+      "subCategory": {
+        "type": "string"
       }
     }
   }
@@ -33,46 +34,75 @@ const indexDefinition = `
 
 const searchQuery = `
 pipeline = [
-      {
-          "$search": {
-              "index": self.text_index,
-              "compound": {
-                  "should": [
-                      {
-                          "text": {
-                              "query": query,
-                              "path": "productName",
-                              "score": {"boost": {"value": 3}},
-                              "fuzzy": {"maxEdits": 2},
-                              "synonyms": "default_synonyms",
-                          }
-                      },
-                      {
-                          "text": {
-                              "query": query,
-                              "path": ["brand", "category", "subCategory"],
-                              "score": {"boost": {"value": 1}},
-                              "fuzzy": {"maxEdits": 2},
-                              "synonyms": "default_synonyms",
-                          }
-                      }
-                  ]
-              }
-          }
-      },
-      {"$match": {"inventorySummary.storeObjectId": ObjectId(store_object_id)}},
-      {"$project": {**PRODUCT_FIELDS, "score": {"$meta": "searchScore"}}},
-      {"$facet": {
-          "docs": [
-              {"$skip": skip},
-              {"$limit": page_size},
-          ],
-          "count": [{"$count": "total"}],
-      }},
-      {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
-      {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
-  ]
-  agg = self.col.aggregate(pipeline, maxTimeMS=4000)
+        # 1) Atlas Search compound query (prefix fuzzy boosts)
+        {
+            "$search": {
+                "index": text_index,
+                "compound": {
+                    "should": [
+                        {   # productName – strongest signal
+                            "text": {
+                                "query": query,
+                                "path":  "productName",
+                                "score": {"boost": {"value": 0.8}},
+                                "fuzzy": {"maxEdits": 2},
+                            }
+                        },
+                        {   # brand – moderate
+                            "text": {
+                                "query": query,
+                                "path":  "brand",
+                                "score": {"boost": {"value": 0.1}},
+                            }
+                        },
+                        {   # category – low weight
+                            "text": {
+                                "query": query,
+                                "path":  "category",
+                                "score": {"boost": {"value": 0.06}},
+                            }
+                        },
+                        {   # subCategory – very low
+                            "text": {
+                                "query": query,
+                                "path":  "subCategory",
+                                "score": {"boost": {"value": 0.04}},
+                            }
+                        },
+                    ]
+                },
+            }
+        },
+
+        # 2) Promote Atlas relevance into a normal field
+        {"$set": {"score": {"$meta": "searchScore"}}},
+
+        # 3) Filter by store (inventorySummary array)
+        {
+            "$match": {
+                "inventorySummary": {
+                    "$elemMatch": {"storeObjectId": store_oid}
+                }
+            }
+        },
+
+        # 4) Facet: paginate & count
+        {
+            "$facet": {
+                "docs": [
+                    {"$project": projection},
+                    {"$skip": skip},
+                    {"$limit": limit},
+                ],
+                "count": [{"$count": "total"}],
+            }
+        },
+
+        # 5) Flatten and default total=0
+        {"$unwind":   {"path": "$count", "preserveNullAndEmptyArrays": True}},
+        {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
+        {"$project":  {"count": 0}},
+    ]
   `
 
 const VectorSearchLearnMore = () => {
