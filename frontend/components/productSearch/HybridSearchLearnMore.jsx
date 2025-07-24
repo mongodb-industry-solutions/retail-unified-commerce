@@ -2,11 +2,62 @@ import React from 'react'
 import { Container } from 'react-bootstrap'
 import Code from '@leafygreen-ui/code'
 
-const indexDefinition = `
-TODO
-`
+const hybridSearchQuery = `
+ [
+        # 1) Hybrid rank fusion
+        {
+            "$rankFusion": {
+                "input": {
+                    "pipelines": {
+                        "vectorPipeline": [
+                            {"$vectorSearch": {
+                                "index": vector_index,
+                                "path": vector_field,
+                                "queryVector": embedding,
+                                "numCandidates": num_candidates,
+                                "limit": knn_limit,
+                            }}
+                        ],
+                        "textPipeline": [
+                            {"$search": {
+                                "index": text_index,
+                                "compound": {
+                                    "should": [
+                                        {"text": {"query": query, "path": "productName", "score": {"boost": {"value": 0.8}}, "fuzzy": {"maxEdits": 2}}},
+                                        {"text": {"query": query, "path": "brand",       "score": {"boost": {"value": 0.1}},}},
+                                        {"text": {"query": query, "path": "category",    "score": {"boost": {"value": 0.06}},}},
+                                        {"text": {"query": query, "path": "subCategory", "score": {"boost": {"value": 0.04}},}},
+                                    ]
+                                }
+                            }},
+                            {"$limit": knn_limit},
+                        ],
+                    }
+                },
+                "combination": {"weights": weights}, //weights is a Dict[str, float],
+                "scoreDetails": True,
+            }
+        },
 
-const hybridSearchQuery = `TODO`
+        # 2) Filter to our store
+        {"$match": {"inventorySummary.storeObjectId": store_oid}},
+
+        # 3) Facet for pagination + total count
+        {"$facet": {
+            "docs": [
+                {"$project": projection},
+                {"$skip":   skip},
+                {"$limit":  limit},
+            ],
+            "count": [{"$count": "total"}],
+        }},
+
+        # 4) Unwind + default total to 0
+        {"$unwind": {"path": "$count", "preserveNullAndEmptyArrays": True}},
+        {"$addFields": {"total": {"$ifNull": ["$count.total", 0]}}},
+        {"$project": {"count": 0}},
+    ]
+`
 
 const HybridSearchLearnMore = () => {
   return (
@@ -21,23 +72,15 @@ const HybridSearchLearnMore = () => {
       <h4 className="mt-2">How Does It Work?</h4>
       <ul>
         <li>
-          You create a <strong>hybrid search index</strong> on your collection, specifying both text fields and a vector field.
-        </li>
-        <li>
-          <strong>In our case, we index fields such as:</strong> <code>productName</code>, <code>brand</code>, <code>category</code>, <code>subCategory</code> (for text search), and <code>embedding</code> (for vector search).
-        </li>
-        <li>
           When a user searches, we run a <code>compound</code> query that combines both text and vector search, so results can match either or both criteria.
         </li>
+        <li>
+          Mixes Atlas $search (text) and Lucene $vectorSearch with $rankFusion.
+        </li>
+        <li>
+          We have added weight for semantic and text search, to give more weight to one or another depending on the query.
+        </li>
       </ul>
-
-      <h4 className="mt-2">Our Hybrid Search Index</h4>
-      <p>
-        Here is the definition of our Hybrid Search index for the <code>products</code> collection:
-      </p>
-      <Code language="json" showLineNumbers>
-        {indexDefinition}
-      </Code>
 
       <h4 className="mt-2">Our Hybrid Search Query</h4>
       <p>
