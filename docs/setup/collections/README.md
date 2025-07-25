@@ -30,7 +30,8 @@ Three sample `.json` files are provided:
 
 This demo follows a modern, **retail-oriented schema** that optimizes for intelligent product discovery, store operations, and scalable search. The data model is built on MongoDB’s flexible document approach, aligning with the *Extended Reference Pattern*—a hybrid strategy that materializes just enough data for high-speed queries while preserving a normalized source of truth.
 
-### ``** Collection**
+#### **`products` Collection**
+
 
 - **What it stores:** Core product details, semantic enrichment (embeddings), and a summary of per-store inventory.
 - **Key fields:**
@@ -62,7 +63,7 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 
 ---
 
-### ``** Collection**
+### **`stores` Collection**
 
 - Stores geospatial metadata (`Point`), layout (sections/aisles/shelves), open hours, and time zone.
 - Enables:
@@ -72,7 +73,7 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 
 ---
 
-### ``** Collection**
+### **`inventory` Collection**
 
 - **Source of truth** for all stock data.
 - Each document tracks one product’s inventory *across* multiple stores:
