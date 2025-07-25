@@ -12,6 +12,7 @@ This demo showcases a store associate application built on **MongoDB Atlas**, de
 
 Unified commerce connects all sales channels, data, and backend systems into a single, real-time platform—delivering a complete view of the business and enabling consistent, personalized customer experiences.
 
+MongoDB serves as the central data platform in the demo, enabling everything from simple keyword search to semantic and hybrid queries—including geospatial lookups for nearby store inventory—demonstrating how unified commerce can deliver actionable insights to store associates.
 
 ---
 
