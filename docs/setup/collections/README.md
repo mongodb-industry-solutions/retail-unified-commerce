@@ -8,10 +8,6 @@ This guide explains how to set up the necessary MongoDB Atlas collections to run
 
 Before importing the datasets, create your MongoDB database. You can name it `retail-unified-commerce` (recommended), or choose your own—just be sure to update your `.env` file accordingly:
 
-```env
-DB_NAME=retail-unified-commerce
-```
-
 ---
 
 ## 2. 📦 Import Demo Collections
@@ -38,7 +34,7 @@ MongoDB’s flexible document model lets us design for performance and real-worl
 
 Each product document is enriched with:
 
-- `aboutTheProduct`: Rich textual content used to generate vector embeddings (semantic search)
+- `embeddingText`: : Main field for generating vector embeddings. Combines the product’s description - aboutTheProduct field -, brand, category, subcategory, and quantity for richer semantic search.
 - `imageUrlS3`: Product image used for image-based embeddings (multimodal search)
 - `inventorySummary`: An **embedded array** of store-level inventory records
 
