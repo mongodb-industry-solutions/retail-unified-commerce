@@ -51,6 +51,8 @@ Powered by MongoDB’s flexible document model, the app unifies product and inve
 
 👉 For technical deep dives, see the [Frontend README](./frontend/README.md) and [Advanced Search Microservice README](./backend/advanced-search-ms/README.md).
 
+🗄️ Database & Modeling ->>> See [docs/setup/collections/README.md](./docs/setup/collections/README.md) for setup instructions and insights into our data modeling strategy. This section also highlights how MongoDB’s flexibility enables powerful unified commerce solutions.
+
 🗒️ _Tip_: Check the [ADR documentaion](./docs/adr/) folder for architectural rationales and design choices.
 
 ---
