@@ -19,9 +19,8 @@ Powered by MongoDB’s flexible document model, the app unifies product and inve
 ## 🎯 Demo Goals & Capabilities
 
 - **Demonstrate how MongoDB Atlas enables unified, real-time operational data through flexible modeling.**
-  - The document model allows you to organize data for efficient performance and retrieval. This demo presents just one example of what's possible: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected, current, and optimized for quick access. 
-  
-  - Inventory changes are tracked separately and synced into product documents using **Atlas Triggers**, maintaining a live, store-level view in real time.
+  - The document model allows you to organize data for efficient performance and retrieval. This demo showcases one example: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected—enabling high-performance retrieval and continuous real-time updates using **Atlas Triggers**.
+
 
 - 🔍🧠 **Showcase advanced, intelligent product discovery with MongoDB Atlas:**
   - Regular search (regex) : Basic pattern matching used as a baseline to compare against MongoDB’s advanced search features.
@@ -29,11 +28,10 @@ Powered by MongoDB’s flexible document model, the app unifies product and inve
   - Semantic vector search (via Voyage AI embeddings)
   - Hybrid search (RRF fusion of text and vector results)
   - Geospatial queries to find nearby availability
-  - Comming soon...Boost promotions to align with sales goals
-  - Comming soon...Image-based product search using multimodal embeddings
+  - Comming soon...Boost promotions to align with sales goals / Image-based product search using multimodal embeddings
 
 - 🏗️ **Use clean architecture to structure the advanced search microservice**
-  - This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns—making the microservice easier to test, extend, and maintain over time. Key benefits include:
+  - This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns. Key benefits include:
       - **Swappable AI providers:** Easily integrate or replace embedding providers (e.g., switching from Voyage AI to Bedrock, or an internal vector service) by isolating vector generation behind an interface.
       - **Extensible search logic:** Add new retrieval strategies or post-processing steps, such as rule-based re-rankers, personalization layers, or business-logic filters—without touching core orchestration code
       - **Multi-channel reuse:** Expose the same unified search logic through different entry points like REST, GraphQL, or event-based consumers—enabling consistent behavior across web apps, mobile, or conversational agents
