@@ -41,8 +41,8 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 
 > This *summary* is maintained in sync with the transactional `inventory` collection via an Atlas Trigger (real-time sync, no polling). You get:
 >
-> - A **write-optimized **`` collection for ingesting updates.
-> - A **read-optimized **`` collection, perfect for instant search, store filtering, and UI/API responses.
+> - A **write-optimized ** collection for ingesting updates.
+> - A **read-optimized ** collection, perfect for instant search, store filtering, and UI/API responses.
 
 #### **Why embed a summary?**
 
