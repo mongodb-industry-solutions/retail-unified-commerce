@@ -68,7 +68,6 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 - Enables:
   - **Geospatial queries** (find stores near a point)
   - Intelligent routing/navigation in apps
-  - Planogram and layout insights
 
 ---
 
@@ -77,7 +76,6 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 - **Source of truth** for all stock data.
 - Each document tracks one product’s inventory *across* multiple stores:
   - `storeInventory[]`: Array per store, with shelf/backroom qty, replenishment flags, and predictive fields.
-  - Denormalized `storeName` and `location` for speed.
   - Designed for high-frequency updates, event ingestion, and analytics.
 
 > **Why decouple?**\
@@ -94,8 +92,6 @@ For best performance:
   - See [`vector-index.json`](../indexes/vector-index.json)
 - **Inventory Filtering:**
   - Add a compound index on `inventorySummary.storeId` (and any flag commonly filtered).
-- **Geospatial:**
-  - Index `stores.location` as `2dsphere` for proximity searches.
 
 📁 Find index definitions in [`docs/setup/indexes/`](../indexes/).
 
