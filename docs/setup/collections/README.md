@@ -41,24 +41,23 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 
 > This *summary* is maintained in sync with the transactional `inventory` collection via an Atlas Trigger (real-time sync, no polling). You get:
 >
-> - A **write-optimized ** collection for ingesting updates.
-> - A **read-optimized ** collection, perfect for instant search, store filtering, and UI/API responses.
+> - A *write-optimized* collection for ingesting updates.
+> - A *read-optimized * collection, perfect for instant search, store filtering, and UI/API responses.
 
 #### **Why embed a summary?**
 
 - In retail, you **search by product, but act by local inventory** (availability, replenishment, etc).
 - Embedding a filtered summary for each store lets you:
-  - Query “products in stock near me” without joins/lookups.
   - Present store-level context in discovery flows.
   - Accelerate search with `$elemMatch` and targeted indexes.
 
 > **Scalability note:**\
-> This model is proven efficient for up to \~100 stores per product and thousands of products—ideal for demos and mid-sized deployments. If scaling to hundreds of stores per product, consider limiting the embedded summary to relevant stores or alternative patterns.
+> This model is proven efficient for up to \~50 stores per product and thousands of products—ideal for demos and mid-sized deployments. If scaling to hundreds of stores per product, consider limiting the embedded summary to relevant stores or alternative patterns.
 
 #### **Pattern Used: Extended Reference Pattern**
 
-- [MongoDB Docs: Extended Reference Pattern](https://www.mongodb.com/blog/post/6-rules-of-thumb-for-mongodb-schema-design-part-1)
-- A materialized, always-fresh summary inside the read-optimized document, powered by triggers/change streams.
+- [MongoDB Docs: Extended Reference Pattern](https://www.mongodb.com/company/blog/building-with-patterns-the-extended-reference-pattern)
+- A materialized, always-fresh summary of key fields for each store in the inventorySummary section of the product document, powered by triggers and change streams.
 - **Not** a pure reference (which would require runtime joins) nor full embedding (which would duplicate all inventory).
 
 ---
