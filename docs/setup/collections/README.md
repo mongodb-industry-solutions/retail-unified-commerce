@@ -35,7 +35,7 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 
 - **What it stores:** Core product details, semantic enrichment (embeddings), and a summary of per-store inventory.
 - **Key fields:**
-  - `embeddingText`: Composite field for vector search (built from product description -aboutTheProduct field-, brand, category, subcategory, and quantity).
+  - `embeddingText`: Composite field for vector search (built from product name and description -aboutTheProduct field-, brand, category, subcategory, and quantity).
   - `imageUrlS3`: Product image for multimodal search.
   - `inventorySummary`: Embedded array with **only the essential inventory info per store**.
 
