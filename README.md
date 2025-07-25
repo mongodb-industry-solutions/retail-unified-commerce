@@ -1,10 +1,10 @@
-# 🛍️ Store Associate App Demo – From Data Silos to Smart Service with MongoDB Atlas
+# Store Associate App Demo – From Data Silos to Smart Service with MongoDB Atlas
 
 This README helps developers understand the purpose, structure, and deployment process of this unified commerce demo.
 
 ---
 
-## 🔎 Overview
+## Overview
 
 This demo showcases a store associate application built on **MongoDB Atlas**, designed to streamline **product discovery** and **inventory visibility** as part of a **unified commerce strategy**.
 
