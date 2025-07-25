@@ -1,10 +1,10 @@
-# 🛍️ Store Associate App Demo – From Data Silos to Smart Service with MongoDB Atlas
+# Store Associate App Demo – From Data Silos to Smart Service with MongoDB Atlas
 
 This README helps developers understand the purpose, structure, and deployment process of this unified commerce demo.
 
 ---
 
-## 🔎 Overview
+## Overview
 
 This demo showcases a store associate application built on **MongoDB Atlas**, designed to streamline **product discovery** and **inventory visibility** as part of a **unified commerce strategy**.
 
@@ -16,29 +16,29 @@ Powered by MongoDB’s flexible document model, the app unifies product and inve
 
 ---
 
-## 🎯 Demo Goals
+## 🎯 Demo Goals & Capabilities
 
 - **Demonstrate how MongoDB Atlas enables unified, real-time operational data through flexible modeling.**
-  - The document model allows you to organize data for efficient performance and retrieval. This demo presents just one example of what's possible: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected, current, and optimized for quick access. Inventory changes are tracked separately and synced into product documents using **Atlas Triggers**, maintaining a live, store-level view in real time.
+  - The document model allows you to organize data for efficient performance and retrieval. This demo showcases one example: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected—enabling high-performance retrieval and continuous real-time updates using **Atlas Triggers**.
 
-- **Showcase advanced, intelligent product discovery with MongoDB Atlas:**
-  - Regular search (regex)
-  - Full-text search using Atlas Search
+
+- 🔍🧠 **Showcase advanced, intelligent product discovery with MongoDB Atlas:**
+  - Regular search (regex) : Basic pattern matching used as a baseline to compare against MongoDB’s advanced search features.
+  - Full-text search (Atlas Search): Relevance-based search using $search with fuzzy matching, field boosts, pagination, and store-level filtering.
   - Semantic vector search (via Voyage AI embeddings)
   - Hybrid search (RRF fusion of text and vector results)
   - Geospatial queries to find nearby availability
-  - Comming soon...Boost promotions to align with sales goals
-  - Comming soon...Image-based product search using multimodal embeddings
+  - Comming soon...Boost promotions to align with sales goals / Image-based product search using multimodal embeddings
 
-- **Use clean architecture to structure the advanced search microservice**
-  - This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns—making the microservice easier to test, extend, and maintain over time. Key benefits include:
-      - Swappable AI providers: Easily integrate or replace embedding providers (e.g., switching from Voyage AI to Bedrock, or an internal vector service) by isolating vector generation behind an interface.
-      - Extensible search logic: Add new retrieval strategies or post-processing steps, such as rule-based re-rankers, personalization layers, or business-logic filters—without touching core orchestration code
-      - Multi-channel reuse: Expose the same unified search logic through different entry points like REST, GraphQL, or event-based consumers—enabling consistent behavior across web apps, mobile, or conversational agents
+- 🏗️ **Use clean architecture to structure the advanced search microservice**
+  - This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns. Key benefits include:
+      - **Swappable AI providers:** Easily integrate or replace embedding providers (e.g., switching from Voyage AI to Bedrock, or an internal vector service) by isolating vector generation behind an interface.
+      - **Extensible search logic:** Add new retrieval strategies or post-processing steps, such as rule-based re-rankers, personalization layers, or business-logic filters—without touching core orchestration code
+      - **Multi-channel reuse:** Expose the same unified search logic through different entry points like REST, GraphQL, or event-based consumers—enabling consistent behavior across web apps, mobile, or conversational agents
 
 ---
 
-## 🧱 Architecture Overview
+## 🧩 Architecture Overview
 
 ![Architecture Overview](docs/images/architecture_overview.png)
 
@@ -49,7 +49,6 @@ Powered by MongoDB’s flexible document model, the app unifies product and inve
 | **MongoDB Atlas** | Core operational data layer with 3 collections: `products`, `inventory`, and `stores`. Stores text and image embeddings used for semantic and image-based search.• Each product embeds a store-level inventorySummary. One Atlas Trigger listens for key inventory changes and syncs product documents. A second scheduled trigger simulates daily inventory updates to maintain realism and consistency. |
 | **Embeddings & AI Integration** | Embeddings were generated using **Voyage AI** and stored in MongoDB. The same model is used for query embedding generation to ensure consistency. The architecture also supports swapping in alternative providers. |
 
-👉 This README guides deployment of the full experience.  
 👉 For technical deep dives, see the [Frontend README](./frontend/README.md) and [Advanced Search Microservice README](./backend/advanced-search-ms/README.md).
 
 🗒️ _Tip_: Check the [ADR documentaion](./docs/adr/) folder for architectural rationales and design choices.
@@ -80,12 +79,14 @@ retail-unified-commerce/
   - [inventory collection](./docs/setup/collections/retail-unified-commerce.inventory.json/)
   - [stores collection](./docs/setup/collections/retail-unified-commerce.stores.json/)
 - [Index definitions](./docs/setup/indexes/README.md/) in:
-  - [search index](./docs/setup/cindexes/search-index.json/)
-  - [vector index](./docs/setup/cindexes/vector-index.json/)
-- Environment configuration files (.env) for each app, using .env.EXAMPLE as a template:
-  - [frontend](./frontend/.env.EXAMPLE)
-  - [advanced-search-ms](./backend/advanced-search-ms/.env.EXAMPLE)
-- A [Voyage AI API key](https://www.voyageai.com/) added to the backend `.env`
+  - [search index](./docs/setup/indexes/search-index.json/)
+  - [vector index](./docs/setup/indexes/vector-index.json/)
+- [Atlas Triggers](./docs/setup/atlas-triggers/README.md/) – Not required to run the app, but we include two triggers to keep inventory data fresh and simulate real-world updates:
+  - [daily inventory simulation](./docs/setup/atlas-triggers/daily_inventory_simulation.js/)
+  - [inventory sync](./docs/setup/atlas-triggers/inventory_sync.js/)
+- Environment configuration files (.env) for each app, using .env.example files as a template:
+  - [frontend](./frontend/.env.example)
+  - [advanced-search-ms](./backend/advanced-search-ms/.env.example)
 - Installed tools:
   - Docker + Docker Compose
   - Node.js v20 (if running frontend separately)
@@ -100,6 +101,8 @@ git clone https://github.com/mongodb-industry-solutions/retail-unified-commerce.
 cd retail-unified-commerce
 make build
 ```
+> 📝 **Note:** Once the apps are running, go to [http://localhost:3000](http://localhost:3000) to use the frontend app.  
+> To view the API documentation for the Advanced Search microservice, visit [http://localhost:8000/docs](http://localhost:8000/docs).
 
 #### Common Commands
 
@@ -131,7 +134,7 @@ make build
 
 ---
 
-## 🧠 Why MongoDB for Unified Commerce
+## 🍃  Why MongoDB for Unified Commerce
 
 MongoDB Atlas is a powerful **Operational Data Layer (ODL)** for unified commerce. It simplifies how retailers consolidate, serve, and act on critical data across channels.
 
@@ -154,34 +157,55 @@ MongoDB Atlas is a powerful **Operational Data Layer (ODL)** for unified commerc
 - **🌟 What’s Next: Native AI Simplicity**  
  MongoDB will soon offer native support for automatic embedding generation and reranking—making intelligent search and recommendations even easier to build.
  ![What's Next on MongoDB Atlas](docs/images/whats_next_mongodb_atlas.png)
- 👉 _Read more in [this blog post](#)_.
+ 👉 _Read more in [**this blog post**](https://www.mongodb.com/company/blog/news/redefining-database-ai-why-mongodb-acquired-voyage-ai)
 
 ---
-
 ## 👥 Authors
 
-**Use Case & Implementation**
-- Prashant Juttukonda – Principal  
-- Rodrigo Leal – Principal  
-- Genevieve Broadhead – Global Lead, Retail Solutions
+This project was made possible through a close collaboration between domain experts and technical implementers:
 
-**Technical Design & Development**
-- Angie Guemes – Developer & Maintainer  
-- Florencia Arin – Developer & Maintainer
+### Lead Authors *(Use Case Ideation & Retail Implementation)*
+
+- [**Prashant Juttukonda**](https://www.linkedin.com/in/cloudpkj/) – Principal
+- [**Rodrigo Leal**](https://www.linkedin.com/in/rodrigo-leal-5b240121/) – Principal
+- [**Genevieve Broadhead**](https://www.linkedin.com/in/genevieve-broadhead-271757bb/) – Global Lead, Retail Solutions  
+
+### Developers & Maintainers *(Technical Design & Implementation)*
+- [**Angie Guemes**](https://www.linkedin.com/in/angelica-guemes-estrada/) – Developer & Maintainer  
+- [**Florencia Arin**](https://www.linkedin.com/in/floarin/) – Developer & Maintainer
 
 ---
 
-## 📚 Related Demo Content Package
+## Related Demo Content Package
 
 - 🎥 YouTube Video – _coming soon_
-- 📄 Solution Library – _coming soon_
+- 📚 Solution Library – _coming soon_
 - 📝 Blog – _coming soon_
+
+---
 
 ⭐ If you found this useful, consider giving the repo a star!
 
 ---
 
-## 📄 License
+## MIT License
 
-© 2025 MongoDB. All rights reserved.  
-This demo is for educational purposes only. Commercial use is prohibited without written permission from MongoDB.
+Copyright (c) 2025 MongoDB
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights  
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell  
+copies of the Software, and to permit persons to whom the Software is  
+furnished to do so, subject to the following conditions:  
+
+The above copyright notice and this permission notice shall be included in all  
+copies or substantial portions of the Software.  
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR  
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE  
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER  
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN  
+THE SOFTWARE.
