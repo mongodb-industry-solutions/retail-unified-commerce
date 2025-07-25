@@ -6,22 +6,21 @@ This README helps developers understand the purpose, structure, and deployment p
 
 ## Overview
 
+![Unified Commerce](docs/images/unified_commerce.png)
+
 This demo showcases a store associate application built on **MongoDB Atlas**, designed to streamline **product discovery** and **inventory visibility** as part of a **unified commerce strategy**.
 
 Unified commerce connects all sales channels, data, and backend systems into a single, real-time platform—delivering a complete view of the business and enabling consistent, personalized customer experiences.
 
-![Unified Commerce](docs/images/unified_commerce.png)
-
-Powered by MongoDB’s flexible document model, the app unifies product and inventory data into one operational layer. From classic search to semantic and hybrid search—including geospatial queries to check nearby store availability—this experience demonstrates how unified commerce becomes actionable by giving store associates accurate data to serve with speed, clarity, and confidence.
 
 ---
 
 ## 🎯 Demo Goals & Capabilities
 
+![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
+
 - **Demonstrate how MongoDB Atlas enables unified, real-time operational data through flexible modeling.**
   - The document model allows you to organize data for efficient performance and retrieval. This demo showcases one example: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected—enabling high-performance retrieval and continuous real-time updates using **Atlas Triggers**.
-
-![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
 
 - 🔍🧠 **Showcase advanced, intelligent product discovery with MongoDB Atlas:**
   - Regular search (regex) : Basic pattern matching used as a baseline to compare against MongoDB’s advanced search features.
