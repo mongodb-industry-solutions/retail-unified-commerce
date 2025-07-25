@@ -30,7 +30,7 @@ Three sample `.json` files are provided:
 
 This demo follows a modern, **retail-oriented schema** that optimizes for intelligent product discovery, store operations, and scalable search. The data model is built on MongoDB’s flexible document approach, aligning with the *Extended Reference Pattern*—a hybrid strategy that materializes just enough data for high-speed queries while preserving a normalized source of truth.
 
-### **`products` Collection**
+### ``** Collection**
 
 - **What it stores:** Core product details, semantic enrichment (embeddings), and a summary of per-store inventory.
 - **Key fields:**
@@ -39,27 +39,30 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
   - `inventorySummary`: Embedded array with **only the essential inventory info per store**.
 
 > This *summary* is maintained in sync with the transactional `inventory` collection via an Atlas Trigger (real-time sync, no polling). You get:
-> - A **write-optimized `inventory`** collection for ingesting updates.
-> - A **read-optimized `products`** collection, perfect for instant search, store filtering, and UI/API responses.
+>
+> - A **write-optimized **`` collection for ingesting updates.
+> - A **read-optimized **`` collection, perfect for instant search, store filtering, and UI/API responses.
 
 #### **Why embed a summary?**
 
 - In retail, you **search by product, but act by local inventory** (availability, replenishment, etc).
 - Embedding a filtered summary for each store lets you:
+  - Query “products in stock near me” without joins/lookups.
   - Present store-level context in discovery flows.
   - Accelerate search with `$elemMatch` and targeted indexes.
 
-> **Scalability note:**  
-> This model is proven efficient for up to ~50 stores per product and thousands of products—ideal for demos and mid-sized deployments. If scaling to hundreds of stores per product, consider limiting the embedded summary to relevant stores or alternative patterns.
+> **Scalability note:**\
+> This model is proven efficient for up to \~100 stores per product and thousands of products—ideal for demos and mid-sized deployments. If scaling to hundreds of stores per product, consider limiting the embedded summary to relevant stores or alternative patterns.
 
 #### **Pattern Used: Extended Reference Pattern**
+
 - [MongoDB Docs: Extended Reference Pattern](https://www.mongodb.com/blog/post/6-rules-of-thumb-for-mongodb-schema-design-part-1)
-- A materialized, always-fresh summary inside the read-optimized document, powered by triggers/change streams.  
+- A materialized, always-fresh summary inside the read-optimized document, powered by triggers/change streams.
 - **Not** a pure reference (which would require runtime joins) nor full embedding (which would duplicate all inventory).
 
 ---
 
-### **`stores` Collection**
+### ``** Collection**
 
 - Stores geospatial metadata (`Point`), layout (sections/aisles/shelves), open hours, and time zone.
 - Enables:
@@ -69,7 +72,7 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 
 ---
 
-### **`inventory` Collection**
+### ``** Collection**
 
 - **Source of truth** for all stock data.
 - Each document tracks one product’s inventory *across* multiple stores:
@@ -77,7 +80,7 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
   - Denormalized `storeName` and `location` for speed.
   - Designed for high-frequency updates, event ingestion, and analytics.
 
-> **Why decouple?**  
+> **Why decouple?**\
 > Heavy writes go to `inventory` (normalized, lean, fast for bulk ingest), while only the *summary* needed for search is pushed to `products`.
 
 ---
@@ -86,12 +89,12 @@ This demo follows a modern, **retail-oriented schema** that optimizes for intell
 
 For best performance:
 
-- **Text & Vector Search:**  
-  - See [`search-index.json`](../indexes/search-index.json)  
+- **Text & Vector Search:**
+  - See [`search-index.json`](../indexes/search-index.json)
   - See [`vector-index.json`](../indexes/vector-index.json)
-- **Inventory Filtering:**  
+- **Inventory Filtering:**
   - Add a compound index on `inventorySummary.storeId` (and any flag commonly filtered).
-- **Geospatial:**  
+- **Geospatial:**
   - Index `stores.location` as `2dsphere` for proximity searches.
 
 📁 Find index definitions in [`docs/setup/indexes/`](../indexes/).
@@ -100,7 +103,8 @@ For best performance:
 
 ## 5. ⚙️ Real-Time Inventory → Product Sync
 
-A **single Atlas Trigger** keeps `products.inventorySummary` always in sync with the canonical `inventory` collection.  
+A **single Atlas Trigger** keeps `products.inventorySummary` always in sync with the canonical `inventory` collection.
+
 - **Pattern:** Materialized View / Extended Reference Pattern
 - **How:** Trigger listens to insert/update/replace on `inventory`, rewrites only relevant summary data into the matching product.
 
@@ -110,3 +114,27 @@ Collection     : <your_db>.inventory
 Ops            : Insert, Update, Replace
 Full Doc Lookup: ON
 Options        : Auto-Resume = ON, Event Ordering = ON
+```
+
+| File                            | What it does                                                                                                                                                          |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inventory_sync.js`             | Production-ready trigger: condenses `inventory` changes into `{ storeId, sectionId, aisleId, shelfId, inStock, nearToReplenishmentInShelf }` and updates the product. |
+| `daily_inventory_simulation.js` | *(Optional)* Helper to simulate dynamic inventory and see the trigger in action.                                                                                      |
+
+**Why?**
+
+- No polling, no complex join logic, instant reflection of inventory in the product catalog.
+- **Workload isolation:** Search-intensive apps can read from secondary replicas (“read-only”), ensuring search is fast even during heavy updates.
+
+---
+
+## 6. 📚 Dataset Source
+
+- [Big Basket Products Dataset on Kaggle](https://www.kaggle.com/datasets/chinmayshanbhag/big-basket-products)\
+  Enriched for this demo with semantic metadata, vector embeddings, and simulated multi-store inventory.
+
+---
+
+> ✅ Collections are ready!\
+> Next step: Go back to the [root README](../../../README.md) to continue the app setup and explore the unified commerce demo.
+
