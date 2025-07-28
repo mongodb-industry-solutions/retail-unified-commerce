@@ -18,10 +18,10 @@ MongoDB serves as the central data platform in the demo, enabling everything fro
 
 ## 🎯 Demo Goals & Capabilities
 
-![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
-
 - **Demonstrate how MongoDB Atlas enables unified, real-time operational data through flexible modeling.**
   - The document model allows you to organize data for efficient performance and retrieval. This demo showcases one example: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected—enabling high-performance retrieval and continuous real-time updates using **Atlas Triggers**.
+
+![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
 
 - 🔍🧠 **Showcase advanced, intelligent product discovery with MongoDB Atlas:**
   - Regular search (regex) : Basic pattern matching used as a baseline to compare against MongoDB’s advanced search features.
