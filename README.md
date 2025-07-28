@@ -31,6 +31,8 @@ MongoDB serves as the central data platform in the demo, enabling everything fro
   - Geospatial queries to find nearby availability
   - Comming soon...Boost promotions to align with sales goals / Image-based product search using multimodal embeddings
 
+![MongoDB Demo Explainer Tools](docs/images/mongodb_demo_explainer_tools.png)
+
 - 🏗️ **Use clean architecture to structure the advanced search microservice**
   - This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns. Key benefits include:
       - **Swappable AI providers:** Easily integrate or replace embedding providers (e.g., switching from Voyage AI to Bedrock, or an internal vector service) by isolating vector generation behind an interface.
@@ -76,7 +78,7 @@ retail-unified-commerce/
 
 ### 🔧 Prerequisites
 
-- [MongoDB Atlas account](https://www.mongodb.com/cloud/atlas/register) (Free Tier works)
+- [MongoDB Atlas account](https://www.mongodb.com/cloud/atlas/register) (Free Tier)
 - [Demo dataset](./docs/setup/collections/README.md/) - we provide JSON files for the 3 required collections:
   - [products collection with embeddings](./docs/setup/collections/retail-unified-commerce.products.json/)
   - [inventory collection](./docs/setup/collections/retail-unified-commerce.inventory.json/)
