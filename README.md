@@ -183,7 +183,7 @@ This project was made possible through a close collaboration between domain expe
 
 - 🎥 YouTube Video – _coming soon_
 - 📚 Solution Library – _coming soon_
-- 📝 Blog – _coming soon_
+- 📝 [Blog] (https://www.mongodb.com/company/blog/innovation/empower-retail-associates-unified-commerce-mongodb-atlas?utm_source=ADVOCACY&utm_medium=ORGANIC_SOCIAL)
 
 ---
 
