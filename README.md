@@ -18,10 +18,12 @@ MongoDB serves as the central data platform in the demo, enabling everything fro
 
 ## 🎯 Demo Goals & Capabilities
 
-![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
+![MongoDB Atlas in our demo solution](docs/images/mongodbatlas.png)
 
 - **Demonstrate how MongoDB Atlas enables unified, real-time operational data through flexible modeling.**
   - The document model allows you to organize data for efficient performance and retrieval. This demo showcases one example: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected—enabling high-performance retrieval and continuous real-time updates using **Atlas Triggers**.
+
+![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
 
 - 🔍🧠 **Showcase advanced, intelligent product discovery with MongoDB Atlas:**
   - Regular search (regex) : Basic pattern matching used as a baseline to compare against MongoDB’s advanced search features.
@@ -30,6 +32,8 @@ MongoDB serves as the central data platform in the demo, enabling everything fro
   - Hybrid search (RRF fusion of text and vector results)
   - Geospatial queries to find nearby availability
   - Comming soon...Boost promotions to align with sales goals / Image-based product search using multimodal embeddings
+
+![MongoDB Demo Explainer Tools](docs/images/mongodb_demo_explainer_tools.png)
 
 - 🏗️ **Use clean architecture to structure the advanced search microservice**
   - This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns. Key benefits include:
@@ -76,7 +80,7 @@ retail-unified-commerce/
 
 ### 🔧 Prerequisites
 
-- [MongoDB Atlas account](https://www.mongodb.com/cloud/atlas/register) (Free Tier works)
+- [MongoDB Atlas account](https://www.mongodb.com/cloud/atlas/register) (Free Tier)
 - [Demo dataset](./docs/setup/collections/README.md/) - we provide JSON files for the 3 required collections:
   - [products collection with embeddings](./docs/setup/collections/retail-unified-commerce.products.json/)
   - [inventory collection](./docs/setup/collections/retail-unified-commerce.inventory.json/)
@@ -140,8 +144,6 @@ make build
 ## 🍃  Why MongoDB for Unified Commerce
 
 MongoDB Atlas is a powerful **Operational Data Layer (ODL)** for unified commerce. It simplifies how retailers consolidate, serve, and act on critical data across channels.
-
-![MongoDB Atlas](docs/images/mongodb_atlas.png)
 
 ### Key Advantages
 
