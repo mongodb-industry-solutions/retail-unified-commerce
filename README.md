@@ -145,8 +145,6 @@ make build
 
 MongoDB Atlas is a powerful **Operational Data Layer (ODL)** for unified commerce. It simplifies how retailers consolidate, serve, and act on critical data across channels.
 
-![MongoDB Atlas](docs/images/mongodb_atlas.png)
-
 ### Key Advantages
 
 - **Flexible document model**  
