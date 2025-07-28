@@ -18,6 +18,8 @@ MongoDB serves as the central data platform in the demo, enabling everything fro
 
 ## 🎯 Demo Goals & Capabilities
 
+![MongoDB Atlas in our demo solution](docs/images/mongodbatlas.png)
+
 - **Demonstrate how MongoDB Atlas enables unified, real-time operational data through flexible modeling.**
   - The document model allows you to organize data for efficient performance and retrieval. This demo showcases one example: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected—enabling high-performance retrieval and continuous real-time updates using **Atlas Triggers**.
 
