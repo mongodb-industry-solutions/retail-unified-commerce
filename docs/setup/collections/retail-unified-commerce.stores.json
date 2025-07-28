@@ -1,0 +1,4899 @@
+[{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568aca"
+  },
+  "storeId": "store-001",
+  "storeName": "Chaihirankarn, Bunlupong and Chomsri - Surat Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      99.317989,
+      9.133786
+    ],
+    "address": "3597 Methavorakul Tunnel Suite 886",
+    "city": "Surat Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568acb"
+  },
+  "storeId": "store-002",
+  "storeName": "Srisoontorn PLC - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.469402,
+      7.022215
+    ],
+    "address": "0758 Thanatcha Vista",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568acc"
+  },
+  "storeId": "store-003",
+  "storeName": "Methavorakul Inc - Khon Kaen",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.829041,
+      16.458762
+    ],
+    "address": "7826 Noppakao Viaduct",
+    "city": "Khon Kaen"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568acd"
+  },
+  "storeId": "store-004",
+  "storeName": "Vethayasas-Tianvarich - Surat Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      99.329893,
+      9.129205
+    ],
+    "address": "68536 Prames Fork Apt. 515",
+    "city": "Surat Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              },
+              {
+                "shelfId": "SH123",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ace"
+  },
+  "storeId": "store-005",
+  "storeName": "Wasunun Inc - Bangkok",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.511977,
+      13.742523
+    ],
+    "address": "2779 Darin Brook Suite 328",
+    "city": "Bangkok"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              },
+              {
+                "shelfId": "SH223",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              },
+              {
+                "shelfId": "SH323",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568acf"
+  },
+  "storeId": "store-006",
+  "storeName": "Vinyuvanichkul, Suraprasert and Methavorakul - Nakhon Ratchasima",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.104829,
+      14.964336
+    ],
+    "address": "1036 Sujjaboriboon Creek",
+    "city": "Nakhon Ratchasima"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              },
+              {
+                "shelfId": "SH412",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad0"
+  },
+  "storeId": "store-007",
+  "storeName": "Kamalanon-Krittayanukoon - Khon Kaen",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.815309,
+      16.435025
+    ],
+    "address": "246 Nutwadee Garden",
+    "city": "Khon Kaen"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad1"
+  },
+  "storeId": "store-008",
+  "storeName": "Wannapaitoonsri, Intaum and Neerachapong - Surat Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      99.345348,
+      9.153934
+    ],
+    "address": "88888 Sitiwat Well Suite 065",
+    "city": "Surat Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              },
+              {
+                "shelfId": "SH313",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad2"
+  },
+  "storeId": "store-009",
+  "storeName": "Kamalanon-Sooksawang - Ayutthaya",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.574506,
+      14.349377
+    ],
+    "address": "3195 Sarunporn Knoll",
+    "city": "Ayutthaya"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              },
+              {
+                "shelfId": "SH123",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad3"
+  },
+  "storeId": "store-010",
+  "storeName": "Methavorakul, Benchapatranon and Norramon - Chiang Mai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.988855,
+      18.778033
+    ],
+    "address": "221 Bunlerngsri Hill Apt. 030",
+    "city": "Chiang Mai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad4"
+  },
+  "storeId": "store-011",
+  "storeName": "Turongkinanon-Krittayanukoon - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.487458,
+      7.017495
+    ],
+    "address": "740 Supasita Knolls Apt. 541",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad5"
+  },
+  "storeId": "store-012",
+  "storeName": "Pongpanitch-Trikasemmart - Phuket",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.402709,
+      7.884496
+    ],
+    "address": "5277 Siripaiboo Grove Apt. 616",
+    "city": "Phuket"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              },
+              {
+                "shelfId": "SH123",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              },
+              {
+                "shelfId": "SH223",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad6"
+  },
+  "storeId": "store-013",
+  "storeName": "Intaum, Pitanuwat and Pothanun - Ayutthaya",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.587739,
+      14.346128
+    ],
+    "address": "54479 Sorattanachai Spurs",
+    "city": "Ayutthaya"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              },
+              {
+                "shelfId": "SH123",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad7"
+  },
+  "storeId": "store-014",
+  "storeName": "Vethayasas-Chaihirankarn - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.467116,
+      7.008693
+    ],
+    "address": "596 Chaisatit Club",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad8"
+  },
+  "storeId": "store-015",
+  "storeName": "Trikasemmart, Anekvorakul and Krittayanukoon - Chiang Mai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.985583,
+      18.7929
+    ],
+    "address": "29702 Atit Tunnel",
+    "city": "Chiang Mai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              },
+              {
+                "shelfId": "SH412",
+                "level": 2
+              },
+              {
+                "shelfId": "SH413",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I42",
+            "shelves": [
+              {
+                "shelfId": "SH421",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ad9"
+  },
+  "storeId": "store-016",
+  "storeName": "Anekvorakul, Anekvorakul and Suraprachit - Surat Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      99.314666,
+      9.146445
+    ],
+    "address": "275 Permchart Track",
+    "city": "Surat Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              },
+              {
+                "shelfId": "SH313",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ada"
+  },
+  "storeId": "store-017",
+  "storeName": "Wasunun PLC - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.45848,
+      6.991036
+    ],
+    "address": "5431 Jaruwan Parks Suite 814",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568adb"
+  },
+  "storeId": "store-018",
+  "storeName": "Chaihirankarn-Kongchayasukawut - Phuket",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.384709,
+      7.89707
+    ],
+    "address": "731 Prima Mission Apt. 715",
+    "city": "Phuket"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              },
+              {
+                "shelfId": "SH223",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568adc"
+  },
+  "storeId": "store-019",
+  "storeName": "Vethayasas, Sujjaboriboon and Pitanuwat - Surat Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      99.339918,
+      9.124338
+    ],
+    "address": "25831 Apisara Freeway Suite 058",
+    "city": "Surat Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568add"
+  },
+  "storeId": "store-020",
+  "storeName": "Pichpandecha, Norramon and Choeychuen - Phuket",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.384132,
+      7.866598
+    ],
+    "address": "46786 Kamalanon Crossroad",
+    "city": "Phuket"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              },
+              {
+                "shelfId": "SH412",
+                "level": 2
+              },
+              {
+                "shelfId": "SH413",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ade"
+  },
+  "storeId": "store-021",
+  "storeName": "Kamalanon-Chaihirankarn - Udon Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.780472,
+      17.397448
+    ],
+    "address": "852 Wasin Meadows Apt. 182",
+    "city": "Udon Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              },
+              {
+                "shelfId": "SH123",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568adf"
+  },
+  "storeId": "store-022",
+  "storeName": "Sorattanachai-Boonpungbaramee - Ayutthaya",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.567367,
+      14.372578
+    ],
+    "address": "358 Neerachapong Glen Apt. 842",
+    "city": "Ayutthaya"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae0"
+  },
+  "storeId": "store-023",
+  "storeName": "Phusilarungrueng, Pianduangsri and Titipatrayunyong - Udon Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.788082,
+      17.430665
+    ],
+    "address": "922 Sukhenai Views",
+    "city": "Udon Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              },
+              {
+                "shelfId": "SH412",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae1"
+  },
+  "storeId": "store-024",
+  "storeName": "Neerachapong Inc - Chiang Mai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.974182,
+      18.806157
+    ],
+    "address": "396 Pitipat Road Suite 473",
+    "city": "Chiang Mai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae2"
+  },
+  "storeId": "store-025",
+  "storeName": "Trikasemmart, Phusilarungrueng and Thantananont - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.488267,
+      7.025633
+    ],
+    "address": "027 Lertsattayanusak Mountain",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae3"
+  },
+  "storeId": "store-026",
+  "storeName": "Methavorakul PLC - Udon Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.771452,
+      17.423543
+    ],
+    "address": "5562 Krittayanukoon Points",
+    "city": "Udon Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae4"
+  },
+  "storeId": "store-027",
+  "storeName": "Kitprapa and Sons - Pattaya",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.86441,
+      12.915646
+    ],
+    "address": "47321 Patcharaporn Lights Suite 325",
+    "city": "Pattaya"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              },
+              {
+                "shelfId": "SH223",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              },
+              {
+                "shelfId": "SH412",
+                "level": 2
+              },
+              {
+                "shelfId": "SH413",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae5"
+  },
+  "storeId": "store-028",
+  "storeName": "Kitprapa, Pikatsingkorn and Boonpungbaramee - Phuket",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.372363,
+      7.872051
+    ],
+    "address": "774 Kamalanon Course Suite 873",
+    "city": "Phuket"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              },
+              {
+                "shelfId": "SH223",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae6"
+  },
+  "storeId": "store-029",
+  "storeName": "Sooksawang Inc - Surat Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      99.352633,
+      9.140893
+    ],
+    "address": "7974 Nutcha Meadows",
+    "city": "Surat Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              },
+              {
+                "shelfId": "SH223",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae7"
+  },
+  "storeId": "store-030",
+  "storeName": "Todsapornpitakul Ltd - Chiang Mai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.994618,
+      18.782092
+    ],
+    "address": "5060 Chalisa Plaza Suite 168",
+    "city": "Chiang Mai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              },
+              {
+                "shelfId": "SH313",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae8"
+  },
+  "storeId": "store-031",
+  "storeName": "Kittakun-Matinawin - Udon Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.773964,
+      17.397179
+    ],
+    "address": "65585 Pakjira Rapids",
+    "city": "Udon Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568ae9"
+  },
+  "storeId": "store-032",
+  "storeName": "Trikasemmart, Titipatrayunyong and Sukhenai - Pattaya",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.896986,
+      12.915044
+    ],
+    "address": "25787 Parin Dam",
+    "city": "Pattaya"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              },
+              {
+                "shelfId": "SH412",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I42",
+            "shelves": [
+              {
+                "shelfId": "SH421",
+                "level": 1
+              },
+              {
+                "shelfId": "SH422",
+                "level": 2
+              },
+              {
+                "shelfId": "SH423",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568aea"
+  },
+  "storeId": "store-033",
+  "storeName": "Kitprapa-Boonpungbaramee - Khon Kaen",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.844083,
+      16.453946
+    ],
+    "address": "495 Phusilarungrueng Mountains Apt. 551",
+    "city": "Khon Kaen"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568aeb"
+  },
+  "storeId": "store-034",
+  "storeName": "Turongkinanon-Tianvarich - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.46696,
+      7.014837
+    ],
+    "address": "9930 Sorattanachai Pine Suite 230",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568aec"
+  },
+  "storeId": "store-035",
+  "storeName": "Suraprasert, Pikatsingkorn and Kamalanon - Khon Kaen",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.846659,
+      16.447479
+    ],
+    "address": "6263 Titipatrayunyong Trail Suite 028",
+    "city": "Khon Kaen"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              },
+              {
+                "shelfId": "SH123",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568aed"
+  },
+  "storeId": "store-036",
+  "storeName": "Pothanun Ltd - Phuket",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.399424,
+      7.894347
+    ],
+    "address": "652 Methavorakul Plains Suite 497",
+    "city": "Phuket"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568aee"
+  },
+  "storeId": "store-037",
+  "storeName": "Tungkasethakul LLC - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.492679,
+      7.002886
+    ],
+    "address": "44375 Vethayasas Points Suite 419",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              },
+              {
+                "shelfId": "SH313",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              },
+              {
+                "shelfId": "SH412",
+                "level": 2
+              },
+              {
+                "shelfId": "SH413",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I42",
+            "shelves": [
+              {
+                "shelfId": "SH421",
+                "level": 1
+              },
+              {
+                "shelfId": "SH422",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568aef"
+  },
+  "storeId": "store-038",
+  "storeName": "Sittisaowapak, Kongsri and Vethayasas - Pattaya",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.863537,
+      12.942021
+    ],
+    "address": "0415 Chowitunkit Summit",
+    "city": "Pattaya"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              },
+              {
+                "shelfId": "SH223",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af0"
+  },
+  "storeId": "store-039",
+  "storeName": "Kongchayasukawut-Srisoontorn - Udon Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.771329,
+      17.403707
+    ],
+    "address": "421 Kunaporn Causeway Apt. 301",
+    "city": "Udon Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              },
+              {
+                "shelfId": "SH313",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af1"
+  },
+  "storeId": "store-040",
+  "storeName": "Youprasert-Prayoonhong - Chiang Mai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.976914,
+      18.7903
+    ],
+    "address": "208 Phenphitcha Shoal",
+    "city": "Chiang Mai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af2"
+  },
+  "storeId": "store-041",
+  "storeName": "Lertsattayanusak-Srisoontorn - Phuket",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      98.392061,
+      7.869869
+    ],
+    "address": "4019 Pattapon Extensions Suite 206",
+    "city": "Phuket"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              },
+              {
+                "shelfId": "SH312",
+                "level": 2
+              },
+              {
+                "shelfId": "SH313",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af3"
+  },
+  "storeId": "store-042",
+  "storeName": "Intaum-Pitanuwat - Hat Yai",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.472699,
+      7.014094
+    ],
+    "address": "49915 Thantananont Row",
+    "city": "Hat Yai"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af4"
+  },
+  "storeId": "store-043",
+  "storeName": "Prakalpawong, Wasunun and Titipatrayunyong - Surat Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      99.319686,
+      9.126721
+    ],
+    "address": "3152 Chowitunkit Stravenue Apt. 054",
+    "city": "Surat Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I42",
+            "shelves": [
+              {
+                "shelfId": "SH421",
+                "level": 1
+              },
+              {
+                "shelfId": "SH422",
+                "level": 2
+              },
+              {
+                "shelfId": "SH423",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af5"
+  },
+  "storeId": "store-044",
+  "storeName": "Pikatsingkorn, Benchapatranon and Trikasemmart - Khon Kaen",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.818737,
+      16.446477
+    ],
+    "address": "516 Jaruwan Dam Suite 530",
+    "city": "Khon Kaen"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af6"
+  },
+  "storeId": "store-045",
+  "storeName": "Suraprachit-Chomsri - Ayutthaya",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.557332,
+      14.343786
+    ],
+    "address": "5499 Todsawun Shoal Suite 301",
+    "city": "Ayutthaya"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              },
+              {
+                "shelfId": "SH113",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I12",
+            "shelves": [
+              {
+                "shelfId": "SH121",
+                "level": 1
+              },
+              {
+                "shelfId": "SH122",
+                "level": 2
+              },
+              {
+                "shelfId": "SH123",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I32",
+            "shelves": [
+              {
+                "shelfId": "SH321",
+                "level": 1
+              },
+              {
+                "shelfId": "SH322",
+                "level": 2
+              },
+              {
+                "shelfId": "SH323",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S04",
+        "aisles": [
+          {
+            "aisleId": "I41",
+            "shelves": [
+              {
+                "shelfId": "SH411",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I42",
+            "shelves": [
+              {
+                "shelfId": "SH421",
+                "level": 1
+              },
+              {
+                "shelfId": "SH422",
+                "level": 2
+              },
+              {
+                "shelfId": "SH423",
+                "level": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af7"
+  },
+  "storeId": "store-046",
+  "storeName": "Turongkinanon-Boonpungbaramee - Bangkok",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.498425,
+      13.742623
+    ],
+    "address": "841 Pichpandecha Ridges Apt. 327",
+    "city": "Bangkok"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              },
+              {
+                "shelfId": "SH212",
+                "level": 2
+              },
+              {
+                "shelfId": "SH213",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              },
+              {
+                "shelfId": "SH222",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af8"
+  },
+  "storeId": "store-047",
+  "storeName": "Thantananont Ltd - Nakhon Ratchasima",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.092522,
+      14.965131
+    ],
+    "address": "8783 Darin Pine Suite 851",
+    "city": "Nakhon Ratchasima"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": true
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568af9"
+  },
+  "storeId": "store-048",
+  "storeName": "Suraprasert, Chaisatit and Titipatrayunyong - Bangkok",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      100.497166,
+      13.747908
+    ],
+    "address": "822 Siripaiboo Mills",
+    "city": "Bangkok"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568afa"
+  },
+  "storeId": "store-049",
+  "storeName": "Polpo Ltd - Udon Thani",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.784573,
+      17.435539
+    ],
+    "address": "87072 Thantananont Port Apt. 874",
+    "city": "Udon Thani"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": []
+      },
+      {
+        "sectionId": "S02",
+        "aisles": [
+          {
+            "aisleId": "I21",
+            "shelves": [
+              {
+                "shelfId": "SH211",
+                "level": 1
+              }
+            ]
+          },
+          {
+            "aisleId": "I22",
+            "shelves": [
+              {
+                "shelfId": "SH221",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S03",
+        "aisles": [
+          {
+            "aisleId": "I31",
+            "shelves": [
+              {
+                "shelfId": "SH311",
+                "level": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+},
+{
+  "_id": {
+    "$oid": "684aa28064ff7c785a568afb"
+  },
+  "storeId": "store-050",
+  "storeName": "Kamalanon, Kongsri and Chowitunkit - Khon Kaen",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      102.850294,
+      16.441696
+    ],
+    "address": "391 Chaifah Key",
+    "city": "Khon Kaen"
+  },
+  "layout": {
+    "sections": [
+      {
+        "sectionId": "S01",
+        "aisles": [
+          {
+            "aisleId": "I11",
+            "shelves": [
+              {
+                "shelfId": "SH111",
+                "level": 1
+              },
+              {
+                "shelfId": "SH112",
+                "level": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "S02",
+        "aisles": []
+      },
+      {
+        "sectionId": "S03",
+        "aisles": []
+      }
+    ]
+  },
+  "backroom": {
+    "zones": [
+      {
+        "zoneId": "B1",
+        "description": "Cold Storage"
+      },
+      {
+        "zoneId": "B2",
+        "description": "Dry Goods"
+      }
+    ],
+    "isLarge": false
+  },
+  "openHours": {
+    "monday": "08:00-20:00",
+    "tuesday": "08:00-20:00",
+    "wednesday": "08:00-20:00",
+    "thursday": "08:00-20:00",
+    "friday": "08:00-21:00",
+    "saturday": "08:00-21:00",
+    "sunday": "09:00-18:00"
+  },
+  "timeZone": "Asia/Bangkok"
+}]
