@@ -11,7 +11,7 @@ The response is a paginated list of relevant products with a **relevance score**
 - MongoDB Atlas Lucene `$vectorSearch` **and** `$search` text indexes.
 - Reciprocal Rank Fusion to blend vector & text results.
 - Voyage AI embeddings (`voyage‑3‑large`).
-- Fully async stack (FastAPI + Motor + httpx) on Python 3.11.
+- FastAPI on Python 3.11.
 
 ---
 
@@ -19,15 +19,15 @@ The response is a paginated list of relevant products with a **relevance score**
 
 | Option | Use Case Class           | Engine / Technique                                     | Typical Use Case | Notes |
 | ------ | ------------------------ | ------------------------------------------------------ | ---------------- | ----- |
-| **1**  | `KeywordSearchUseCase`   | Simple regex / prefix match on `productName`           | Exact SKU / name match | No weights |
-| **2**  | `AtlasTextSearchUseCase` | Atlas Lucene `$search` full-text index                 | Keyword search with stemming, fuzziness, synonyms | No weights |
+| **1**  | `KeywordSearchUseCase`   | Simple regex / prefix match on `productName`           | Name match | No weights |
+| **2**  | `AtlasTextSearchUseCase` | Atlas Lucene `$search` full-text index                 | Keyword search with boosting, fuzziness, and optional synonyms  | No weights |
 | **3**  | `VectorSearchUseCase`    | Lucene `$vectorSearch` (k-NN, cosine similarity)       | Semantic / natural-language queries | No weights |
 | **4**  | `HybridRRFSearchUseCase` | `$rankFusion` blending options 2 & 3                   | Combine keyword relevance + semantic meaning | Supports `weightVector` & `weightText` |
 
 > **Dynamic weights in option 4:**  
 > The client can send extra parameters (`weightVector`, `weightText`) to fine-tune the influence of each search type at runtime.
 
-> All strategies are **store-scoped** (MongoDB `stores` doc `_id`), so results only include products available in the selected store.  
+> All strategies are **store-scoped**, so results only include products available in the selected store.  
 > **Image Search** will be added as a new option in a future release.
 
 ---
@@ -52,26 +52,6 @@ VOYAGE_MODEL=voyage-3-large
 ---
 
 ## 3 – Example Requests
-
-### Option 4 (Hybrid RRF) with weights
-
-```http
-POST /api/v1/search
-Content-Type: application/json
-
-{
-  "query": "green tea skin care",
-  "storeObjectId": "684aa28064ff7c785a568aca",
-  "option": 4,
-  "page": 1,
-  "page_size": 20,
-  "weightVector": 0.5,
-  "weightText": 0.5
-}
-```
-
-- If `weightVector` and `weightText` are omitted, defaults to **0.5 / 0.5**.
-- Values are normalized if they do not sum to `1`.
 
 ### Option 1 (Keyword)
 ```http
@@ -115,23 +95,31 @@ Content-Type: application/json
 }
 ```
 
----
-## 4 – Option 4: Hybrid Search (RRF) – Details
+### Option 4 (Hybrid RRF) with weights
 
-**Goal:** deliver a single ranked list that balances **keyword relevance** (Atlas `$search`) and **semantic similarity** (vector search) using **Reciprocal Rank Fusion (RRF)**.
+```http
+POST /api/v1/search
+Content-Type: application/json
 
-**Request parameters (option 4):**
-- `weightVector` *(float 0..1)* – influence of the vector pipeline.  
-- `weightText` *(float 0..1)* – influence of the text pipeline.  
-- Defaults: `0.5` / `0.5`. Values are used as-is (no auto-normalization).
+{
+  "query": "green tea skin care",
+  "storeObjectId": "684aa28064ff7c785a568aca",
+  "option": 4,
+  "page": 1,
+  "page_size": 20,
+  "weightVector": 0.5,
+  "weightText": 0.5
+}
+```
 
 ![Hybrid Search (RRF) ](../../docs/images/hybrid_search.png)
+
 **How it works (high level):**
 1. Generate an embedding for `query` via Voyage AI (`voyage-3-large`).
 2. Execute **two** searches scoped to `storeObjectId`:
    - **Vector**: `$vectorSearch` over `EMBEDDING_FIELD_NAME` (cosine similarity).
    - **Text**: `$search` full-text query over relevant fields.
-3. Fuse both result lists with **RRF** using the provided weights to produce a single ranking and a numeric `score` per product.
+3. Fuse both result lists with [RRF](https://www.mongodb.com/docs/atlas/atlas-search/tutorial/hybrid-search/?utm_source=chatgpt.com) using the provided weights to produce a single ranking and a numeric `score` per product.
 
 > **Tips:**  
 > - Explore / Discover: Favor semantics → `weightVector=0.6–0.8`.  
