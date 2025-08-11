@@ -51,11 +51,11 @@ Three sample `.json` files are provided:
 
 - **Entities**: products, stores, inventory.
 - **Read paths**: product discovery (text + vector search) with **store-aware filters** (availability, replenishment flags).
-- **Write paths**: frequent stock updates (per store) flowing into a canonical inventory store.
+- **Write paths**: frequent stock updates flowing into a canonical inventory collection.
 - **Scale**:
   - **Real scenario**: ~**6,000 products** × **50 stores**.
   - **Sample dataset** (for easy sharing/reproducibility): **200 products** × **50 stores**.
-- **Access pattern**: users **search by product** but **act based on local store context** (is it in stock here? where is it located?).
+- **Access pattern**: users **search by product** but **act based on local store context** (in which stores is this product?is it in stock here?).
 
 ---
 
@@ -105,15 +105,14 @@ This schema is validated around **~50 stores per product**. If you need to scale
 
 ---
 
-## 4. ⚡ Atlas Indexing Best Practices
+## 4. ⚡ Search & Vector Search Indexes
 
 For best performance:
 
 - **Text & Vector Search:**
   - See [`search-index.json`](../indexes/search-index.json)
   - See [`vector-index.json`](../indexes/vector-index.json)
-- **Inventory Filtering:**
-  - Add a compound index on `inventorySummary.storeId` (and, if useful, `inventorySummary.inStock` or `inventorySummary.nearToReplenishmentInShelf`).
+- Check the configuration guide [here](../indexes/README.md).
 
 ---
 
