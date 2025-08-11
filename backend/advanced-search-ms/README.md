@@ -1,79 +1,46 @@
-# Advanced Search Microservice
+# Advanced Search Microservice
 
-> **Multimodal product search with MongoDB Atlas & Voyage AI – supports keyword, full‑text, vector and hybrid RRF in one endpoint.**
+> **Product Discovery with MongoDB Atlas & Voyage AI – keyword, full-text, vector, and hybrid RRF search in one endpoint.**  
+> 🖼 **Image-based search — Coming Soon!**
 
-This service exposes ``. Clients send a free‑text query plus a *store* scope and choose one of four strategies; the service returns a paginated set of matching products, each with a relevance **score**.
+This [microservice](../../docs/adr/adr-2025-07-advanced-search-microservice-backend-isolation.md/) powers the **Product Discovery** feature in the Unified Commerce demo.  
+Clients send a **free-text query** scoped to a **store**, and choose one of four search strategies.  
+The response is a paginated list of relevant products with a **relevance score**.
 
-- Clean Architecture (domain → application → infrastructure → interface).
+-   [Clean Architecture](../../docs/adr/adr-2025-07-clean-architecture-advanced-search-ms.md/) (domain → application → infrastructure → interface).
 - MongoDB Atlas Lucene `$vectorSearch` **and** `$search` text indexes.
 - Reciprocal Rank Fusion to blend vector & text results.
 - Voyage AI embeddings (`voyage‑3‑large`).
-- Fully async stack (FastAPI + Motor + httpx) on Python 3.11.
+- FastAPI on Python 3.11.
 
 ---
 
-## 1 – Search Strategies
+## 1 – Search Strategies (Text-Based)
 
-| Option | Use‑case class           | Engine / technique                           |
-| ------ | ------------------------ | -------------------------------------------- |
-| **1**  | `KeywordSearchUseCase`   | Simple regex / prefix match on `productName` |
-| **2**  | `AtlasTextSearchUseCase` | Atlas Lucene `$search` full‑text index       |
-| **3**  | `VectorSearchUseCase`    | Lucene `$vectorSearch` (k‑NN, cosine)        |
-| **4**  | `HybridRRFSearchUseCase` | `$rankFusion` – blends 2 & 3 with RRF        |
+| Option | Use Case Class           | Engine / Technique                                     | Typical Use Case | Notes |
+| ------ | ------------------------ | ------------------------------------------------------ | ---------------- | ----- |
+| **1**  | `KeywordSearchUseCase`   | Simple regex / prefix match on `productName`           | Name match | No weights |
+| **2**  | `AtlasTextSearchUseCase` | Atlas Lucene `$search` full-text index                 | Keyword search with boosting, fuzziness, and optional synonyms  | No weights |
+| **3**  | `VectorSearchUseCase`    | Lucene `$vectorSearch` (k-NN, cosine similarity)       | Semantic / natural-language queries | No weights |
+| **4**  | `HybridRRFSearchUseCase` | `$rankFusion` blending options 2 & 3                   | Combine keyword relevance + semantic meaning | Supports `weightVector` & `weightText` |
 
-All strategies are scoped to a single **store** (= MongoDB `stores` doc id) so the client only sees local inventory.
+> **Dynamic weights in option 4:**  
+> The client can send extra parameters (`weightVector`, `weightText`) to fine-tune the influence of each search type at runtime.
 
----
-
-## 2 – Architecture Overview
-
-| Layer              | Folder               | Responsibility                                      |
-| ------------------ | -------------------- | --------------------------------------------------- |
-| **Domain**         | `app/domain`         | Immutable business entities (`Product` …)           |
-| **Application**    | `app/application`    | Use‑cases & ports – *no I/O code*                   |
-| **Infrastructure** | `app/infrastructure` | Mongo & Voyage adapters implementing the ports      |
-| **Interface**      | `app/interfaces`     | FastAPI router, request validation, error mapping   |
-| **Shared**         | `app/shared`         | Config, exceptions, logging helpers                 |
-
-```text
-advanced-search-ms/
-├─ main.py                      # FastAPI entry‑point & DI
-├─ .env.example                 # Template for secrets
-├─ pyproject.toml               # Poetry deps (Python 3.11)
-├─ app/
-  ├─ domain/
-  ├─ application/
-  ├─ infrastructure/
-  ├─ interfaces/
-  └─ shared/
-
-```
-
-### Request Flow (option‑4 example)
-
-1. Client → `` with JSON `{query, storeId, option:4, page, page_size}`.
-2. Router picks `HybridRRFSearchUseCase`.
-3. Use‑case
-   1. calls **Voyage AI** → embedding
-   2. runs `$vectorSearch` *and* `$search` pipelines via `MongoSearchRepository`
-   3. delegates to `$rankFusion` with weights *(0.7 vector / 0.3 text)*
-4. Mongo returns documents with fused ``.
-5. Use‑case maps each raw doc → `Product` domain model.
-6. Router serialises to JSON → 200.
+> All strategies are **store-scoped**, so results only include products available in the selected store.  
+> **Image Search** will be added as a new option in a future release.
 
 ---
 
-## 3 – Environment
-
-Copy `.env.example` → `.env` and fill:
+## 2 – Environment Variables
 
 ```dotenv
 # MongoDB Atlas
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/
 MONGODB_DATABASE=retail-unified-commerce
 PRODUCTS_COLLECTION=products
-SEARCH_INDEX_NAME=product_text_vector_index   # for $vectorSearch
-TEXT_INDEX_NAME=product_text_search_index     # for $search
+VECTOR_INDEX_NAME=product_text_vector_index
+TEXT_INDEX_NAME=product_atlas_search
 EMBEDDING_FIELD_NAME=textEmbeddingVector
 
 # Voyage AI
@@ -84,111 +51,155 @@ VOYAGE_MODEL=voyage-3-large
 
 ---
 
-## 4 – Local Setup
+## 3 – Example Requests
 
-```bash
-cd backend/advanced-search-ms
-brew install python@3.11 poetry   # macOS example
-poetry env use python3.11
-poetry install
-cp .env.example .env              # then add secrets
-
-# Run dev server
-poetry run uvicorn main:app --reload
-```
-
-Visit [**http://localhost:8000/docs**](http://localhost:8000/docs) for interactive Swagger UI.
-
----
-
-## 5 – MongoDB Indexes
-
-### 5.1 Vector Index (Lucene `$vectorSearch`)
-
-```jsonc
-{
-  "name": "product_text_vector_index",
-  "definition": {
-    "mappings": {
-      "dynamic": false,
-      "fields": {
-        "textEmbeddingVector": {
-          "type": "knnVector",
-          "dimensions": 1024,
-          "similarity": "cosine"
-        }
-      }
-    }
-  }
-}
-```
-
-### 5.2 Text Index (Atlas Search `$search`)
-
-```jsonc
-{
-  "name": "product_text_search_index",
-  "definition": {
-    "mappings": {
-      "dynamic": true
-    }
-  }
-}
-```
-
-### 5.3 Hybrid `$rankFusion` example
-
-See *MongoDB docs → Atlas Search → Hybrid Search* for a ready‑made pipeline that our repo executes programmatically.
-
----
-
-## 6 – API Example
-
+### Option 1 (Keyword)
 ```http
 POST /api/v1/search
 Content-Type: application/json
+
 {
-  "query": "organic onions",
-  "storeObjectId": "64efd523c8c0a5d13ba4fd12",
-  "option": 4,
+  "query": "matcha",
+  "storeObjectId": "684aa28064ff7c785a568aca",
+  "option": 1,
   "page": 1,
   "page_size": 20
 }
 ```
 
-Response (truncated):
+### Option 2 (Full‑text)
+```http
+POST /api/v1/search
+Content-Type: application/json
 
-```json
 {
+  "query": "green tea cleanser",
+  "storeObjectId": "684aa28064ff7c785a568aca",
+  "option": 2,
   "page": 1,
-  "page_size": 5,
-  "total_results": 42,
-  "total_pages": 9,
+  "page_size": 20
+}
+```
+
+### Option 3 (Vector)
+```http
+POST /api/v1/search
+Content-Type: application/json
+
+{
+  "query": "gentle antioxidant cleanser",
+  "storeObjectId": "684aa28064ff7c785a568aca",
+  "option": 3,
+  "page": 1,
+  "page_size": 20
+}
+```
+
+### Option 4 (Hybrid RRF) with weights
+
+```http
+POST /api/v1/search
+Content-Type: application/json
+
+{
+  "query": "green tea skin care",
+  "storeObjectId": "684aa28064ff7c785a568aca",
+  "option": 4,
+  "page": 1,
+  "page_size": 20,
+  "weightVector": 0.5,
+  "weightText": 0.5
+}
+```
+
+![Hybrid Search (RRF) ](../../docs/images/hybrid_search.png)
+
+**How it works (high level):**
+1. Generate an embedding for `query` via Voyage AI (`voyage-3-large`).
+2. Execute **two** searches scoped to `storeObjectId`:
+   - **Vector**: `$vectorSearch` over `EMBEDDING_FIELD_NAME` (cosine similarity).
+   - **Text**: `$search` full-text query over relevant fields.
+3. Fuse both result lists with [RRF](https://www.mongodb.com/docs/atlas/atlas-search/tutorial/hybrid-search/?utm_source=chatgpt.com) using the provided weights to produce a single ranking and a numeric `score` per product.
+
+> **Tips:**  
+> - Explore / Discover: Favor semantics → `weightVector=0.6–0.8`.  
+> - Precise search / Known catalog: Favor text → `weightText=0.6–0.8`.
+
+---
+## 5 – Example Response
+
+```jsonc
+{
+  "total_results": 141,
+  "total_pages": 8,
   "products": [
     {
-      "id": "...",
-      "productName": "Organic Brown Onion 1 kg",
-      "score": 0.84,
-      "price": {"amount": 2.19, "currency": "USD"},
-      "inventorySummary": [{"storeId": "64efd523…", "inStock": true}]
+      "id": "685bfe2d3d832cf7e16155f7",
+      "productName": "Green Tea Quick Face Detox Kit",
+      "brand": "MCaffeine",
+      "price": {
+        "amount": 25.79,
+        "currency": "USD"
+      },
+      "quantity": "5 pcs",
+      "category": "Beauty & Hygiene",
+      "subCategory": "Face Care",
+      "absoluteUrl": "https://www.bigbasket.com/pd/40193676/mcaffeine-green-tea-quick-face-detox-kit-5-pcs/",
+      "aboutTheProduct": "The Green Tea Quick Face Detox Kit is ideal for you if you’re looking for a complete detox of your face...",
+      "imageUrlS3": "https://retail-unified-commerce.s3.amazonaws.com/products/685bfe2d3d832cf7e16155f7.png",
+      "inventorySummary": [
+        {
+          "storeObjectId": "684aa28064ff7c785a568aca",
+          "storeId": "store-001",
+          "sectionId": "S02",
+          "aisleId": "I21",
+          "shelfId": "SH211",
+          "inStock": true,
+          "nearToReplenishmentInShelf": false
+        }
+      ],
+      "score": 0.0148
     }
   ]
 }
 ```
+---
+
+## 5 – Running Locally
+
+### Prerequisites
+
+* Python 3.11
+* [Poetry](https://python-poetry.org/)
+
+### Backend Only (Poetry)
+
+```bash
+# 1) Navigate to the microservice
+cd backend/advanced-search-ms
+
+# 2) Create environment & install dependencies
+poetry env use python3.11
+poetry install
+
+# 3) Configure environment variables
+cp .env.example .env
+# -> Fill in MongoDB credentials and VOYAGE_API_KEY
+
+# 4) Start the dev server
+poetry run uvicorn main:app --reload --port 8000
+```
+
+Verify:
+
+* **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
 
 ---
 
-## 7 – Operational Notes
+### Backend + Frontend Together with Docker and Makefile
 
-| Concern          | Detail                                                               |
-| ---------------- | -------------------------------------------------------------------- |
-| **Health‑check** | `GET /health` issues `db.admin.command("ping")` for k8s/LB probes.   |
-| **Retries**      | Tenacity 3× exp back‑off on Mongo & Voyage calls.                    |
-| **Timeouts**     | Mongo aggregate `maxTimeMS=4000`; outbound HTTP 5 s via httpx.       |
-| **Logging**      | JSON structured (`api`, `usecase`, `infra`), INFO‑level by default.  |
-| **Metrics**      | Latency & hit counts emitted via standard logger – pluggable to APM. |
+To run the microservice together with the frontend, follow the steps in the [main project README](../../README.md).
 
 ---
-
-> *Happy querying!* 🎉
 
