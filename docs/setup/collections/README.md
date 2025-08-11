@@ -18,68 +18,90 @@ Three sample `.json` files are provided:
 - [`inventory`](./retail-unified-commerce.inventory.json)
 - [`stores`](./retail-unified-commerce.stores.json)
 
+![Product Document example](docs/images/product_document.png)
+
 ### Importing Data
 
 1. Go to your MongoDB Atlas cluster → **Browse Collections**.
 2. Create each collection in your target database.
 3. Use the **Import** feature to upload the relevant JSON into each collection.
 
----
-
-## 3. 🧠 Data Model: Design Rationale
-
-This demo follows a modern, **retail-oriented schema** that optimizes for intelligent product discovery, store operations, and scalable search. The data model is built on MongoDB’s flexible document approach, aligning with the *Extended Reference Pattern*—a hybrid strategy that materializes just enough data for high-speed queries while preserving a normalized source of truth.
-
-#### **`products` Collection**
 
 
-- **What it stores:** Core product details, semantic enrichment (embeddings), and a summary of per-store inventory.
-- **Key fields:**
-  - `embeddingText`: Composite field for vector search (built from product name and description -aboutTheProduct field-, brand, category, subcategory, and quantity).
-  - `imageUrlS3`: Product image for multimodal search.
-  - `inventorySummary`: Embedded array with **only the essential inventory info per store**.
+## 3.🧠 Data Modeling
 
-> This *summary* is maintained in sync with the transactional `inventory` collection via an Atlas Trigger (real-time sync, no polling). You get:
->
-> - A *write-optimized* collection for ingesting updates.
-> - A *read-optimized * collection, perfect for instant search, store filtering, and UI/API responses.
+**Relational vs. MongoDB — Two approaches. Two mindsets.**
 
-#### **Why embed a summary?**
+### In relational databases
+- You model entities and relationships first — using strict normalization (Third Normal Form).  
+  There’s essentially one “right” way to model the data.
+- Then you write the queries (the workload).
+- You avoid duplication and rely on joins.
+- ✏️ The schema is rigid and expensive to change.
 
-- In retail, you **search by product, but act by local inventory** (availability, replenishment, etc).
-- Embedding a filtered summary for each store lets you:
-  - Present store-level context in discovery flows.
-  - Accelerate search with `$elemMatch` and targeted indexes.
-
-> **Scalability note:**\
-> This model is proven efficient for up to \~50 stores per product and thousands of products—ideal for demos and mid-sized deployments. If scaling to hundreds of stores per product, consider limiting the embedded summary to relevant stores or alternative patterns.
-
-#### **Pattern Used: Extended Reference Pattern**
-
-- [MongoDB Docs: Extended Reference Pattern](https://www.mongodb.com/company/blog/building-with-patterns-the-extended-reference-pattern)
-- A materialized, always-fresh summary of key fields for each store in the inventorySummary section of the product document, powered by triggers and change streams.
-- **Not** a pure reference (which would require runtime joins) nor full embedding (which would duplicate all inventory).
+### In MongoDB
+- 🍃 You start by analyzing the workload — estimating data size and measuring read/write operations.
+- 🍃 You identify and quantify relationships — embedding or referencing as appropriate.
+- 🍃 You apply schema design patterns for peak performance.
+- ✏️ The schema is flexible and evolves without friction.
 
 ---
 
-### **`stores` Collection**
+### Workload & Scale Assumptions for This Demo
 
-- Stores geospatial metadata (`Point`), layout (sections/aisles/shelves), open hours, and time zone.
-- Enables:
-  - **Geospatial queries** (find stores near a point)
-  - Intelligent routing/navigation in apps
+- **Entities**: products, stores, inventory.
+- **Read paths**: product discovery (text + vector search) with **store-aware filters** (availability, replenishment flags).
+- **Write paths**: frequent stock updates (per store) flowing into a canonical inventory store.
+- **Scale**:
+  - **Real scenario**: ~**6,000 products** × **50 stores**.
+  - **Sample dataset** (for easy sharing/reproducibility): **200 products** × **50 stores**.
+- **Access pattern**: users **search by product** but **act based on local store context** (is it in stock here? where is it located?).
 
 ---
 
-### **`inventory` Collection**
+### Modeling Decisions
 
-- **Source of truth** for all stock data.
-- Each document tracks one product’s inventory *across* multiple stores:
-  - `storeInventory[]`: Array per store, with shelf/backroom qty, replenishment flags, and predictive fields.
-  - Designed for high-frequency updates, event ingestion, and analytics.
+1) **`inventory` = canonical, write-optimized source of truth**  
+   - Holds authoritative per-store stock details and signals (e.g., shelf/backroom, replenishment flags).
+   - Optimized for **high-frequency writes** and bulk ingestion.
 
-> **Why decouple?**\
-> Heavy writes go to `inventory` (normalized, lean, fast for bulk ingest), while only the *summary* needed for search is pushed to `products`.
+2) **`products` = read-optimized, search-friendly documents**  
+   - Holds product core attributes and **a minimal per-store summary** under `inventorySummary[]`.
+   - This summary is **denormalized** (materialized fields inside the document) and kept in sync from `inventory` via **Atlas Trigger** events.
+   - Goal: serve **single-document reads** for product discovery + store filtering without runtime joins/lookups.
+
+3) **`stores` = geospatial and operational context**  
+   - Location (`Point`), layout (sections/aisles/shelves), hours, time zone — enabling geospatial and in-store navigation use cases.
+
+> **Pattern used:** **Extended Reference Pattern**  
+> We **preserve references** (`storeId`, `productId`) as the link to canonical data, while **materializing only the fields needed for fast reads** in `products.inventorySummary`.  
+> Here we use materialized fields within the product document, kept fresh by triggers/change streams.
+
+---
+
+### Why an Embedded Store-Level Summary in `products`?
+
+- **Product discovery is global; action is local.** Users find items by name/brand/category/semantics, then need local availability and in-store location immediately.
+- Embedding a **tiny, filtered summary per store** enables:
+  - **Fast filtering** with `$elemMatch` and targeted indexes (`inventorySummary.storeId`, flags).
+  - **Simple, low-latency reads** for UI and APIs (no `$lookup` on the hot path).
+
+---
+
+### 📐 Sizing-Quick recommendation & further resources
+
+This schema is validated around **~50 stores per product**. If you need to scale further, **watch next:**
+- Adapt the model → https://youtu.be/YsaOcUDUJKY?si=aPvZ2OoVpQoghR2y&t=408  
+- Modeling strategies → https://youtu.be/3GHZd0zv170?si=BXPsy_jvOUMNMRZT&t=867
+
+---
+
+### Operational Flow (High Level)
+
+1. **Writes** land in `inventory` (canonical).  
+2. An **Atlas Trigger** listens to inserts/updates and **projects only the required fields** into the matching `products.inventorySummary` entry (upsert behavior).
+3. Search-time queries hit `products` with **full-text/vector** + **store filters** for low-latency responses.
+4. Heavy ingestion and search are isolated (read from secondaries if desired) to avoid contention.
 
 ---
 
@@ -91,26 +113,18 @@ For best performance:
   - See [`search-index.json`](../indexes/search-index.json)
   - See [`vector-index.json`](../indexes/vector-index.json)
 - **Inventory Filtering:**
-  - Add a compound index on `inventorySummary.storeId` (and any flag commonly filtered).
-
-📁 Find index definitions in [`docs/setup/indexes/`](../indexes/).
+  - Add a compound index on `inventorySummary.storeId` (and, if useful, `inventorySummary.inStock` or `inventorySummary.nearToReplenishmentInShelf`).
 
 ---
 
 ## 5. ⚙️ Real-Time Inventory → Product Sync
 
+![mongodbatlas](docs/images/mongodbatlas.png)
+
 A **single Atlas Trigger** keeps `products.inventorySummary` always in sync with the canonical `inventory` collection.
 
-- **Pattern:** Materialized View / Extended Reference Pattern
 - **How:** Trigger listens to insert/update/replace on `inventory`, rewrites only relevant summary data into the matching product.
 
-```text
-Trigger type   : Collection
-Collection     : <your_db>.inventory
-Ops            : Insert, Update, Replace
-Full Doc Lookup: ON
-Options        : Auto-Resume = ON, Event Ordering = ON
-```
 
 | File                            | What it does                                                                                                                                                          |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
