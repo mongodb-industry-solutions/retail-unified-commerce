@@ -49,7 +49,7 @@ MongoDB serves as the central data platform in the demo, enabling everything fro
 
 | Component | Description |
 |----------|-------------|
-| **Frontend (Next.js)** | Mini-monolith app that handles UI and basic MongoDB queries. Manages geospatial logic locally (finding stores with stock nearby) and delegates advanced product search to the microservice. |
+| **Main App (Next.js)** | Full-stack frontend that delivers the UI and runs basic MongoDB queries. It handles [geospatial logic ](./docs/adr/adr-2025-07-geospatial-query-pipeline-usecase-backend.md)—finding nearby stores with available stock—and delegates advanced product search to the microservice. |
 | **Advanced Search Microservice (Python)** | Cleanly architected FastAPI service that performs 4 types of search and coordinates query embeddings with Voyage AI. |
 | **MongoDB Atlas** | Core operational data layer with 3 collections: `products`, `inventory`, and `stores`. Stores text and image embeddings used for semantic and image-based search.• Each product embeds a store-level inventorySummary. One Atlas Trigger listens for key inventory changes and syncs product documents. A second scheduled trigger simulates daily inventory updates to maintain realism and consistency. |
 | **Embeddings & AI Integration** | Embeddings were generated using **Voyage AI** and stored in MongoDB. The same model is used for query embedding generation to ensure consistency. The architecture also supports swapping in alternative providers. |
