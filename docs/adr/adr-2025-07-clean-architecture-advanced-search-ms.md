@@ -1,11 +1,11 @@
-ADR 2025-07 — Using Clean Architecture in the Advanced Search Microservice for Educational Value
+# ADR 2025-07 — Using Clean Architecture in the Advanced Search Microservice for Educational Value
 
-Date: July 2025
+**Date:** July 2025
 
-Decision
+## Decision
 We structured the Advanced Search microservice using Clean Architecture to teach a maintainable, extensible design pattern. While the demo’s scale doesn’t require this level of layering, it makes the code easier to navigate for someone learning both MongoDB search capabilities and backend architecture.
 
-Why in a Demo Context
+## Why in a Demo Context
 - **Highlight separation of concerns:** Clearly illustrates where business rules live in the **application layer**, where the **domain layer** defines core entities, where the **interface layer** handles the application’s entry points (API endpoints), and where the **infrastructure layer** integrates with external services such as MongoDB (query building) and Voyage AI (query embedding generation).
 - **Improve clarity for learners:** Allows anyone running the demo to understand exactly where to add or change logic, swap embedding providers, or adjust query pipelines without affecting unrelated parts of the code.
 - **Show real-world readiness:** Even in a small demo, demonstrating a production-friendly structure gives users a pattern they can apply in their own projects.

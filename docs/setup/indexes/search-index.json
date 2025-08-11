@@ -1,0 +1,27 @@
+{
+    "mappings": {
+      "dynamic": false,
+      "fields": {
+        "brand": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "inventorySummary": {
+          "fields": {
+            "storeObjectId": {
+              "type": "objectId"
+            }
+          },
+          "type": "document"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "subCategory": {
+          "type": "string"
+        }
+      }
+    }
+  }
