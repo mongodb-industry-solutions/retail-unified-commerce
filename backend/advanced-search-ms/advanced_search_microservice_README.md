@@ -175,11 +175,6 @@ Content-Type: application/json
   ]
 }
 ```
-
----
-
-Got it — here’s **Section 5** in **Markdown** and in English, showing how to run the Advanced Search microservice locally with Poetry, or run it **together with the frontend** by following the main README, including a link to its location.
-
 ---
 
 ## 5 – Running Locally
