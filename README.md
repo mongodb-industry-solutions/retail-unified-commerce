@@ -92,7 +92,7 @@ retail-unified-commerce/
   - [daily inventory simulation](./docs/setup/atlas-triggers/daily_inventory_simulation.js/)
   - [inventory sync](./docs/setup/atlas-triggers/inventory_sync.js/)
 - Environment configuration files (.env) for each app, using .env.example files as a template:
-  - [frontend](./frontend/.env.example)
+  - [frontend](./frontend/.example.env)
   - [advanced-search-ms](./backend/advanced-search-ms/.env.example)
 - Installed tools:
   - Docker + Docker Compose
@@ -183,7 +183,8 @@ This project was made possible through a close collaboration between domain expe
 
 ## Related Demo Content Package
 
-- 🎥 YouTube Video – _coming soon_
+- 🎥 YouTube Video 1– _coming soon_
+- 🎥 YouTube Video 2– _coming soon_
 - 📚 Solution Library – _coming soon_
 - 📝 [Blog](https://www.mongodb.com/company/blog/innovation/empower-retail-associates-unified-commerce-mongodb-atlas?utm_source=ADVOCACY&utm_medium=ORGANIC_SOCIAL)
 
