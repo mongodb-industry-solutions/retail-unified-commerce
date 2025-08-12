@@ -1,0 +1,18 @@
+{
+    "fields": [
+      {
+        "numDimensions": 1024,
+        "path": "textEmbeddingVector",
+        "similarity": "cosine",
+        "type": "vector"
+      },
+      {
+        "path": "inventorySummary.storeObjectId",
+        "type": "filter"
+      },
+      {
+        "path": "inventorySummary.inStock",
+        "type": "filter"
+      }
+    ]
+  }

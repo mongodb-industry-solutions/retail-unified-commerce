@@ -18,7 +18,7 @@ Three sample `.json` files are provided:
 - [`inventory`](./retail-unified-commerce.inventory.json)
 - [`stores`](./retail-unified-commerce.stores.json)
 
-![Product Document example](docs/images/product_document.png)
+![Product Document example](../../images/product_document.png)
 
 ### Importing Data
 
@@ -118,7 +118,7 @@ For best performance:
 
 ## 5. ⚙️ Real-Time Inventory → Product Sync
 
-![mongodbatlas](docs/images/mongodbatlas.png)
+![mongodbatlas](../../images//mongodbatlas.png)
 
 A **single Atlas Trigger** keeps `products.inventorySummary` always in sync with the canonical `inventory` collection.
 

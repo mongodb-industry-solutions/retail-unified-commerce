@@ -57,10 +57,10 @@ Create a **Vector Search** index in the same collection.
 
 These fields define which index names the applications will use:
 
-- **Frontend** → [`frontend/.env.example`](../../frontend/.env.example)  
+- **Frontend** → [`frontend/.env.example`](../../../frontend/.example.env)  
   SEARCH_INDEX=product_atlas_search
 
-- **Backend** → [`backend/advanced-search-ms/.env.example`](../../backend/advanced-search-ms/.env.example)  
+- **Backend** → [`backend/advanced-search-ms/.env.example`](../../../backend/advanced-search-ms/.env.example)  
   SEARCH_TEXT_INDEX=product_atlas_search  
   SEARCH_VECTOR_INDEX=product_text_vector_index
 
