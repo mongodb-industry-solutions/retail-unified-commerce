@@ -1,0 +1,4 @@
+{
+  "key": { "location": "2dsphere" },
+  "name": "location_2dsphere"
+}
