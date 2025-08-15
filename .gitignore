@@ -1,7 +1,7 @@
 # 🔐 Environment files
 .env
 .env.*
-!env.example
+!.env.example
 
 # 🌐 Frontend (Next.js, Node.js, Yarn)
 node_modules/

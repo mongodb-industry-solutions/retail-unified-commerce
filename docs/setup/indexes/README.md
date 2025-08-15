@@ -53,7 +53,19 @@ Create a **Vector Search** index in the same collection.
 
 ---
 
-## 3) Relevant Configuration Fields
+## 3) Create **2dspere index** for geospatial queries
+
+In Atlas open your <code>stores</code> collection and click in the **Indexes tab → Create Index → "location" index field → "2dsphere" index type → Create Index**  
+
+Or in mongosh
+```
+db.stores.createIndex({location: "2dsphere"})
+```
+📄 [`docs/indexes/geospatial-index.json`](geospatial-index.json)
+
+---
+
+## 4) Relevant Configuration Fields
 
 These fields define which index names the applications will use:
 

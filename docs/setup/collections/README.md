@@ -111,7 +111,9 @@ For best performance:
 
 - **Text & Vector Search:**
   - See [`search-index.json`](../indexes/search-index.json)
-  - See [`vector-index.json`](../indexes/vector-index.json)
+  - See [`vector-index.json`](../indexes/vector-index.json)  
+- **Geospatial:**
+  - See [`geospatial-index.json`](../indexes/geospatial-index.json)
 - Check the configuration guide [here](../indexes/README.md).
 
 ---
