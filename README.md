@@ -88,6 +88,7 @@ retail-unified-commerce/
 - [Index definitions](./docs/setup/indexes/README.md/) in:
   - [search index](./docs/setup/indexes/search-index.json/)
   - [vector index](./docs/setup/indexes/vector-index.json/)
+  - [geospatial index](./docs/setup/indexes/geospatial-index.json/)
 - Atlas Triggers – Not required to run the app, but we include two triggers to keep inventory data fresh and simulate real-world updates:
   - [daily inventory simulation](./docs/setup/atlas-triggers/daily_inventory_simulation.js/)
   - [inventory sync](./docs/setup/atlas-triggers/inventory_sync.js/)
