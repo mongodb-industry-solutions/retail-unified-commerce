@@ -12,6 +12,9 @@ Why
 
 from __future__ import annotations
 
+from dotenv import load_dotenv
+load_dotenv()
+import os
 import logging
 import time
 from math import ceil
@@ -105,10 +108,12 @@ async def search(
         logger.info("✅ [INTERFACES/routes] Use-case execution completed, returned to route handler")
 
         status = 200
+        mongo_uri = os.getenv("MONGODB_URI", "")
         return SearchResponse(
             total_results=result["total"],
             total_pages=ceil(result["total"] / req.page_size) if result["total"] else 0,
             products=[ProductOut(**p.dict()) for p in result["products"]],
+            deployment="atlas" if ".mongodb.net" in mongo_uri else "enterprise"
         )
 
     except Exception as exc:

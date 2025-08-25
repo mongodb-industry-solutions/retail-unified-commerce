@@ -63,7 +63,7 @@ class MongoClient:
             maxPoolSize=50,
             minPoolSize=10,
             serverSelectionTimeoutMS=5000,
-            tls=True,
+            tls=True if ".mongodb.net" in uri else False,
         )
 
         # Store references

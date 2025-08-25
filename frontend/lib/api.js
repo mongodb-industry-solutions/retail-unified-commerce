@@ -1,5 +1,5 @@
 
-import { setStores } from "@/redux/slices/GlobalSlice";
+import { pushLatestApiCallsDeployments, setDeployment, setStores } from "@/redux/slices/GlobalSlice";
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
 import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
@@ -32,6 +32,7 @@ if (!response.ok) {
 }
 const data = await response.json();
 console.log('data: ', Object.keys(data.products).length, data)
+setDeploymentToRedux(data.deployment, `${Object.values(SEARCH_OPTIONS).find(s => s.id === searchType)?.label} for product '${query}'`);
 return { products: data.products, totalItems: data.total_results };
 }
 
@@ -215,3 +216,14 @@ export async function getProduct(_id) {
   let data = await response.json();
   return data.result[0]
 }
+
+const setDeploymentToRedux = (deployment = null, latestApiCallsDeployments = null) => {
+  if (deployment === 'atlas') {
+    deployment = 'MongoDB Atlas'
+  } else   if (deployment === 'enterprise') {
+    deployment = 'Enterprise Server'
+  } else {
+    deployment = 'MongoDB'
+  }
+  store.dispatch(pushLatestApiCallsDeployments({ deployment, latestApiCallsDeployments }));
+};

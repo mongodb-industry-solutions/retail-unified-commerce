@@ -13,7 +13,7 @@
     "@leafygreen-ui/button": "^24.0.2",
     "@leafygreen-ui/card": "^13.0.0",
     "@leafygreen-ui/code": "^18.0.0",
-    "@leafygreen-ui/expandable-card": "^5.0.0",
+    "@leafygreen-ui/expandable-card": "^5.0.3",
     "@leafygreen-ui/icon": "^14.1.0",
     "@leafygreen-ui/icon-button": "^17.0.2",
     "@leafygreen-ui/leafygreen-provider": "^5.0.1",
