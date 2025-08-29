@@ -9,27 +9,26 @@ export const PAGINATION_PER_PAGE = 20
 export const SEARCH_OPTIONS = {
     search: {
         id: 2,
-        label: 'Atlas Search',
-        description: 'Full-text search'
+        label: 'MongoDB Search',
+        description: 'Full-text search',
+        enabled: process.env.NEXT_PUBLIC_ENABLE_ATLAS_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_ATLAS_SEARCH
     },
     vectorSearch: {
         id: 3,
-        label: 'Vector Search',
-        description: 'Semantic search with vector embeddings'
+        label: 'MongoDB Vector Search',
+        description: 'Semantic search with vector embeddings',
+        enabled: process.env.NEXT_PUBLIC_ENABLE_VECTOR_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_VECTOR_SEARCH
     },
     hybridSearch: {
         id: 4,
         label: 'Hybrid Search',
-        description: 'Hybrid search'
+        description: 'Hybrid search',
+        enabled: process.env.NEXT_PUBLIC_ENABLE_HYBRID_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_HYBRID_SEARCH
     },
     regex: {
         id: 1,
         label: 'Regex Search',
-        description: 'Regular expression'
-    },
-    // rerank: {
-    //     id: 4,
-    //     label: 'Hybrid Search + Rerank',
-    //     description: 'Re rank results after the search'
-    // },
+        description: 'Regular expression',
+        enabled: process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH
+    }
 }

@@ -17,7 +17,7 @@ import Icon from '@leafygreen-ui/icon';
 export default function Home() {
   const dispatch = useDispatch();
   const { stores, selectedStore } = useSelector(state => state.Global);
-
+  
   useEffect(() => {
     const fetchStores = async () => {
       dispatch(setStores({ stores: [] }));

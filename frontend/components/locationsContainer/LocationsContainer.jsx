@@ -21,8 +21,8 @@ import Image from 'next/image';
 
 const calculateStockLevel = (shelfQuantity = 0, backroomQuantity = 0) => {
     const amount = Number(shelfQuantity) + Number(backroomQuantity);
-    const text = amount < 0 ? 'Out of Stock' : amount <= 10 ? 'Low In Stock' : 'In Stock';
-    const color = amount < 0 ? 'red' : amount <= 40 ? 'yellow' : 'green';
+    const text = amount < 0 ? 'Out of Stock' : amount <= 15 ? 'Low In Stock' : 'In Stock';
+    const color = amount < 0 ? 'red' : amount <= 15 ? 'yellow' : 'green';
     return { color, text }
 }
 

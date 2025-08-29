@@ -113,4 +113,5 @@ def build_vector_pipeline(
     ]
 
     logger.info("[infra/mongodb/pipelines/VECTOR] ✅ Vector pipeline built with %d stages", len(pipeline))
+
     return pipeline

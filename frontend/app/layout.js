@@ -3,6 +3,7 @@ import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import './global.css';
 import ClientProvider from "./ClientProvider";
 import { Toaster } from "react-hot-toast";
+import FloatingCard from "@/components/floatingCard/FloatingCard";
 
 export const metadata = {
   title: "Leafy Associate",
@@ -21,6 +22,7 @@ export const metadata = {
 
 
 export default function RootLayout({ children }) {
+
   return (
     <html lang="en" className={GeistSans.className}>
       <body>
@@ -34,6 +36,7 @@ export default function RootLayout({ children }) {
         />
         <ClientProvider>
           {children}
+          <FloatingCard/>
         </ClientProvider>
       </body>
     </html>

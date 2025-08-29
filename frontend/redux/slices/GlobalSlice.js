@@ -4,7 +4,9 @@ const GlobalSlice = createSlice({
     name: "Global",
     initialState: {
         stores: [],
-        selectedStore:'684aa28064ff7c785a568aca'// null,
+        selectedStore: '684aa28064ff7c785a568aca', // null,
+        deployment: null,
+        latestApiCallsDeployments: []
     },
     reducers: {
         setStores(state, action) {
@@ -21,12 +23,35 @@ const GlobalSlice = createSlice({
                 selectedStore: action.payload.store || null,
             };
         },
+        setDeployment(state, action) {
+            return {
+                ...state,
+                deployment: action.payload.deployment || null,
+            };
+        },
+        pushLatestApiCallsDeployments(state, action) {
+            const newCall = action.payload.latestApiCallsDeployments || null;
+            const lastCall = state.latestApiCallsDeployments[1];
+
+            // Only push if newCall is not the same as the last one
+            if (newCall && JSON.stringify(newCall) !== JSON.stringify(lastCall)) {
+                return {
+                    ...state,
+                    deployment: action.payload.deployment || null,
+                    latestApiCallsDeployments: [...state.latestApiCallsDeployments, newCall].slice(-2),
+                };
+            }
+            // Otherwise, keep state unchanged
+            return state;
+        },
     }
 })
 
 export const {
     setStores,
-    setSelectedStore
+    setSelectedStore,
+    setDeployment,
+    pushLatestApiCallsDeployments
 } = GlobalSlice.actions
 
 export default GlobalSlice.reducer

@@ -1,0 +1,29 @@
+.FloatingCard{
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 241px; /* Set your specific width */
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    border-radius: 12px;
+    min-height: 49px;
+}
+.my-badge-floating{
+    background-color: #16a34a;
+    color: white !important;
+    padding: 3px 5px;
+    height: auto;
+    text-transform: capitalize;
+    font-variant: normal;
+}
+.FloatingCard > div:first-child {
+    padding: 9px 7px;
+}
+.FloatingCard > div:first-child [aria-label="expand card"],
+.FloatingCard > div:first-child [aria-label="collapse card"] {
+   width: 18px;
+   height: 18px;
+}
+.FloatingCard > div:nth-child(2) {
+    padding-top: 0px;
+}

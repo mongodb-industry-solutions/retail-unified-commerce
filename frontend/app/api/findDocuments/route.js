@@ -34,9 +34,15 @@ export async function POST(request) {
         .toArray()
     console.log(`-- ${collectionName} projection: `, projection)
 
-        console.log(`-- ${collectionName} result: `, result)
-    
-    return NextResponse.json({ result:result || null }, { status: 200 });
+    console.log(`-- ${collectionName} result: `, result)
+    const mongoUri = process.env.MONGODB_URI || "";
+    const deployment = mongoUri.includes(".mongodb.net") ? "atlas" : "enterprise";
+
+    return NextResponse.json({ 
+        result: result || null, 
+        deployment: deployment 
+    }, 
+    { status: 200 });
 }
 
 function convertFieldsToObjectId(obj, fields) {

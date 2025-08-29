@@ -93,6 +93,7 @@ class SearchResponse(BaseModel):
     total_results: int
     total_pages: int
     products: List[ProductOut]
+    deployment: str
 
     def __init__(self, **data):
         logger.info("📤 [INTERFACES/schemas] Outgoing SearchResponse: %d products | total_results=%d",

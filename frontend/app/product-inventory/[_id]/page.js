@@ -4,7 +4,7 @@ import { Container } from "react-bootstrap";
 import { useSelector, useDispatch } from 'react-redux';
 import Icon from '@leafygreen-ui/icon';
 import { Tabs, Tab } from '@leafygreen-ui/tabs';
-import { H1, H3, Subtitle } from '@leafygreen-ui/typography';
+import { H1, Subtitle } from '@leafygreen-ui/typography';
 import { useRouter } from 'next/navigation';
 
 import InfoWizard from '@/components/InfoWizard/InfoWizard';

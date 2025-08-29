@@ -30,8 +30,6 @@ const ProductSearch = () => {
         searchWeight
     } = useSelector(state => state.ProductInventory);
 
-    console.log('ProductSearch:', vectorSearchWeight, searchWeight);
-
     const handleSearch = () => {
         // Placeholder: implement search logic here
         console.log('Searching for:', searchValue);
@@ -74,7 +72,9 @@ const ProductSearch = () => {
                         }}
                     >
                         {
-                            Object.values(SEARCH_OPTIONS).map(option => (
+                            Object.values(SEARCH_OPTIONS)
+                            .filter(option => option.enabled)
+                            .map(option => (
                                 <Option
                                     className='search-option'
                                     key={option.id}
