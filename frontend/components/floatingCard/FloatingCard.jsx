@@ -4,7 +4,7 @@ import React from 'react'
 import Icon from '@leafygreen-ui/icon';
 import { useSelector } from 'react-redux';
 
-import './FloatingCard.css'
+import './floatingCard.css'
 import Badge from '@leafygreen-ui/badge';
 import ExpandableCard from '@leafygreen-ui/expandable-card';
 
