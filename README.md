@@ -1,6 +1,6 @@
-# Store Associate App Demo – From Data Silos to Smart Service with MongoDB Atlas
+# Leafy Store Associate Demo App – Unified Data and Search for Smarter Product Discovery
 
-This README helps developers understand the purpose, structure, and deployment process of this unified commerce demo.
+This README helps developers understand the purpose, structure, and deployment process of this Demo App.
 
 ---
 
@@ -13,7 +13,7 @@ This README helps developers understand the purpose, structure, and deployment p
     </td>
     <td>
       This demo showcases the <b>Leafy Store Associate App</b>, built on <b>MongoDB</b> to streamline product discovery and inventory visibility as part of a <b>unified commerce</b> strategy.<br><br>
-      Unified commerce brings all channels and systems together into a single, real-time platform—offering a complete business view and consistent customer experiences. The app highlights how advanced search can run directly on operational data, with performance and simplicity.<br><br>
+      Unified commerce brings all channels and systems together into a single, real-time platform—an approach you can implement in siloed environments using an <a href="https://www.mongodb.com/resources/solutions/use-cases/implementing-an-operational-data-layer"><b>Operational Data Layer (ODL)</b></a> with MongoDB. The app highlights how advanced search can run directly on operational data, with performance and simplicity.<br><br>
       Inventory data is simulated but kept fresh with <b>Atlas Triggers</b>, showing how product and store stock can update in real time with minimal effort. By combining search, freshness, and flexible modeling in one platform, MongoDB makes AI-ready commerce experiences simple to build and easy to scale.
     </td>
   </tr>
