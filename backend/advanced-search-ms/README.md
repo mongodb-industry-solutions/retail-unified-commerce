@@ -82,6 +82,9 @@ Content-Type: application/json
 ```
 
 ### Option 3 (Vector)
+
+![Architechture Advanced Search MS-Vector Search ](../../docs/images/advanced_search_ms_vector_search.png)
+
 ```http
 POST /api/v1/search
 Content-Type: application/json

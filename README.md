@@ -54,7 +54,7 @@ This README helps developers understand the purpose, structure, and deployment p
 
 👉 For technical deep dives, see the [Frontend README](./frontend/README.md) and [Advanced Search Microservice README](./backend/advanced-search-ms/README.md).
 
-🗄️ Database & Modeling ->>> See [docs/setup/collections/README.md](./docs/setup/collections/README.md) for setup instructions and insights into our data modeling strategy. This section also highlights how MongoDB’s flexibility enables powerful unified commerce solutions.
+🗄️ Database & Modeling -> See [docs/setup/collections/README.md](./docs/setup/collections/README.md) for setup instructions and insights into our data modeling strategy.
 
 🗒️ _Tip_: Check the [ADR documentaion](./docs/adr/) folder for architectural rationales and design choices.
 
@@ -181,8 +181,6 @@ This project was made possible through a close collaboration between domain expe
 ### Lead Authors *(Use Case Ideation & Retail Implementation)*
 
 - [**Prashant Juttukonda**](https://www.linkedin.com/in/cloudpkj/) – Principal
-- [**Rodrigo Leal**](https://www.linkedin.com/in/rodrigo-leal-5b240121/) – Principal
-- [**Genevieve Broadhead**](https://www.linkedin.com/in/genevieve-broadhead-271757bb/) – Global Lead, Retail Solutions  
 
 ### Developers & Maintainers *(Technical Design & Implementation)*
 - [**Angie Guemes**](https://www.linkedin.com/in/angelica-guemes-estrada/) – Developer & Maintainer  
