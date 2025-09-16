@@ -5,6 +5,20 @@ This README helps developers understand the purpose, structure, and deployment p
 ---
 
 ## Overview
+## Overview
+
+<table>
+  <tr>
+    <td width="300">
+      <img src="docs/images/unified_commerce.png" width="280" alt="Unified Commerce"/>
+    </td>
+    <td>
+      This demo showcases a store associate application built on <b>MongoDB Atlas</b>, designed to streamline <b>product discovery</b> and <b>inventory visibility</b> as part of a <b>unified commerce strategy</b>.<br><br>
+      Unified commerce connects all sales channels, data, and backend systems into a single, real-time platform—delivering a complete view of the business and enabling consistent, personalized customer experiences.<br><br>
+      MongoDB serves as the central data platform in the demo, enabling everything from simple keyword search to semantic and hybrid queries—including geospatial lookups for nearby store inventory—demonstrating how unified commerce can deliver actionable insights to store associates.
+    </td>
+  </tr>
+</table>
 
 ![Unified Commerce](docs/images/unified_commerce.png)
 
