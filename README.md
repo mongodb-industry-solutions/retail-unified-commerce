@@ -5,7 +5,6 @@ This README helps developers understand the purpose, structure, and deployment p
 ---
 
 ## Overview
-## Overview
 
 <table>
   <tr>
@@ -13,47 +12,32 @@ This README helps developers understand the purpose, structure, and deployment p
       <img src="docs/images/unified_commerce.png" width="280" alt="Unified Commerce"/>
     </td>
     <td>
-      This demo showcases a store associate application built on <b>MongoDB Atlas</b>, designed to streamline <b>product discovery</b> and <b>inventory visibility</b> as part of a <b>unified commerce strategy</b>.<br><br>
-      Unified commerce connects all sales channels, data, and backend systems into a single, real-time platform—delivering a complete view of the business and enabling consistent, personalized customer experiences.<br><br>
-      MongoDB serves as the central data platform in the demo, enabling everything from simple keyword search to semantic and hybrid queries—including geospatial lookups for nearby store inventory—demonstrating how unified commerce can deliver actionable insights to store associates.
+      This demo showcases the <b>Leafy Store Associate App</b>, built on <b>MongoDB</b> to streamline product discovery and inventory visibility as part of a <b>unified commerce</b> strategy.<br><br>
+      Unified commerce brings all channels and systems together into a single, real-time platform—offering a complete business view and consistent customer experiences. The app highlights how advanced search can run directly on operational data, with performance and simplicity.<br><br>
+      Inventory data is simulated but kept fresh with <b>Atlas Triggers</b>, showing how product and store stock can update in real time with minimal effort. By combining search, freshness, and flexible modeling in one platform, MongoDB makes AI-ready commerce experiences simple to build and easy to scale.
     </td>
   </tr>
 </table>
 
-![Unified Commerce](docs/images/unified_commerce.png)
-
-This demo showcases a store associate application built on **MongoDB Atlas**, designed to streamline **product discovery** and **inventory visibility** as part of a **unified commerce strategy**.
-
-Unified commerce connects all sales channels, data, and backend systems into a single, real-time platform—delivering a complete view of the business and enabling consistent, personalized customer experiences.
-
-MongoDB serves as the central data platform in the demo, enabling everything from simple keyword search to semantic and hybrid queries—including geospatial lookups for nearby store inventory—demonstrating how unified commerce can deliver actionable insights to store associates.
-
 ---
+## Discover in this Demo:  
 
-## 🎯 Demo Goals & Capabilities
+- **Intelligent product discovery at scale**  
+  Unified search on operational data using Regex, Full-Text (fuzzy + boosting), Vector (semantic), and Hybrid (RRF with configurable weights).  
+  Includes geospatial queries to instantly locate nearby inventory—showing how MongoDB enables advanced search directly on live operational data, critical for unified commerce.  
 
-![MongoDB Atlas in our demo solution](docs/images/mongodbatlas.png)
+- **Fast, enriched search results**  
+  Product cards display SKU, aisle, shelf, stock, image, and relevance score.  
+  Thanks to MongoDB’s flexible data model, results return instantly from a unified product catalog with embedded store-level inventory.  
 
-- **Demonstrate how MongoDB Atlas enables unified, real-time operational data through flexible modeling.**
-  - The document model allows you to organize data for efficient performance and retrieval. This demo showcases one example: a `products` collection with an embedded `inventorySummary` that keeps product and inventory data connected—enabling high-performance retrieval and continuous real-time updates using **Atlas Triggers**.
+- **Continuously fresh inventory data**  
+  A 12-hour simulation trigger updates ~500 products with realistic stock movements, while an inventory-sync trigger keeps each product’s `inventorySummary` current.  
 
-![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
-
-- 🔍🧠 **Showcase advanced, intelligent product discovery with MongoDB Atlas:**
-  - Regular search (regex) : Basic pattern matching used as a baseline to compare against MongoDB’s advanced search features.
-  - Full-text search (Atlas Search): Relevance-based search using $search with fuzzy matching, field boosts, pagination, and store-level filtering.
-  - Semantic vector search (via Voyage AI embeddings)
-  - Hybrid search (RRF fusion of text and vector results)
-  - Geospatial queries to find nearby availability
-  - Comming soon...Boost promotions to align with sales goals / Image-based product search using multimodal embeddings
-
-![MongoDB Demo Explainer Tools](docs/images/mongodb_demo_explainer_tools.png)
-
-- 🏗️ **Use clean architecture to structure the advanced search microservice**
-  - This demo implements advanced search logic in a dedicated microservice using a modular, layered architecture. It separates the API layer, use-case logic, and infrastructure concerns. Key benefits include:
-      - **Swappable AI providers:** Easily integrate or replace embedding providers (e.g., switching from Voyage AI to Bedrock, or an internal vector service) by isolating vector generation behind an interface.
-      - **Extensible search logic:** Add new retrieval strategies or post-processing steps, such as rule-based re-rankers, personalization layers, or business-logic filters—without touching core orchestration code
-      - **Multi-channel reuse:** Expose the same unified search logic through different entry points like REST, GraphQL, or event-based consumers—enabling consistent behavior across web apps, mobile, or conversational agents
+- **Clean architecture for the advanced search microservice**  
+  The search logic lives in a dedicated, modular FastAPI service that separates API, use-case, and infrastructure layers.  
+  - **Swappable AI providers** (e.g., Voyage AI → Bedrock) via an embedding interface  
+  - **Extensible logic** to add new re-rankers, personalization, or filters without touching orchestration code  
+  - **Multi-channel reuse** across REST, GraphQL, or event-driven consumers  
 
 ---
 
@@ -155,7 +139,17 @@ make build
 | View logs      | `make back-logs`   |
 
 ---
+## 👨‍💻 Explore the Demo
 
+Now that the app is running, you can start exploring.  Use the available helpers to guide your journey:
+
+- Talk tracks that explain key concepts per page  
+- Document summaries and full JSON views of products and more... 
+
+![Overview of Core App Capabilities](docs/images/app_core_functionality_highlights.png)
+![MongoDB Demo Explainer Tools](docs/images/mongodb_demo_explainer_tools.png)
+
+---
 ## 🍃  Why MongoDB for Unified Commerce
 
 MongoDB Atlas is a powerful **Operational Data Layer (ODL)** for unified commerce. It simplifies how retailers consolidate, serve, and act on critical data across channels.
