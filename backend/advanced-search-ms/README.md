@@ -216,7 +216,7 @@ The search API returns consistent JSON responses.
 - **400 (Bad Request)** → Request is invalid (validation/business rules).
 - **500 (Internal Server Error)** → Unexpected failure processing the request.
 
-### 200 – OK
+## 200 – OK
 
 The request was processed successfully.
 
