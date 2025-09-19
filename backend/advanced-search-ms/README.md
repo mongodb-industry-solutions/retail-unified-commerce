@@ -69,10 +69,47 @@ VOYAGE_API_URL=https://api.voyageai.com/v1
 VOYAGE_API_KEY=<your-token>
 VOYAGE_MODEL=voyage-3-large
 ```
+---
+
+## 3 – Running Locally
+
+### Prerequisites
+
+* Python 3.11
+* [Poetry](https://python-poetry.org/)
+
+### Backend Only (Poetry)
+
+```bash
+# 1) Navigate to the microservice
+cd backend/advanced-search-ms
+
+# 2) Create environment & install dependencies
+poetry env use python3.11
+poetry install
+
+# 3) Configure environment variables
+cp .env.example .env
+# -> Fill in MongoDB credentials and VOYAGE_API_KEY
+
+# 4) Start the dev server
+poetry run uvicorn main:app --reload --port 8000
+```
+
+Verify:
+
+* **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
 
 ---
 
-## 3 – Example Requests
+## 4 Backend + Frontend Together with Docker and Makefile
+
+To run the microservice together with the frontend, follow the steps in the [main project README](../../README.md).
+
+---
+
+## 4 – Example Requests
 
 ### Option 1 (Keyword)
 ```http
@@ -171,7 +208,19 @@ Content-Type: application/json
 > - Precise search / Known catalog: favor text → `weightText=0.6–0.8`.  
 
 ---
-## 5 – Example Response
+## 5 API Responses
+
+The search API returns consistent JSON responses.
+
+- **200 (OK)** → Request is valid, even if no products are found.
+- **400 (Bad Request)** → Request is invalid (validation/business rules).
+- **500 (Internal Server Error)** → Unexpected failure processing the request.
+
+---
+
+### 200 – OK
+
+The request was processed successfully.
 
 ```jsonc
 {
@@ -208,43 +257,83 @@ Content-Type: application/json
   ]
 }
 ```
----
+**Example (no results):**
 
-## 5 – Running Locally
+```json
+{
+  "total_results": 0,
+  "total_pages": 0,
+  "products": []
+}
+```
+## 400 – Bad Request
 
-### Prerequisites
+Returned when **validation** or **business rules** fail.
 
-* Python 3.11
-* [Poetry](https://python-poetry.org/)
+### Common cases
+- `brandAmplification` sent with `option=1`.
+- `brandAmplification` present but empty.
+- Any `boostLevel` not in `[1,2,3]`.
+- Invalid `page_size` (must be `1..100`) or `page` (`>=1`).
+- Invalid `fusionMode` (must be `rrf` or `scoreFusion`).
+- **Unknown brands**: one or more provided brand names don’t exist in the catalog for the selected store (case-insensitive).
 
-### Backend Only (Poetry)
+### Examples
 
-```bash
-# 1) Navigate to the microservice
-cd backend/advanced-search-ms
-
-# 2) Create environment & install dependencies
-poetry env use python3.11
-poetry install
-
-# 3) Configure environment variables
-cp .env.example .env
-# -> Fill in MongoDB credentials and VOYAGE_API_KEY
-
-# 4) Start the dev server
-poetry run uvicorn main:app --reload --port 8000
+**Invalid boost level:**
+```json
+{
+  "error": {
+    "code": "INVALID_BOOST_LEVEL",
+    "message": "boostLevel must be one of [1,2,3]"
+  }
+}
 ```
 
-Verify:
+**Brand amplification not allowed for option=1:**
+```json
+{
+  "error": {
+    "code": "INVALID_OPTION_FOR_BRAND_AMP",
+    "message": "brandAmplification is only supported for options {2,3,4}"
+  }
+}
+```
 
-* **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-* **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+**Unknown brands (some or all not found):**
+```json
+{
+  "error": {
+    "code": "UNKNOWN_BRANDS",
+    "message": "Some brands were not found in the catalog for the selected store.",
+    "details": {
+      "unknownBrands": ["innisfree", "brand-x"]
+    }
+  }
+}
+```
 
 ---
 
-### Backend + Frontend Together with Docker and Makefile
+## 500 – Internal Server Error
 
-To run the microservice together with the frontend, follow the steps in the [main project README](../../README.md).
+Returned when the service fails unexpectedly (e.g., DB/connectivity issues, embedding provider failure).
+
+**Example:**
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "An unexpected error occurred. Please try again later."
+  }
+}
+```
 
 ---
+
+## Notes
+
+- If `weightVector` / `weightText` are **omitted** in option 4, defaults `0.5 / 0.5` are applied (no error).
+- If `fusionMode` is **omitted** in option 4, default is `rrf` (no error).
+- If `brandAmplification` is **omitted**, the search runs normally without amplification.
 
