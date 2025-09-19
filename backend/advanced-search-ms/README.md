@@ -274,7 +274,6 @@ Returned when **validation** or **business rules** fail.
 - Any `boostLevel` not in `[1,2,3]`.
 - Invalid `page_size` (must be `1..100`) or `page` (`>=1`).
 - Invalid `fusionMode` (must be `rrf` or `scoreFusion`).
-- **Unknown brands**: one or more provided brand names don’t exist in the catalog for the selected store (case-insensitive).
 
 ### Examples
 
@@ -293,15 +292,6 @@ Returned when **validation** or **business rules** fail.
   "error": {
     "code": "INVALID_OPTION_FOR_BRAND_AMP",
     "message": "brandAmplification is only supported for options {2,3,4}"
-  }
-}
-```
-**Unknown brands (some or all not found):**
-```json
-{
-  "error": {
-    "code": "UNKNOWN_BRANDS",
-    "message": "Some brands were not found in the catalog for the selected store.",
   }
 }
 ```
