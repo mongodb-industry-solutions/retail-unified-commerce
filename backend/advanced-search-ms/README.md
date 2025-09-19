@@ -208,15 +208,13 @@ Content-Type: application/json
 > - Precise search / Known catalog: favor text → `weightText=0.6–0.8`.  
 
 ---
-## 5 API Responses
+## 5 –  API Responses
 
 The search API returns consistent JSON responses.
 
 - **200 (OK)** → Request is valid, even if no products are found.
 - **400 (Bad Request)** → Request is invalid (validation/business rules).
 - **500 (Internal Server Error)** → Unexpected failure processing the request.
-
----
 
 ### 200 – OK
 
@@ -289,7 +287,6 @@ Returned when **validation** or **business rules** fail.
   }
 }
 ```
-
 **Brand amplification not allowed for option=1:**
 ```json
 {
@@ -299,7 +296,6 @@ Returned when **validation** or **business rules** fail.
   }
 }
 ```
-
 **Unknown brands (some or all not found):**
 ```json
 {
@@ -312,8 +308,6 @@ Returned when **validation** or **business rules** fail.
   }
 }
 ```
-
----
 
 ## 500 – Internal Server Error
 
@@ -328,8 +322,6 @@ Returned when the service fails unexpectedly (e.g., DB/connectivity issues, embe
   }
 }
 ```
-
----
 
 ## Notes
 
