@@ -302,9 +302,6 @@ Returned when **validation** or **business rules** fail.
   "error": {
     "code": "UNKNOWN_BRANDS",
     "message": "Some brands were not found in the catalog for the selected store.",
-    "details": {
-      "unknownBrands": ["innisfree", "brand-x"]
-    }
   }
 }
 ```
