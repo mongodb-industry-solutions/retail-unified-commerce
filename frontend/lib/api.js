@@ -3,19 +3,20 @@ import { pushLatestApiCallsDeployments, setDeployment, setStores } from "@/redux
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
 import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
+import { setMetaSearch } from "@/redux/slices/PromotionFormSlice";
 
 export async function getProductsWithSearchInput(query = '') {
   const searchType = store.getState('ProductInventory').ProductInventory.searchType;
   const storeObjectId = store.getState('Global').Global.selectedStore;
   console.log('getProductsWithSearch', searchType)
   const body = {
-        query: query,
-        storeObjectId: storeObjectId,
-        option: searchType,
-        page: store.getState('ProductInventory').ProductInventory.pagination_page + 1,
-        page_size: PAGINATION_PER_PAGE
+    query: query,
+    storeObjectId: storeObjectId,
+    option: searchType,
+    page: store.getState('ProductInventory').ProductInventory.pagination_page + 1,
+    page_size: PAGINATION_PER_PAGE
   }
-  if(searchType === SEARCH_OPTIONS.hybridSearch.id) {
+  if (searchType === SEARCH_OPTIONS.hybridSearch.id) {
     body.weightVector = Number(store.getState('ProductInventory').ProductInventory.vectorSearchWeight);
     body.weightText = Number(store.getState('ProductInventory').ProductInventory.searchWeight);
   }
@@ -25,15 +26,15 @@ export async function getProductsWithSearchInput(query = '') {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-});
-if (!response.ok) {
-  console.log(response)
-  throw new Error(`Error fetching products: ${response.status}`);
-}
-const data = await response.json();
-console.log('data: ', Object.keys(data.products).length, data)
-setDeploymentToRedux(data.deployment, `${Object.values(SEARCH_OPTIONS).find(s => s.id === searchType)?.label} for product '${query}'`);
-return { products: data.products, totalItems: data.total_results };
+  });
+  if (!response.ok) {
+    console.log(response)
+    throw new Error(`Error fetching products: ${response.status}`);
+  }
+  const data = await response.json();
+  console.log('data: ', Object.keys(data.products).length, data)
+  setDeploymentToRedux(data.deployment, `${Object.values(SEARCH_OPTIONS).find(s => s.id === searchType)?.label} for product '${query}'`);
+  return { products: data.products, totalItems: data.total_results };
 }
 
 export async function getProductWithScanner(_id) {
@@ -217,10 +218,32 @@ export async function getProduct(_id) {
   return data.result[0]
 }
 
+export async function brandAmplificationGetSearchMeta() {
+  const response = await fetch(`/api/searchMeta`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
+      indexName: process.env.NEXT_PUBLIC_SEARCH_INDEX,
+      brand: store.getState().BrandAmplificationFormSlice.brandAmplification.brand,
+      categories: store.getState().BrandAmplificationFormSlice.brandAmplification.categories
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching search meta details: ${response.status}`);
+  }
+  let data = await response.json();
+  console.log('brandAmplificationGetSearchMeta searchMeta res', data)
+  store.dispatch(setMetaSearch({metaSearch: data}))
+  return data.meta
+}
+
 const setDeploymentToRedux = (deployment = null, latestApiCallsDeployments = null) => {
   if (deployment === 'atlas') {
     deployment = 'MongoDB Atlas'
-  } else   if (deployment === 'enterprise') {
+  } else if (deployment === 'enterprise') {
     deployment = 'Enterprise Server'
   } else {
     deployment = 'MongoDB'

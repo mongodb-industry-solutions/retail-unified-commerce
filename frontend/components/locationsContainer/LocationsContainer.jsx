@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import './locationsContainer.css';
 import { useSelector } from 'react-redux';
 import { Description } from '@leafygreen-ui/typography';
@@ -17,6 +17,7 @@ import {
 } from '@leafygreen-ui/table';
 import StoreDistanceContainer from './StoreDistanceContainer';
 import Image from 'next/image';
+import { CardHeader } from '../cardHeader/CardHeader';
 
 
 const calculateStockLevel = (shelfQuantity = 0, backroomQuantity = 0) => {
@@ -80,10 +81,7 @@ const LocationsContainer = () => {
                 </div>
             </Card>
             <Card className='mb-4 '>
-                <p className='medium-text text-dark mb-1'>
-                    <Icon glyph="Pin" size="large" /> {/* Aisle icon */}
-                    <strong>Store Map</strong>
-                </p>
+                <CardHeader title="Store Map" glyphIcon="Pin" />
                 <Description className='medium-text mt-0'>See product location on the store map</Description>
                 <div className='d-flex justify-content-center align-items-center mb-2'>
                     <Image

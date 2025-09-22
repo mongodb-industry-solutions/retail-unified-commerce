@@ -1,10 +1,19 @@
 export const productInventoryURL = '/product-inventory'
+export const brandAmplificationURL = '/brand-amplification'
 export const modules =[
     {name: 'Product Inventory', description: 'Easily search for products and view up-to-date stock information.', url: productInventoryURL, disabled: false},
+    {name: 'Brand Amplification', description: 'Create and manage brand amplifications to boost product visibility inside the catalog to reach monthly KPIs.', url: brandAmplificationURL, disabled: false},
     {name: 'Spoiled Inventory', description: 'Access timely reports on products approaching spoilage, enabling preventive measures before expiration.', url: '/module2', disabled: true },
 ]
 
 export const PAGINATION_PER_PAGE = 20
+export const MAX_ALLOWED_CATEGORIES = 3
+export const BOOST_VALUES = [
+    {label: 'low', value: 1},
+    {label: 'medium', value: 2},
+    {label: 'high', value: 3},
+]
+export const BA_DEFAULT_NAME = `ba-${Date.now()}`
 
 export const SEARCH_OPTIONS = {
     search: {
@@ -32,3 +41,17 @@ export const SEARCH_OPTIONS = {
         enabled: process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH
     }
 }
+export const SEARCH_FUSION_OPTIONS = {
+    rankFusion: {
+        id: 1, //this matches with what the backen expects in request.body.fusionMode
+        label: 'Rank Fusion ($rankFusion)',
+    },
+    scoreFusion: {
+        id: 2, //this matches with what the backen expects in request.body.fusionMode
+        label: 'Score Fusion ($scoreFusion)',
+    },
+
+}
+
+
+

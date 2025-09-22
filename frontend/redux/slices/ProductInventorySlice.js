@@ -1,4 +1,4 @@
-import { SEARCH_OPTIONS } from "@/lib/constant";
+import { SEARCH_FUSION_OPTIONS, SEARCH_OPTIONS } from "@/lib/constant";
 import { createSlice } from "@reduxjs/toolkit";
  
 const ProductInventorySlice = createSlice({
@@ -12,6 +12,7 @@ const ProductInventorySlice = createSlice({
         searchType: SEARCH_OPTIONS.search.id, // 'search' or 'vector-search'
         vectorSearchWeight: 0.5,
         searchWeight: 0.5,
+        fusionMode: SEARCH_FUSION_OPTIONS.rankFusion.id, // 'rankFusion' or 'scoreFusion'
         initialLoad: true, // Used to determine if the page is loading for the first time
         loading: false,
         error: null,
@@ -93,14 +94,20 @@ const ProductInventorySlice = createSlice({
         setSearchWeight: (state, action) => {
             return {
                 ...state,
-                searchWeight: action.payload.searchWeight // Assuming SearchWeight is a float
+                searchWeight: Number(action.payload.searchWeight), // Assuming SearchWeight is a float
+                vectorSearchWeight: 1 - Number(action.payload.searchWeight)
             };
         },
         setVectorSearchWeight: (state, action) => {
             return {
                 ...state,
-                vectorSearchWeight: action.payload.vectorSearchWeight // Assuming vectorSearchWeight is a float
+                vectorSearchWeight: Number(action.payload.vectorSearchWeight), // Assuming vectorSearchWeight is a float
+                searchWeight: 1 - Number(action.payload.vectorSearchWeight) // Assuming SearchWeight is a float
+
             };
+        },
+        setFusionMode(state, action) {
+            state.fusionMode = action.payload.fusionMode; // Assuming fusionMode is an int
         }
     }
 })
@@ -116,7 +123,8 @@ export const {
     setCurrentPage,
     toggleForceSearchWithEnter,
     setSearchWeight,
-    setVectorSearchWeight
+    setVectorSearchWeight,
+    setFusionMode
 } = ProductInventorySlice.actions
 
 export default ProductInventorySlice.reducer

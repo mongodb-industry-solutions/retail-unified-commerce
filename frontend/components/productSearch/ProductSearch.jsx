@@ -7,27 +7,30 @@ import Icon from '@leafygreen-ui/icon';
 import Button from '@leafygreen-ui/button';
 import { Option, Select } from '@leafygreen-ui/select';
 import { SearchInput } from '@leafygreen-ui/search-input';
-import { setProductQuery, setSearchType, setSearchWeight, setVectorSearchWeight, toggleForceSearchWithEnter } from '@/redux/slices/ProductInventorySlice';
+import { setFusionMode, setProductQuery, setSearchType, setSearchWeight, setVectorSearchWeight, toggleForceSearchWithEnter } from '@/redux/slices/ProductInventorySlice';
 import ProductScan from '../productScan/ProductScan';
 import AtlasSearchLearnMore from './AtlasSearchLearnMore';
 import VectorSearchLearnMore from './VectorSearchLearnMore';
 import RegexSearchLearnMore from './RegexSearchLearnMore';
-import { SEARCH_OPTIONS } from '@/lib/constant';
+import { SEARCH_FUSION_OPTIONS, SEARCH_OPTIONS } from '@/lib/constant';
 import HybridSearchLearnMore from './HybridSearchLearnMore';
 import { NumberInput } from '@leafygreen-ui/number-input';
 import toast from 'react-hot-toast';
 import { validateHybridSearchParameters } from '@/lib/helpers';
+import { RadioBox, RadioBoxGroup } from '@leafygreen-ui/radio-box-group';
+import ExpandableCard from '@leafygreen-ui/expandable-card';
 
 const ProductSearch = () => {
     const dispatch = useDispatch();
     const [openHelpModal, setOpenHelpModal] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [show, setShow] = useState(false);
-    const { 
-        query, 
+    const {
+        query,
         searchType,
         vectorSearchWeight,
-        searchWeight
+        searchWeight,
+        fusionMode
     } = useSelector(state => state.ProductInventory);
 
     const handleSearch = () => {
@@ -37,7 +40,7 @@ const ProductSearch = () => {
             toast.error('Please enter a search term.');
             return;
         }
-        if (searchType === SEARCH_OPTIONS.hybridSearch.id ) { // user is executing hybrid search
+        if (searchType === SEARCH_OPTIONS.hybridSearch.id) { // user is executing hybrid search
             const validParams = validateHybridSearchParameters(vectorSearchWeight, searchWeight);
             if (!validParams) {
                 return; // Stop execution if validation fails
@@ -73,16 +76,16 @@ const ProductSearch = () => {
                     >
                         {
                             Object.values(SEARCH_OPTIONS)
-                            .filter(option => option.enabled)
-                            .map(option => (
-                                <Option
-                                    className='search-option'
-                                    key={option.id}
-                                    value={option.id}
-                                    description={option.description}
-                                >
-                                    {option.label}
-                                </Option>))
+                                .filter(option => option.enabled)
+                                .map(option => (
+                                    <Option
+                                        className='search-option'
+                                        key={option.id}
+                                        value={option.id}
+                                        description={option.description}
+                                    >
+                                        {option.label}
+                                    </Option>))
                         }
                     </Select>
                     <SearchInput
@@ -143,26 +146,58 @@ const ProductSearch = () => {
             </div>
             {
                 searchType === SEARCH_OPTIONS.hybridSearch.id &&
-                <div className='d-flex flex-row align-items-center mt-3'>
-                    <NumberInput
-                        className='weight-input'
-                        label=""
-                        description="Vector Search Weight"
-                        min={0}
-                        max={1}
-                        value={vectorSearchWeight}
-                        onChange={(e) =>dispatch(setVectorSearchWeight({ vectorSearchWeight: e.target.value }))}
-                    />
-                    <NumberInput
-                        className='weight-input ms-1'
-                        label=""
-                        description="Search Weight"
-                        min={0}
-                        max={1}
-                        value={searchWeight}
-                        onChange={(e) =>dispatch(setSearchWeight({ searchWeight: e.target.value }))}
-                    />
-                </div>
+                <ExpandableCard
+                    className='mt-3'
+                    title="Hybrid search settings"
+                    description="Expand to fine-tune the balance between semantic relevance and keyword matching."
+                    flagText="Fusion mode and weights"
+                >
+                    <div>
+                        <RadioBoxGroup
+                            size="compact"
+                            className="radio-box-group-style"
+                            value={fusionMode}
+                        >
+                            {
+                                Object.values(SEARCH_FUSION_OPTIONS).map((option) => (
+                                    <RadioBox
+                                        key={option.id}
+                                        value={option.id}
+                                        onClick={() => {
+                                            dispatch(setFusionMode({ fusionMode: option.id }))
+                                        }}
+                                    >
+                                        {option.label}
+                                    </RadioBox>
+                                ))
+                            }
+                        </RadioBoxGroup>
+                    </div>
+                    <div className='d-flex flex-row align-items-center mt-3'>
+                        <NumberInput
+                            className='weight-input'
+                            label=""
+                            description="Vector Search Weight"
+                            min={0}
+                            max={1}
+                            value={vectorSearchWeight}
+                            onChange={(e) => dispatch(setVectorSearchWeight({ vectorSearchWeight: e.target.value }))}
+                        />
+                        <NumberInput
+                            className='weight-input ms-1'
+                            label=""
+                            description="Search Weight"
+                            min={0}
+                            max={1}
+                            value={searchWeight}
+                            onChange={(e) => dispatch(setSearchWeight({ searchWeight: e.target.value }))}
+                        />
+                    </div>
+                    <div className='mt-3 mb-3'>
+                        In <code>$rankFusion</code>, rankings are influenced by pipeline weights. In <code>$scoreFusion</code>, weights control the contribution of each pipeline's scores to the final result
+                    </div>
+                </ExpandableCard>
+
             }
         </div>
     )

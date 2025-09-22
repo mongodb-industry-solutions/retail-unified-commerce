@@ -5,9 +5,10 @@
         "brand": {
           "type": "string"
         },
-        "category": {
-          "type": "string"
-        },
+        "category": [
+          {"type": "string"},
+          { "type": "stringFacet" }
+        ],
         "inventorySummary": {
           "fields": {
             "storeObjectId": {

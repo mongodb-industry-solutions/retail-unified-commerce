@@ -1,0 +1,67 @@
+.bucket-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* centers the row horizontally */
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.bucket.color-card {
+    width: 220px; /* or your preferred fixed width */
+    text-align: center;
+    font-size: 15px;
+    margin-bottom: 16px;
+    color: #4c4b4b;
+}
+
+.bucket-count{
+    font-size: 20px;
+    margin-top: 10px;
+    color: gray;
+}
+
+.bucket.color-card{
+    text-align: center;
+    font-size: 15px;
+}
+
+.color-card{
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+}
+
+.card-blue{
+    background-color: rgb(225, 247, 255);;
+    border: 1px solid rgb(4, 152, 236);
+
+}
+.card-forest-green{
+    background-color: #00684a;
+    border: 1px solid #023430;
+    color: white;
+}
+
+.card-forest-green{
+    background-color: #00684a;
+    border: 1px solid #023430;
+
+}
+
+.card-lavender{
+    background-color: #f9ebff;
+    border: 1px solid #f9ebff;
+    color: black;
+}
+
+.card-mist{
+    background-color: #e3fcf7;
+    border: 1px solid #e3fcf7;
+    color: black;
+}
+
+.card-lime{
+    background-color: #e9ff99;
+    border: 1px solid #e9ff99;
+    color: black;
+}
