@@ -1,4 +1,5 @@
 # app/interfaces/schemas.py
+
 """
 Pydantic schemas for API layer (request & response).
 
@@ -11,12 +12,6 @@ Contract highlights (v2):
 - Hybrid fusion (option=4): optional fusionMode ('rrf' | 'scoreFusion') + weights.
 - Pagination: page >=1, page_size 1..100 (default 20).
 - Response includes relevance 'score' and 'isBoosted' (response-only).
-
-Notes:
-All classes inherit from `pydantic.BaseModel`, which provides:
-• Automatic type validation of inputs and outputs.
-• JSON serialization and OpenAPI generation.
-• A clean and declarative way to define data structures.
 """
 
 import logging
@@ -28,8 +23,6 @@ logger = logging.getLogger("advanced-search-ms.schemas")
 
 # ─────────────────────────────── Brand Boost schema ───────────────────────────────
 class BrandBoost(BaseModel):
-    # DTO representing a single brand boost entry submitted by the client.
-    # This is part of the public contract: name + boostLevel.
     name: str = Field(
         ...,
         min_length=1,
@@ -45,14 +38,8 @@ class BrandBoost(BaseModel):
     )
 
 
-# ──────────────────────────────── Request Schema ────────────────────────────────
+# ─────────────────────────────── Request Schema ────────────────────────────────
 class SearchRequest(BaseModel):
-    """
-    DTO for search request body.  
-    Defines exactly what clients can send, validation rules, default values, and OpenAPI schema.
-    Serves as the boundary between external clients and internal use-case logic.
-    """
-
     query: str = Field(
         ...,
         min_length=1,
@@ -110,13 +97,12 @@ class SearchRequest(BaseModel):
     )
     fusionMode: Optional[str] = Field(
         None,
-        regex=r"^(rrf|scoreFusion)$",
+        pattern=r"^(rrf|scoreFusion)$",
         title="Fusion Mode",
         example="rrf",
         description="(Only used if option=4) 'rrf' (default) or 'scoreFusion' to combine text + vector results"
     )
 
-    # BRAND AMPLIFICATION: client may request boosting specific brands
     brandAmplification: Optional[List[BrandBoost]] = Field(
         None,
         title="Brand Amplification",
@@ -126,13 +112,11 @@ class SearchRequest(BaseModel):
 
     @validator("brandAmplification", each_item=False)
     def _validate_brand_amp_not_empty(cls, value):
-        # Business rule: if client supplies brandAmplification, list must not be empty
         if value is not None and len(value) == 0:
             raise ValueError("brandAmplification list, if provided, must contain at least one item")
         return value
 
     def __init__(self, **data):
-        # Logging the sanitized request data helps with observability without leaking sensitive info
         safe = {
             "query": (data.get("query") or "")[:64],
             "storeObjectId": data.get("storeObjectId"),
@@ -148,6 +132,22 @@ class SearchRequest(BaseModel):
         }
         logger.info("📥 [INTERFACES/schemas] Incoming SearchRequest v2 | %s", safe)
         super().__init__(**data)
+
+
+# ─────────────────────────────── Response Schema ────────────────────────────────
+class InventoryItemOut(BaseModel):
+    storeObjectId: str
+    storeId: str
+    sectionId: str
+    aisleId: str
+    shelfId: str
+    inStock: bool
+    nearToReplenishmentInShelf: Optional[bool] = None
+
+
+class PriceOut(BaseModel):
+    amount: float
+    currency: str
 
 
 class ProductOut(BaseModel):
@@ -180,3 +180,20 @@ class ProductOut(BaseModel):
         logger.info("📦 [INTERFACES/schemas] Serializing ProductOut: %s", data.get("productName", "N/A"))
         super().__init__(**data)
 
+
+class SearchResponse(BaseModel):
+    total_results: int
+    total_pages: int
+    products: List[ProductOut]
+    deployment: str = Field(
+        ...,
+        description="Deployment identifier (e.g., 'atlas' | 'enterprise')"
+    )
+
+    def __init__(self, **data):
+        logger.info(
+            "📤 [INTERFACES/schemas] Outgoing SearchResponse: %d products | total_results=%d",
+            len(data.get("products", [])),
+            data.get("total_results", 0)
+        )
+        super().__init__(**data)
