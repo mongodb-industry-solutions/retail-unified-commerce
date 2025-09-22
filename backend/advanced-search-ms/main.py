@@ -111,7 +111,7 @@ async def shutdown_resources() -> None:
 # ───── Mount search routes ──────────────────────────────────────────────────
 app.include_router(
     search_router,
-    prefix="/api/v2",
+    prefix="/api/v1",
     dependencies=[
         Depends(dependencies.get_repo),
         Depends(dependencies.get_embedder),
