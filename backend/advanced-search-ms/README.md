@@ -250,7 +250,9 @@ The request was processed successfully.
           "nearToReplenishmentInShelf": false
         }
       ],
-      "score": 0.0148
+      "score": 0.0148,
+      // NEW: brand amplification fields (response-only)
+      "isBoosted": true
     }
   ]
 }
