@@ -1,4 +1,5 @@
 # app/interfaces/routes.py
+
 """
 API layer (FastAPI router).
 
@@ -8,38 +9,42 @@ Why
 * Chooses the correct search use-case and executes it.
 * Maps domain objects to JSON, sets HTTP status codes.
 * Adds structured logging for observability.
+*
+* Updated for API version 2 (v2):
+* - Validates business rules for brandAmplification:
+*     • Not allowed if option == 1
+*     • boostLevel must be in [1..3]
+* - Logs new fields: fusionMode, weights, brandAmpCount
+* - Preserves existing behavior for options 1-4
 """
 
 from __future__ import annotations
 
-from dotenv import load_dotenv
-load_dotenv()
 import os
-import logging
 import time
+import logging
 from math import ceil
 
 from fastapi import APIRouter, Depends, HTTPException
 
-# ── Application use-cases ──────────────────────────────────────────────────────────
+# Application use-cases
 from app.application.use_cases.keyword_search_use_case import KeywordSearchUseCase
 from app.application.use_cases.atlas_text_search_use_case import AtlasTextSearchUseCase
 from app.application.use_cases.vector_search_use_case import VectorSearchUseCase
 from app.application.use_cases.hybrid_rrf_use_case import HybridRRFSearchUseCase
 
-# ── Ports helpers injected via FastAPI DI ────────────────────────────────────────────
+# Ports / Dependencies
 from app.infrastructure.mongodb.search_repository import MongoSearchRepository
 from app.infrastructure.voyage_ai.client import VoyageClient
 
-# ── Pydantic schemas ────────────────────────────────────────────────────────────────
+# Pydantic schemas
 from app.interfaces.schemas import SearchRequest, SearchResponse, ProductOut
 from app.shared import dependencies
 
 logger = logging.getLogger("advanced-search-ms.api")
 router = APIRouter()
 
-# ────────────────────────────────  Route  ────────────────────────────────
-@router.post("/search", response_model=SearchResponse, summary="Product search (4 strategies)")
+@router.post("/search", response_model=SearchResponse, summary="Product search (4 strategies, supports Brand Amplification in options 2-4)")
 async def search(
     req: SearchRequest,
     repo: MongoSearchRepository = Depends(dependencies.get_repo),
@@ -52,17 +57,51 @@ async def search(
     * **2** – Atlas text (`$search`)  
     * **3** – pure vector (`$vectorSearch`)  
     * **4** – hybrid RRF (text + vector)  
-        → Optional fields: `weightVector`, `weightText`
+
+    Supports optional `brandAmplification` in options 2-4;  
+    Optional `fusionMode`, `weightText`, `weightVector` for option 4.  
     """
+
     t0 = time.perf_counter()
+    # Log request arrival with new fields for observability
     logger.info(
-        "🚀 [INTERFACES/routes] Received request in API layer | query=%r option=%d storeObjectId=%s page=%d page_size=%d",
+        "🚀 [INTERFACES/routes] Received request | query=%r option=%d storeObjectId=%s page=%d page_size=%d brandAmpCount=%d fusionMode=%s weightText=%s weightVector=%s",
         req.query,
         req.option,
         req.storeObjectId,
         req.page,
         req.page_size,
+        len(req.brandAmplification or []),
+        req.fusionMode,
+        req.weightText,
+        req.weightVector
     )
+
+    # Business rule: brandAmplification not allowed for option 1
+    if req.option == 1 and req.brandAmplification is not None:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "INVALID_OPTION_FOR_BRAND_AMP",
+                    "message": "brandAmplification is only supported for options {2,3,4}"
+                }
+            }
+        )
+
+    # Business rule: each boostLevel must be in [1,2,3]
+    if req.brandAmplification is not None:
+        for b in req.brandAmplification:
+            if not (1 <= b.boostLevel <= 3):
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": {
+                            "code": "INVALID_BOOST_LEVEL",
+                            "message": "boostLevel must be one of [1,2,3]"
+                        }
+                    }
+                )
 
     logger.info("📌 [INTERFACES/routes] Selecting use-case based on option=%d", req.option)
 
@@ -81,29 +120,36 @@ async def search(
             logger.info("✅ [INTERFACES/routes] HybridRRFSearchUseCase initialized")
         case _:
             logger.error("❌ [INTERFACES/routes] Invalid option received, raising HTTPException")
-            raise HTTPException(status_code=400, detail="Invalid option")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": {
+                        "code": "INVALID_OPTION",
+                        "message": "option must be one of [1,2,3,4]"
+                    }
+                }
+            )
 
     status = 500
     try:
         logger.info("▶️ [INTERFACES/routes] Calling use-case.execute() to enter application layer")
 
-        match req.option:
-            case 4:
-                result = await use_case.execute(
-                    query=req.query,
-                    store_object_id=req.storeObjectId,
-                    page=req.page,
-                    page_size=req.page_size,
-                    weight_vector=req.weightVector,
-                    weight_text=req.weightText,
-                )
-            case _:
-                result = await use_case.execute(
-                    query=req.query,
-                    store_object_id=req.storeObjectId,
-                    page=req.page,
-                    page_size=req.page_size,
-                )
+        if req.option == 4:
+            result = await use_case.execute(
+                query=req.query,
+                store_object_id=req.storeObjectId,
+                page=req.page,
+                page_size=req.page_size,
+                weight_vector=req.weightVector,
+                weight_text=req.weightText,
+            )
+        else:
+            result = await use_case.execute(
+                query=req.query,
+                store_object_id=req.storeObjectId,
+                page=req.page,
+                page_size=req.page_size,
+            )
 
         logger.info("✅ [INTERFACES/routes] Use-case execution completed, returned to route handler")
 
@@ -116,9 +162,15 @@ async def search(
             deployment="atlas" if ".mongodb.net" in mongo_uri else "enterprise"
         )
 
+    except HTTPException as http_exc:
+        # Let HTTPExceptions bubble up with proper status
+        logger.warning("⚠️ [INTERFACES/routes] HTTPException thrown: %s", http_exc.detail)
+        raise
+
     except Exception as exc:
-        logger.exception("💥 [INTERFACES/routes] Search failed with exception: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        logger.exception("💥 [INTERFACES/routes] Search failed with unexpected exception: %s", exc)
+        # Use 500 for internal server errors according to contract
+        raise HTTPException(status_code=500, detail={"error": {"code": "INTERNAL_ERROR", "message": "An unexpected error occurred. Please try again later."}}) from exc
 
     finally:
         elapsed = (time.perf_counter() - t0) * 1000
