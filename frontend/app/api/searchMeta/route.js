@@ -47,6 +47,70 @@ const pipeline = [
   }
 ];
 
+const pipeline2 = [
+  {
+    $searchMeta: {
+      index: indexName,
+      facet: {
+        operator: {
+          phrase: {
+            query: brand,
+            path: "brand"
+          }
+        },
+        facets: {
+          categoriesFacet: { type: "string", path: "category" }
+        }
+      }
+    }
+  }
+];
+
+const pipeline3 =  [
+  {
+    $searchMeta: {
+      index: indexName,
+      facet: {
+        operator: {
+          equals: {
+            path: "brand",
+            value: brand
+          }
+        },
+        facets: {
+          categoriesFacet: { type: "string", path: "category" }
+        }
+      }
+    }
+  }
+];
+
+
+const pipeline4 = [
+  {
+    $searchMeta: {
+      index: indexName,
+      facet: {
+        operator: { phrase: { query: brand, path: "brand" } },
+        facets: { categoriesFacet: { type: "string", path: "category" } }
+      }
+    }
+  },
+  {
+    $addFields: {
+      "facet.categoriesFacet.buckets": {
+        $filter: {
+          input: "$facet.categoriesFacet.buckets",
+          as: "b",
+          // Only keep categories that belong to documents where brand exactly matches the provided brand
+          cond: { $eq: ["$$b._id", brand] }
+        }
+      }
+    }
+  }
+];
+
+
         let [meta] = await collection.aggregate(pipeline).toArray();
 
         const mongoUri = process.env.MONGODB_URI || "";

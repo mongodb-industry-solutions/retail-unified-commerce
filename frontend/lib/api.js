@@ -3,7 +3,7 @@ import { pushLatestApiCallsDeployments, setDeployment, setStores } from "@/redux
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
 import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
-import { setMetaSearch } from "@/redux/slices/PromotionFormSlice";
+import { setBrandSelector, setMetaSearch } from "@/redux/slices/PromotionFormSlice";
 
 export async function getProductsWithSearchInput(query = '') {
   const searchType = store.getState('ProductInventory').ProductInventory.searchType;
@@ -226,7 +226,7 @@ export async function brandAmplificationGetSearchMeta() {
     },
     body: JSON.stringify({
       collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
-      indexName: process.env.NEXT_PUBLIC_SEARCH_INDEX,
+      indexName: process.env.NEXT_PUBLIC_SEARCH_META_INDEX,
       brand: store.getState().BrandAmplificationFormSlice.brandAmplification.brand,
       categories: store.getState().BrandAmplificationFormSlice.brandAmplification.categories
     }),
@@ -237,6 +237,25 @@ export async function brandAmplificationGetSearchMeta() {
   let data = await response.json();
   console.log('brandAmplificationGetSearchMeta searchMeta res', data)
   store.dispatch(setMetaSearch({metaSearch: data}))
+  return data.meta
+}
+
+export async function getAllBrands() {
+  const response = await fetch(`/api/getDistinctBrands`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching search meta details: ${response.status}`);
+  }
+  let data = await response.json();
+  console.log('getAllBrands res', data)
+  store.dispatch(setBrandSelector({ brands: data.data || [] }));
   return data.meta
 }
 

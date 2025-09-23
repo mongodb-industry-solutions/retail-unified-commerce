@@ -7,7 +7,6 @@ export const modules =[
 ]
 
 export const PAGINATION_PER_PAGE = 20
-export const MAX_ALLOWED_CATEGORIES = 3
 export const BOOST_VALUES = [
     {label: 'low', value: 1},
     {label: 'medium', value: 2},

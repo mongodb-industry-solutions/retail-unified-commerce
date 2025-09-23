@@ -15,22 +15,18 @@ const BrandAmplificationFormSlice = createSlice({
         brandSelector: {
             loading: true,
             error: null,
-            data: [
-                {name: 'Fresho'},
-                {name: 'brand b'},
-                {name: 'brand c'},
-            ]
+            data: []
         },
         // for select options for categories
         categoriesSelector: {
             loading: true,
             error: null,
             data: [
-                {name: 'Fruits & Vegetables'},
-                {name: 'Eggs, Meat & Fish'},
-                {name: 'brand c'},
-                {name: 'brand d'},
-                {name: 'brand e'},
+                { name: 'Fruits & Vegetables' },
+                { name: 'Eggs, Meat & Fish' },
+                { name: 'brand c' },
+                { name: 'brand d' },
+                { name: 'brand e' },
             ]
         },
         // the list of active brand, these are taken from the MongoDB
@@ -43,6 +39,18 @@ const BrandAmplificationFormSlice = createSlice({
         metaSearch: null
     },
     reducers: {
+        setBrandSelectorLoading(state, action) {
+            console.log('setBrandSelectorLoading action payload:', action.payload);
+            state.brandSelector.loading = action.payload.loading;
+        },
+        setBrandSelectorError(state, action) {
+            console.log('setBrandSelectorError action payload:', action.payload);
+            state.brandSelector.error = action.payload.error;
+        },
+        setBrandSelector(state, action) {
+            console.log('setBrandSelector action payload:', action.payload);
+            state.brandSelector.data = action.payload.brands || [];
+        },
         setBrand(state, action) {
             console.log('setBrand action payload:', action.payload);
             let name = state.brandAmplification.name
@@ -51,6 +59,10 @@ const BrandAmplificationFormSlice = createSlice({
                 state.brandAmplification.name = `ba-${brandDashed}-${Date.now()}`
             }
             state.brandAmplification.brand = action.payload.brand || '';
+            state.categoriesSelector.data = action.payload.categories || [];
+            if(!action.payload.brand)
+                state.brandAmplification.categories = []
+
         },
         setBrandAmplificationField(state, action) {
             console.log('setBrandAmplification action payload:', action.payload);
@@ -85,7 +97,10 @@ export const {
     setBrandAmplificationList,
     addBrandAmplifications,
     removeBrandAmplification,
-    setMetaSearch
+    setMetaSearch,
+    setBrandSelectorLoading,
+    setBrandSelectorError,
+    setBrandSelector
 } = BrandAmplificationFormSlice.actions
 
 export default BrandAmplificationFormSlice.reducer

@@ -9,12 +9,8 @@ import Button from '@leafygreen-ui/button';
 import ExpandableCard from '@leafygreen-ui/expandable-card';
 import Code from '@leafygreen-ui/code'
 import { useDispatch, useSelector } from 'react-redux';
-import { Description } from '@leafygreen-ui/typography';
 import { setBrand, setBrandAmplificationField } from '@/redux/slices/PromotionFormSlice';
-import Badge from '@leafygreen-ui/badge';
-import IconButton from '@leafygreen-ui/icon-button';
-import X from "@leafygreen-ui/icon/dist/X";
-import { BOOST_VALUES, MAX_ALLOWED_CATEGORIES } from '@/lib/constant';
+import { BOOST_VALUES } from '@/lib/constant';
 import BrandAmplificationMeta from '../brandAmplificationMeta/BrandAmplificationMeta';
 import { brandAmplificationGetSearchMeta } from '@/lib/api';
 
@@ -60,17 +56,21 @@ const PromotionForm = () => {
             dispatch(setBrandAmplificationField({ field: field, value: arr.filter((item) => item !== value) }))
         }
         else {
-            if (brandAmplification.categories.length < MAX_ALLOWED_CATEGORIES)
-                dispatch(setBrandAmplificationField({ field: field, value: [...arr, value] }))
+            dispatch(setBrandAmplificationField({ field: field, value: [ value] }))
         }
         calcBrandAmplificationGetSearchMeta()
     };
 
-    const onBrandChange = (value) => {
-        dispatch(setBrand({ brand: value }))
+    const onBrandChange = (brand = null) => {
+        dispatch(setBrand({ brand: brand?._id, categories: brand?.categories }))
         calcBrandAmplificationGetSearchMeta()
     }
     const onCategoryChange = (value) => {
+        if (value === "") {
+            dispatch(setBrandAmplificationField({ field: "categories", value: [] }))
+            calcBrandAmplificationGetSearchMeta()
+            return
+        }
         handleArrayToggle("categories", value)
     }
 
@@ -83,44 +83,31 @@ const PromotionForm = () => {
                         <Combobox
                             label="Brand"
                             description="The brand you wish to amplify in the search results"
-                            ///placeholder="Select fruit"
                             className={'selectInput'}
                             onChange={(value) => {
-                                let name = value === null ? '' : value
-                                onBrandChange(name)
+                                if(value === null)
+                                    onBrandChange(null)
                             }}
                         >
                             {(Array.isArray(brandSelector.data)
                                 ? brandSelector.data
                                 : []
                             ).map((brand, index) => (
-                                <ComboboxOption 
-                                    key={`${brand}-${index}`}
-                                    value={brand.name}
+                                <ComboboxOption
+                                    key={`brand-${index}`}
+                                    value={`${brand._id} (${brand.count} products)`}
+                                    onClick={() => {
+                                        //let name = value === null ? '' : value
+                                        onBrandChange(brand)
+                                    }}
                                 />
                             ))}
                         </Combobox>
-                        {/* <Select
-                            className={'selectInput'}
-                            label="Brand"
-                            description="The brand you wish to amplify in the search results"
-                            allowDeselect={false}
-                            onChange={(value) => onBrandChange(value)}
-                        >
-                            {(Array.isArray(brandSelector.data)
-                                ? brandSelector.data
-                                : []
-                            ).map((brand, index) => (
-                                <Option key={`${brand}-${index}`} value={brand.name}>
-                                    {brand.name}
-                                </Option>
-                            ))}
-                        </Select> */}
                         <Select
                             className={'selectInput'}
-                            label="Categories (max 3)"
+                            label="Categories (max 1)"
                             description="If no category is selected the amplification is applied to all"
-                            allowDeselect={false}
+                            allowDeselect={true}
                             disabled={brandAmplification.brand?.length === 0}
                             onChange={(value) => onCategoryChange(value)}
                         >
@@ -128,29 +115,11 @@ const PromotionForm = () => {
                                 ? categoriesSelector.data
                                 : []
                             ).map((category, index) => (
-                                <Option key={`${category}-${index}`} value={category.name}>
-                                    {category.name}
+                                <Option key={`category-${index}`} value={category}>
+                                    {category}
                                 </Option>
                             ))}
                         </Select>
-                    </div>
-                    <div className={'mt-4'}>
-                        <Description><strong>Categories</strong></Description>
-                        <div className={'badgesContainer'}>
-                            {
-                                brandAmplification && brandAmplification.categories.length > 0
-                                    ? brandAmplification.categories.map((category, index) => (
-                                        <Badge
-                                            key={index}
-                                            variant="blue"
-                                            onClick={() => handleArrayToggle('categories', category)}
-                                        >
-                                            {category} <IconButton aria-label="Remove"> <X /> </IconButton>
-                                        </Badge>))
-                                    : <span className='text-muted'>No categories selected</span>
-                            }
-
-                        </div>
                     </div>
                     <section className='mt-3' id="meta-search-section">
                         <ExpandableCard

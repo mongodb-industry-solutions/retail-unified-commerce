@@ -4,16 +4,27 @@ import { Container } from "react-bootstrap";
 import PageSubheader from '@/components/pageSubheader/PageSubheader';
 import { Tabs, Tab } from '@leafygreen-ui/tabs';
 import PromotionForm from '@/components/promotionForm/PromotionForm';
+import { getAllBrands } from '@/lib/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { setBrandSelectorError, setBrandSelectorLoading } from '@/redux/slices/PromotionFormSlice';
 
 export default function ProductInventoryPage() {
-    const [selected, setSelected] = useState(0)
+    const [selected, setSelected] = useState(0);
+    const dispatch = useDispatch();
     const tabs = []
 
     useEffect(() => {
-      //load all brand names for the form selector
-
+        //load all brand names for the form selector
+        getAllBrands().then(res => {
+            console.log(res)
+        })
+        .catch(err => {
+            dispatch(setBrandSelectorError({ error: err }))
+        })
+        .finally(() => {
+            dispatch(setBrandSelectorLoading({ loading: false }))
+        })
     }, [])
-    
 
     return (
         <Container>
