@@ -4,7 +4,7 @@ import './brandAmplificationMeta.css'
 import { useSelector } from 'react-redux';
 
 const BrandAmplificationMeta = () => {
-  const { brandAmplification, metaSearch } = useSelector(state => state.BrandAmplificationFormSlice)
+  const { metaSearch } = useSelector(state => state.BrandAmplificationFormSlice)
   return (
     <div className='brand-amplification-meta'>
       <div className='color-card card-lavender'>
@@ -25,9 +25,6 @@ const BrandAmplificationMeta = () => {
           }
         </div>
       </div>
-
-
-
     </div>
   )
 }

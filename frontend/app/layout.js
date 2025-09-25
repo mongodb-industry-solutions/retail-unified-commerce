@@ -4,9 +4,10 @@ import './global.css';
 import ClientProvider from "./ClientProvider";
 import { Toaster } from "react-hot-toast";
 import FloatingCard from "@/components/floatingCard/FloatingCard";
+import { APP_NAME } from "@/lib/constant";
 
 export const metadata = {
-  title: "Leafy Associate",
+  title: APP_NAME,
   description: "Unified Commerce tool to empower store associates",
   icons: [
     {

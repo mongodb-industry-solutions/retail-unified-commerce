@@ -31,7 +31,7 @@ export default function ProductInventoryPage() {
             <PageSubheader
                 tabs={tabs}
                 header="Brand Amplification"
-                subtitle="Create brand amplifications to boost products relevance and reach KPIs"
+                subtitle="Module for managers to amplify brands, increase product relevance, and reach KPIs"
             />
             <Tabs aria-label="Brand amplification tabs" className='mt-4' setSelected={setSelected} selected={selected}>
                 <Tab id='create-promotion' name="Create brand amplification"><PromotionForm /></Tab>

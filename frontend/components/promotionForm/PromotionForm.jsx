@@ -173,7 +173,7 @@ const PromotionForm = () => {
                 <br /><br />
                 <CardHeader title="Meta Search" subtitle="Watch $metaSearch result" glyphIcon="CurlyBraces" />
                 <Code className="brand-amplification-json mt-4" language="javascript" showLineNumbers>
-                    {JSON.stringify(metaSearch, null, 2)}
+                    {JSON.stringify(metaSearch?.meta?.meta, null, 2)}
                 </Code>
             </div>
 
