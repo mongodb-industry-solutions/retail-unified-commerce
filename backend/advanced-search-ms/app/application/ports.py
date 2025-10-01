@@ -11,47 +11,48 @@ implement these contracts, so business logic remains I/O-agnostic.
 Conventions
 -----------
 Every search method returns:
-    Tuple[List[Dict], int]  →  (documents, total_count)
+    SearchResult = Tuple[List[Dict], int]  →  (documents, total_count)
 
 Shared parameters:
     store_object_id • page • page_size
 
-Brand Amplification
--------------------
-Some strategies build a MongoDB pipeline that boosts specific brands and/or
-projects an `isBoosted` flag. For that reason, ports expose an optional
-`brand_amplification` parameter that the Use Case passes through.
+Brand Amplification (App-local spec)
+------------------------------------
+Use `BrandAmpSpec` (TypedDict) to keep Application ↔ Domain decoupled.
+Infra is responsible for translating:
+  - `boostLevel` (1|2|3) → numeric weights/factors/boosts
+  - optional `categories` → brand+category-specific rules
 """
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Protocol, Sequence, Tuple, TypedDict
+from typing import Dict, List, Optional, Protocol, Sequence, Tuple, TypedDict, Literal
 
 # Readability alias for return types
 SearchResult = Tuple[List[Dict], int]
 
 
 # ───────────────────── Brand amplification typing (app-local) ─────────────────────
-class BrandAmpSpec(TypedDict):
+class BrandAmpSpec(TypedDict, total=False):
     """
     Minimal, app-local spec to avoid coupling Application ↔ Domain.
 
-    name        → brand name to match against product.brand
-    boostLevel  → 1 (low), 2 (medium), 3 (high)
+    name         → brand name to match against product.brand
+    boostLevel   → 1 (low), 2 (medium), 3 (high)
+    categories   → optional list of categories for brand+category rules
     """
     name: str
     boostLevel: int
+    categories: List[str]
 
 
 # ───────────────────────────── Embeddings ──────────────────────────────
-# Implemented by: app/infrastructure/voyage_ai/client.py → VoyageClient
 class EmbeddingProvider(Protocol):
     """Interface for embedding generation providers."""
     async def create_embedding(self, text: str) -> List[float]: ...
 
 
 # ─────────────────────── Product-search repository ─────────────────────
-# Implemented by: app/infrastructure/mongodb/search_repository.py → MongoSearchRepository
 class SearchRepository(Protocol):
     """Repository interface for product search strategies."""
 
@@ -97,6 +98,6 @@ class SearchRepository(Protocol):
         *,
         weight_vector: Optional[float] = None,
         weight_text:   Optional[float] = None,
-        fusion_mode:   Optional[str]  = None,  # "rrf" | "scoreFusion"
+        fusion_mode:   Optional[Literal["rrf", "scoreFusion"]] = None,
         brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
     ) -> SearchResult: ...

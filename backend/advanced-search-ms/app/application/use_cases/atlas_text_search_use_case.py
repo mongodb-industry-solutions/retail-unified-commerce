@@ -11,10 +11,10 @@ How it works
 Implements the `_run_repo_query()` hook from the `SearchUseCase` base class.
 Delegates to the repository's `search_atlas_text()` method.
 
-Brand Amplification
--------------------
+Brand Amplification (legacy + categories)
+----------------------------------------
 • Supported in Option 2.
-• We accept a list of {name, boostLevel} and pass it down to the repository.
+• Accepts a list of {name, boostLevel, categories?} and passes it down to the repository.
 • The repository (Infra) translates this into Atlas Search boosts and/or sets `isBoosted`.
 """
 
@@ -23,7 +23,6 @@ from typing import List, Dict, Tuple, Optional
 
 from app.application.ports import SearchRepository
 from app.application.use_cases.base import SearchUseCase
-from app.domain.brand_amplification import BrandAmplification
 from app.shared.exceptions import InfrastructureError
 
 logger = logging.getLogger("advanced-search-ms.usecase.atlas-text")
@@ -39,7 +38,7 @@ class AtlasTextSearchUseCase(SearchUseCase):
         store_object_id: str,
         page: int,
         page_size: int,
-        brand_amplification: Optional[List[BrandAmplification]] = None,
+        brand_amplification: Optional[List[Dict]] = None,
         **kwargs,
     ) -> Tuple[List[Dict], int]:
 
@@ -50,9 +49,10 @@ class AtlasTextSearchUseCase(SearchUseCase):
         )
 
         if brand_amplification:
+            # Just log as list of dicts (already normalized in base use case)
             logger.info(
-                "🏷️ [USECASE atlas_text] Brand amplification received: %s",
-                [{"name": b.name, "boostLevel": b.boostLevel} for b in brand_amplification]
+                "🏷️ [USECASE atlas_text] Brand amplification: %s",
+                brand_amplification
             )
         else:
             logger.info("🏷️ [USECASE atlas_text] No brand amplification provided")
@@ -64,7 +64,7 @@ class AtlasTextSearchUseCase(SearchUseCase):
                 store_object_id=store_object_id,
                 page=page,
                 page_size=page_size,
-                brand_amplification=brand_amplification,
+                brand_amplification=brand_amplification,  # dict passthrough
             )
             logger.info("✅ [USECASE atlas_text] Repository call completed successfully")
             return result

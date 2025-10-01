@@ -8,10 +8,10 @@ Flow
 2) Call the repository's `search_by_vector()` so MongoDB does the heavy work.
 3) Return paged products + total count.
 
-Brand Amplification
--------------------
+Brand Amplification (legacy + categories)
+----------------------------------------
 • Supported in Option 3.
-• Accepts a list of {name, boostLevel} and passes it to Infra.
+• Accepts a list of {name, boostLevel, categories?} and passes it to Infra.
 • Infra can translate this into a score multiplier and/or set `isBoosted`.
 """
 
@@ -72,7 +72,14 @@ class VectorSearchUseCase(SearchUseCase):
         if brand_amplification:
             logger.info(
                 "🏷️ [USECASE vector] Brand amplification: %s",
-                [{"name": b.name, "boostLevel": b.boostLevel} for b in brand_amplification],
+                [
+                    {
+                        "name": b.name,
+                        "boostLevel": b.boostLevel,
+                        "categories": (b.categories or []),
+                    }
+                    for b in brand_amplification
+                ],
             )
         else:
             logger.info("🏷️ [USECASE vector] No brand amplification provided")

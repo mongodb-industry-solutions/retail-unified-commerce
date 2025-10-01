@@ -17,6 +17,12 @@ pipelines by delegating to specialized *pipeline builders* under
 - Executes the aggregation with Motor (async).
 - Performs minimal post-processing on the result documents.
 
+Brand Amplification
+-------------------
+- Accepts `brand_amplification: Sequence[BrandAmpSpec]` (app-local spec).
+- Pipeline builders are responsible for translating `boostLevel` (1|2|3) to numeric
+  boosts/weights and for optionally projecting `isBoosted` and `scoreDetails`.
+
 Why it matters in this demo
 ---------------------------
 This is an educational repository: logs are intentionally verbose to show the flow
@@ -36,7 +42,11 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from app.application.ports import SearchRepository  # application port (contract)
+from app.application.ports import (
+    SearchRepository,
+    SearchResult,
+    BrandAmpSpec,
+)
 from app.infrastructure.mongodb.utils import (
     PRODUCT_FIELDS,
     filter_inventory_summary,
@@ -99,7 +109,7 @@ class MongoSearchRepository(SearchRepository):
         store_object_id: str,
         page: int,
         page_size: int,
-    ) -> Tuple[List[Dict], int]:
+    ) -> SearchResult:
         """
         Keyword / regex search on product name (no brand amplification).
 
@@ -127,16 +137,17 @@ class MongoSearchRepository(SearchRepository):
         page: int,
         page_size: int,
         *,
-        brand_amplification: Optional[Sequence[Dict]] = None,
-    ) -> Tuple[List[Dict], int]:
+        brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
+    ) -> SearchResult:
         """
         Full-text search using Atlas `$search`.
 
         Parameters
         ----------
-        brand_amplification : Optional[Sequence[Dict]]
-            List of brand specs `{name, boostLevel}`. Pipeline builder decides how to
-            reflect this in the `$search` stage (boosting + optional `isBoosted` projection).
+        brand_amplification : Optional[Sequence[BrandAmpSpec]]
+            List of app-local specs `{name, boostLevel, categories?}`. The pipeline
+            builder decides how to reflect this in the `$search` stage (boosting and/or
+            `isBoosted` / `scoreDetails` projection).
         """
         logger.info(
             "[INFRA] 🔎 Atlas text | q=%r | store=%s | page=%d | size=%d | brandAmp=%d",
@@ -163,16 +174,16 @@ class MongoSearchRepository(SearchRepository):
         page: int,
         page_size: int,
         *,
-        brand_amplification: Optional[Sequence[Dict]] = None,
-    ) -> Tuple[List[Dict], int]:
+        brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
+    ) -> SearchResult:
         """
         Semantic k-NN search via Atlas Lucene `$vectorSearch`.
 
         Parameters
         ----------
-        brand_amplification : Optional[Sequence[Dict]]
-            List of brand specs `{name, boostLevel}`. Builder may apply a secondary boost
-            and/or project `isBoosted` based on `product.brand`.
+        brand_amplification : Optional[Sequence[BrandAmpSpec]]
+            List `{name, boostLevel, categories?}`. Builder may apply a secondary boost
+            and/or project `isBoosted` based on `product.brand` (and category, if provided).
         """
         logger.info(
             "[INFRA] 🔎 Vector | store=%s | page=%d | size=%d | brandAmp=%d",
@@ -204,8 +215,8 @@ class MongoSearchRepository(SearchRepository):
         weight_vector: Optional[float] = None,
         weight_text: Optional[float] = None,
         fusion_mode: Optional[str] = None,  # "rrf" | "scoreFusion"
-        brand_amplification: Optional[Sequence[Dict]] = None,
-    ) -> Tuple[List[Dict], int]:
+        brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
+    ) -> SearchResult:
         """
         Hybrid search (text + vector) with Reciprocal Rank Fusion or score fusion.
 
@@ -215,8 +226,8 @@ class MongoSearchRepository(SearchRepository):
             Optional weighting knobs; builder may normalize/default as needed.
         fusion_mode : Optional[str]
             `"rrf"` (default) or `"scoreFusion"`.
-        brand_amplification : Optional[Sequence[Dict]]
-            Optional list of `{name, boostLevel}` specs.
+        brand_amplification : Optional[Sequence[BrandAmpSpec]]
+            Optional list `{name, boostLevel, categories?}`.
         """
         logger.info(
             "[INFRA] 🔎 Hybrid | q=%r | store=%s | page=%d | size=%d | mode=%s | brandAmp=%d",
@@ -238,8 +249,8 @@ class MongoSearchRepository(SearchRepository):
             vector_index=self.vector_index,
             vector_field=self.vector_field,
             weights=weights,
-            fusion_mode=fusion_mode,                 # passthrough
-            brand_amplification=brand_amplification, # passthrough
+            fusion_mode=fusion_mode,                  # passthrough
+            brand_amplification=brand_amplification,  # passthrough
             skip=skip,
             limit=page_size,
             projection_fields=PRODUCT_FIELDS,
@@ -251,7 +262,7 @@ class MongoSearchRepository(SearchRepository):
         self,
         pipeline: List[Dict],
         store_object_id: str,
-    ) -> Tuple[List[Dict], int]:
+    ) -> SearchResult:
         """
         Execute the aggregation, filter inventory by store, and perform minimal shaping.
 

@@ -8,7 +8,7 @@ Pydantic schemas for API layer (request & response).
 
 Contract highlights (v2):
 - Supports 4 strategies (option=1..4).
-- Brand Amplification (options 2–4): optional list [{ name, boostLevel(1..3) }].
+- Brand Amplification (options 2–4): optional list [{ name, boostLevel(1..3), categories?: string[] }].
 - Hybrid fusion (option=4): optional fusionMode ('rrf' | 'scoreFusion') + weights.
 - Pagination: page >=1, page_size 1..100 (default 20).
 - Response includes relevance 'score' and 'isBoosted' (response-only).
@@ -36,6 +36,22 @@ class BrandBoost(BaseModel):
         example=2,
         description="Boost level: 1 (low), 2 (medium), 3 (high)"
     )
+    # NEW: optional categories for brand+category amplification (legacy format extension)
+    categories: Optional[List[str]] = Field(
+        None,
+        example=["Face Care", "Beverages"],
+        description="Optional list of categories. If provided, the boost applies only when both brand and category match."
+    )
+
+    @validator("categories")
+    def _validate_categories(cls, v):
+        if v is None:
+            return v
+        if not isinstance(v, list):
+            raise ValueError("categories must be a list of strings")
+        if any((not isinstance(c, str) or not c.strip()) for c in v):
+            raise ValueError("each category must be a non-empty string")
+        return [c.strip() for c in v]
 
 
 # ─────────────────────────────── Request Schema ────────────────────────────────
@@ -105,9 +121,15 @@ class SearchRequest(BaseModel):
 
     brandAmplification: Optional[List[BrandBoost]] = Field(
         None,
-        title="Brand Amplification",
-        example=[{"name": "Oatly", "boostLevel": 3}, {"name": "Alpro", "boostLevel": 2}],
-        description="Optional list of brands to boost in ranking; only supported for options 2, 3, 4"
+        title="Brand Amplification (legacy format)",
+        example=[
+            {"name": "Oatly", "boostLevel": 3},
+            {"name": "Alpro", "boostLevel": 2, "categories": ["Fresho"]}
+        ],
+        description=(
+            "Optional list of brands to boost in ranking; only supported for options 2, 3, 4. "
+            "If 'categories' is provided, the boost applies when both brand and category match."
+        )
     )
 
     @validator("brandAmplification", each_item=False)
@@ -117,6 +139,14 @@ class SearchRequest(BaseModel):
         return value
 
     def __init__(self, **data):
+        brand_amp = data.get("brandAmplification") or []
+        brand_amp_with_cats = sum(1 for b in brand_amp if isinstance(b, dict) and b.get("categories")) or \
+                              sum(1 for b in brand_amp if hasattr(b, "categories") and getattr(b, "categories") is not None)
+        brand_amp_cats_total = (
+            sum(len(b.get("categories") or []) for b in brand_amp if isinstance(b, dict)) +
+            sum(len(getattr(b, "categories") or []) for b in brand_amp if not isinstance(b, dict))
+        )
+
         safe = {
             "query": (data.get("query") or "")[:64],
             "storeObjectId": data.get("storeObjectId"),
@@ -128,7 +158,9 @@ class SearchRequest(BaseModel):
                 "text": data.get("weightText"),
                 "vector": data.get("weightVector"),
             },
-            "brandAmpCount": len(data.get("brandAmplification") or []),
+            "brandAmpCount": len(brand_amp),
+            "brandAmpWithCats": brand_amp_with_cats,
+            "brandAmpCatsTotal": brand_amp_cats_total,
         }
         logger.info("📥 [INTERFACES/schemas] Incoming SearchRequest v2 | %s", safe)
         super().__init__(**data)
@@ -152,8 +184,8 @@ class PriceOut(BaseModel):
 
 class ProductOut(BaseModel):
     """
-    DTO for product in the response.  
-    Defines what fields are exposed to clients.  
+    DTO for product in the response.
+    Defines what fields are exposed to clients.
     Fields like `isBoosted` help with explainability of brand amplification in results.
     """
     id: str

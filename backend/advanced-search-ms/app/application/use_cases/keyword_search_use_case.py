@@ -38,10 +38,12 @@ class KeywordSearchUseCase(SearchUseCase):
 
         if brand_amplification:
             # Explicitly document behavior so callers/devs know it's ignored here.
+            with_cats = sum(1 for b in brand_amplification if b.categories)
+            total_cats = sum(len(b.categories or []) for b in brand_amplification)
             logger.info(
-                "ℹ️ [USECASE keyword] brandAmplification provided (%d item(s)) "
+                "ℹ️ [USECASE keyword] brandAmplification provided (%d item(s), withCategories=%d, categoriesTotal=%d) "
                 "but Option 1 does not support it — ignoring.",
-                len(brand_amplification),
+                len(brand_amplification), with_cats, total_cats
             )
 
         result = await self.repo.search_keyword(
