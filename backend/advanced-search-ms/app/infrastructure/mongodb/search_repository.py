@@ -1,33 +1,52 @@
 # app/infrastructure/mongodb/search_repository.py
 """
-MongoSearchRepository – Infrastructure Adapter
-==============================================
+MongoSearchRepository – Infrastructure Adapter (MongoDB)
+=======================================================
 
-This file implements the MongoDB adapter for the SearchRepository port, as per Clean Architecture principles.
+What this class does
+--------------------
+Implements the `SearchRepository` application port using MongoDB/Atlas. It translates
+high-level search operations (keyword, text, vector, hybrid) into concrete aggregation
+pipelines by delegating to specialized *pipeline builders* under
+`app/infrastructure/mongodb/pipelines/`.
 
-Purpose:
------------
-• Translates high-level search operations (keyword, text, vector, hybrid) into MongoDB aggregation pipelines.
-• Delegates the actual pipeline syntax to specialized builders in `pipelines/`.
-• Uses the Motor async client (`AsyncIOMotorCollection`) to execute queries against MongoDB Atlas.
-• Applies lightweight post-processing (e.g., inventory filtering) before returning results to the application layer.
+**This adapter does not hold business rules**. It focuses on I/O details and data shaping:
+- Assembles skip/limit for pagination.
+- Supplies Mongo-specific identifiers (index names, vector field).
+- Passes through “strategy knobs” (weights, fusion mode, brand amplification) to builders.
+- Executes the aggregation with Motor (async).
+- Performs minimal post-processing on the result documents.
 
-Architectural Role:
------------------------
-This class lives in the **infrastructure layer**. It does NOT contain business logic—it focuses on:
-• Wiring MongoDB-specific execution (indexes, vector fields, pagination)
-• Providing clean, backend-ready data to the application layer
+Brand Amplification
+-------------------
+- Accepts `brand_amplification: Sequence[BrandAmpSpec]` (app-local spec).
+- Pipeline builders are responsible for translating `boostLevel` (1|2|3) to numeric
+  boosts/weights and for optionally projecting `isBoosted` and `scoreDetails`.
+
+Why it matters in this demo
+---------------------------
+This is an educational repository: logs are intentionally verbose to show the flow
+end-to-end (inputs, strategy, pagination, totals). The adapter guarantees a stable
+shape for the upstream layers:
+- If a pipeline does not project `isBoosted`, this adapter defaults it to **False**,
+  so the API layer consistently exposes the field.
+- For hybrid RRF, if Mongo exposes a fused score under `scoreDetails.value`,
+  we mirror it into the flat `score` field to keep the domain/API response uniform.
+
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from app.application.ports import SearchRepository
-from app.infrastructure.mongodb.client import MongoClient
+from app.application.ports import (
+    SearchRepository,
+    SearchResult,
+    BrandAmpSpec,
+)
 from app.infrastructure.mongodb.utils import (
     PRODUCT_FIELDS,
     filter_inventory_summary,
@@ -45,10 +64,12 @@ logger = logging.getLogger("advanced-search-ms.mongo-repo")
 
 class MongoSearchRepository(SearchRepository):
     """
-    Concrete adapter behind the SearchRepository port (Clean Architecture).
+    Concrete MongoDB implementation of the `SearchRepository` port.
 
-    It delegates *heavy* work to dedicated pipeline builders; this class only
-    orchestrates parameters, runs the aggregation, and applies final shaping.
+    Notes for maintainers:
+    - Keep this class thin. If logic grows, prefer pushing it into the pipeline
+      builders (aggregation layout) or the application layer (use case orchestration).
+    - Ensure method signatures stay aligned with `app/application/ports.py`.
     """
 
     def __init__(
@@ -58,6 +79,18 @@ class MongoSearchRepository(SearchRepository):
         index_name_vector: str,
         embedding_field: str,
     ) -> None:
+        """
+        Parameters
+        ----------
+        collection : AsyncIOMotorCollection
+            MongoDB collection where products live.
+        index_name_text : str
+            Atlas Search text index name.
+        index_name_vector : str
+            Atlas Lucene `$vectorSearch` index name.
+        embedding_field : str
+            Field name holding vector embeddings (e.g., 'textEmbeddingVector').
+        """
         self.col = collection
         self.text_index = index_name_text
         self.vector_index = index_name_vector
@@ -69,14 +102,22 @@ class MongoSearchRepository(SearchRepository):
             self.vector_index,
         )
 
+    # ───────────────────────────── option 1 ─────────────────────────────
     async def search_keyword(
         self,
         query: str,
         store_object_id: str,
         page: int,
         page_size: int,
-    ) -> Tuple[List[Dict], int]:
-        logger.info("[INFRA/MongoDB/SearchRepo] 🔎 Keyword search | q='%s' | store=%s", query, store_object_id)
+    ) -> SearchResult:
+        """
+        Keyword / regex search on product name (no brand amplification).
+
+        Returns a tuple (docs, total) where `docs` includes the projection defined
+        by `PRODUCT_FIELDS` and the pipeline builder.
+        """
+        logger.info("[INFRA] 🔎 Keyword | q=%r | store=%s | page=%d | size=%d",
+                    query, store_object_id, page, page_size)
 
         skip = (page - 1) * page_size
         pipeline = build_keyword_pipeline(
@@ -88,14 +129,30 @@ class MongoSearchRepository(SearchRepository):
         )
         return await self._run_pipeline(pipeline, store_object_id)
 
+    # ───────────────────────────── option 2 ─────────────────────────────
     async def search_atlas_text(
         self,
         query: str,
         store_object_id: str,
         page: int,
         page_size: int,
-    ) -> Tuple[List[Dict], int]:
-        logger.info("[INFRA/MongoDB/SearchRepo] 🔎 Text search | q='%s' | store=%s", query, store_object_id)
+        *,
+        brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
+    ) -> SearchResult:
+        """
+        Full-text search using Atlas `$search`.
+
+        Parameters
+        ----------
+        brand_amplification : Optional[Sequence[BrandAmpSpec]]
+            List of app-local specs `{name, boostLevel, categories?}`. The pipeline
+            builder decides how to reflect this in the `$search` stage (boosting and/or
+            `isBoosted` / `scoreDetails` projection).
+        """
+        logger.info(
+            "[INFRA] 🔎 Atlas text | q=%r | store=%s | page=%d | size=%d | brandAmp=%d",
+            query, store_object_id, page, page_size, len(brand_amplification or []),
+        )
 
         skip = (page - 1) * page_size
         pipeline = build_text_pipeline(
@@ -105,17 +162,33 @@ class MongoSearchRepository(SearchRepository):
             skip=skip,
             limit=page_size,
             projection_fields=PRODUCT_FIELDS,
+            brand_amplification=brand_amplification,  # passthrough
         )
         return await self._run_pipeline(pipeline, store_object_id)
 
+    # ───────────────────────────── option 3 ─────────────────────────────
     async def search_by_vector(
         self,
         embedding: List[float],
         store_object_id: str,
         page: int,
         page_size: int,
-    ) -> Tuple[List[Dict], int]:
-        logger.info("[INFRA/MongoDB/SearchRepo] 🔎 Vector search | store=%s", store_object_id)
+        *,
+        brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
+    ) -> SearchResult:
+        """
+        Semantic k-NN search via Atlas Lucene `$vectorSearch`.
+
+        Parameters
+        ----------
+        brand_amplification : Optional[Sequence[BrandAmpSpec]]
+            List `{name, boostLevel, categories?}`. Builder may apply a secondary boost
+            and/or project `isBoosted` based on `product.brand` (and category, if provided).
+        """
+        logger.info(
+            "[INFRA] 🔎 Vector | store=%s | page=%d | size=%d | brandAmp=%d",
+            store_object_id, page, page_size, len(brand_amplification or []),
+        )
 
         skip = (page - 1) * page_size
         pipeline = build_vector_pipeline(
@@ -126,9 +199,11 @@ class MongoSearchRepository(SearchRepository):
             skip=skip,
             limit=page_size,
             projection_fields=PRODUCT_FIELDS,
+            brand_amplification=brand_amplification,  # passthrough
         )
         return await self._run_pipeline(pipeline, store_object_id)
 
+    # ───────────────────────────── option 4 ─────────────────────────────
     async def search_hybrid_rrf(
         self,
         query: str,
@@ -136,10 +211,29 @@ class MongoSearchRepository(SearchRepository):
         store_object_id: str,
         page: int,
         page_size: int,
+        *,
         weight_vector: Optional[float] = None,
         weight_text: Optional[float] = None,
-    ) -> Tuple[List[Dict], int]:
-        logger.info("[INFRA/MongoDB/SearchRepo] 🔎 Hybrid RRF | q='%s' | store=%s", query, store_object_id)
+        fusion_mode: Optional[str] = None,  # "rrf" | "scoreFusion"
+        brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
+    ) -> SearchResult:
+        """
+        Hybrid search (text + vector) with Reciprocal Rank Fusion or score fusion.
+
+        Parameters
+        ----------
+        weight_vector, weight_text : Optional[float]
+            Optional weighting knobs; builder may normalize/default as needed.
+        fusion_mode : Optional[str]
+            `"rrf"` (default) or `"scoreFusion"`.
+        brand_amplification : Optional[Sequence[BrandAmpSpec]]
+            Optional list `{name, boostLevel, categories?}`.
+        """
+        logger.info(
+            "[INFRA] 🔎 Hybrid | q=%r | store=%s | page=%d | size=%d | mode=%s | brandAmp=%d",
+            query, store_object_id, page, page_size, fusion_mode or "rrf(default)",
+            len(brand_amplification or []),
+        )
 
         skip = (page - 1) * page_size
         weights = {
@@ -155,66 +249,62 @@ class MongoSearchRepository(SearchRepository):
             vector_index=self.vector_index,
             vector_field=self.vector_field,
             weights=weights,
+            fusion_mode=fusion_mode,                  # passthrough
+            brand_amplification=brand_amplification,  # passthrough
             skip=skip,
             limit=page_size,
             projection_fields=PRODUCT_FIELDS,
         )
         return await self._run_pipeline(pipeline, store_object_id)
 
+    # ───────────────────────────── execution ─────────────────────────────
     async def _run_pipeline(
         self,
         pipeline: List[Dict],
         store_object_id: str,
-    ) -> Tuple[List[Dict], int]:
+    ) -> SearchResult:
         """
-    Executes the aggregation pipeline, filters inventory rows, and
-    for Hybrid RRF results, copies the fused score from scoreDetails.value
-    into the flat `score` field expected by the domain layer.
+        Execute the aggregation, filter inventory by store, and perform minimal shaping.
 
-    Note:
-    We tried extracting the fused score directly in the pipeline using
-    `$project`, but `$scoreDetails.details.value` often returns null,
-    possibly due to how $rankFusion populates metadata.
+        Shaping performed here (kept intentionally small and documented):
+        - **`score` fallback**: for hybrid, if the pipeline exposes a fused score under
+          `scoreDetails.value`, mirror it into the flat `score` field when the latter is
+          missing/zero. This keeps API responses consistent across strategies.
+        - **`isBoosted` default**: if a pipeline does not project `isBoosted`, we set it to
+          `False` explicitly to honor the public API schema contract.
 
-    As a workaround, we set the score here in Python post-aggregation.
-    Ideally, MongoDB should expose this value cleanly for projection,
-    or $rankFusion could allow aliasing the final score directly.
-
-    TODO:
-    Revisit once MongoDB improves $rankFusion metadata projection
-    (e.g., allow accessing `.value` reliably or setting an alias).  
-    """
-
+        If MongoDB improves metadata projection for `$rankFusion` (e.g., stable access to the
+        final score via `$project`), we can push the score shaping entirely into the pipeline
+        and drop the fallback below.
+        """
         try:
-            logger.debug("[INFRA/MongoDB/SearchRepo] ▶️ Executing aggregation…")
+            logger.debug("[INFRA] ▶️ Aggregation…")
             cursor = self.col.aggregate(pipeline, maxTimeMS=6_000)
             root = (await cursor.to_list(length=1))[0] if cursor else {}
 
+            # Both docs and total are shaped by the pipeline contract
             docs = [
                 filter_inventory_summary(doc, store_object_id)
                 for doc in root.get("docs", [])
             ]
             total = int(root.get("total", 0))
 
-            logger.info("[INFRA/MongoDB/SearchRepo] ✅ Returned %d docs | total=%d", len(docs), total)
+            logger.info("[INFRA] ✅ %d doc(s) returned | total=%d", len(docs), total)
 
-            # If available, set score = scoreDetails.value (fallback if score is null/zero)
+            # Mirror fused score (if present) into flat `score`
             for doc in docs:
                 sd: Dict[str, Any] | None = doc.get("scoreDetails")
                 if sd and isinstance(sd, dict):
                     fused = sd.get("value")
                     if fused is not None and (doc.get("score") in (None, 0, 0.0)):
-                        doc["score"] = round(float(fused) , 4)
+                        doc["score"] = round(float(fused), 4)
 
-                    logger.info(
-                        "[RRF] Document %s → fused=%.4f | score=%s",
-                        doc.get("_id"),
-                        fused if sd else -1,
-                        doc["score"],
-                    )
+                # Guarantee isBoosted in the outgoing shape
+                if "isBoosted" not in doc:
+                    doc["isBoosted"] = False
 
             return docs, total
 
         except Exception as exc:
-            logger.error("[INFRA/MongoDB/SearchRepo] 💥 Aggregation failed: %s", exc)
+            logger.error("[INFRA] 💥 Aggregation failed: %s", exc)
             raise InfrastructureError(str(exc)) from exc
