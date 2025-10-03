@@ -13,3 +13,6 @@
 .weight-input input{
     width: 160px;
 }
+.search-selector{
+    min-width: 300px;
+}

@@ -38,9 +38,13 @@ const pipeline = [
     $searchMeta: {
       index: indexName,
       facet: {
-        operator: operator,
+        operator: operator, // the filter conditions in the search query
         facets: {
-          categoriesFacet: { type: "string", path: "category" }
+          categoriesFacet: { 
+            type: "string", 
+            path: "category",
+            // numBuckets: 3 top optionally limit the number of buckets
+          }
         }
       }
     }

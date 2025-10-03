@@ -1,5 +1,5 @@
 import React, { } from 'react'
-import './promotionForm.css'
+import './brandAmplificationForm.css'
 import Card from '@leafygreen-ui/card';
 import { CardHeader } from '../cardHeader/CardHeader';
 import { Combobox, ComboboxOption } from '@leafygreen-ui/combobox';
@@ -28,7 +28,7 @@ const isFormValid = (brandAmplification) => {
     return isFormValid
 }
 
-const PromotionForm = () => {
+const BrandAmplificationForm = () => {
     const {
         brandAmplification,
         brandSelector,
@@ -75,14 +75,14 @@ const PromotionForm = () => {
     }
 
     return (
-        <div className='promotion-form mt-4'>
+        <div className='promotion-form mt-4 mb-4'>
             <div className='form-section'>
                 <Card>
                     <CardHeader title="Product Selection" glyphIcon="Filter" />
                     <div className={'formGroupRow mt-4'}>
                         <Combobox
                             label="Brand"
-                            description="The brand you wish to amplify in the search results"
+                            description="Select the brand you wish to amplify in the search results"
                             className={'selectInput'}
                             onChange={(value) => {
                                 if(value === null)
@@ -124,7 +124,7 @@ const PromotionForm = () => {
                     <section className='mt-3' id="meta-search-section">
                         <ExpandableCard
                             title="Products matched information"
-                            description="Expand to see the metadata of products that will be affected by this brand amplification"
+                            description="Expand to see the categories of the products that will be affected by this brand amplification"
                             flagText="With $searchMeta"
                         >
                             <BrandAmplificationMeta />
@@ -181,4 +181,4 @@ const PromotionForm = () => {
     )
 }
 
-export default PromotionForm
+export default BrandAmplificationForm

@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Container } from "react-bootstrap";
 import PageSubheader from '@/components/pageSubheader/PageSubheader';
 import { Tabs, Tab } from '@leafygreen-ui/tabs';
-import PromotionForm from '@/components/promotionForm/PromotionForm';
+import BrandAmplificationForm from '@/components/brandAmplificationForm/BrandAmplificationForm';
 import { getAllBrands } from '@/lib/api';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { setBrandSelectorError, setBrandSelectorLoading } from '@/redux/slices/PromotionFormSlice';
+import TestBrandAmplificationsTab from '@/components/testBrandAmplificationsTab/TestBrandAmplificationsTab';
 
 export default function ProductInventoryPage() {
     const [selected, setSelected] = useState(0);
@@ -34,8 +35,9 @@ export default function ProductInventoryPage() {
                 subtitle="Module for managers to amplify brands, increase product relevance, and reach KPIs"
             />
             <Tabs aria-label="Brand amplification tabs" className='mt-4' setSelected={setSelected} selected={selected}>
-                <Tab id='create-promotion' name="Create brand amplification"><PromotionForm /></Tab>
+                <Tab id='create-promotion' name="Create brand amplification"><BrandAmplificationForm /></Tab>
                 <Tab id='active-promotions' name="Active brand amplifications"></Tab>
+                <Tab id='active-promotions' name="Test brand amplifications"> <TestBrandAmplificationsTab/> </Tab>
             </Tabs>
         </Container>
     );

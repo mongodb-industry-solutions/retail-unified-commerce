@@ -46,7 +46,7 @@ const InfoWizard = ({
       <Modal 
         show={open} 
         onHide={() => setOpen(false)}
-        size="lg"
+        size="xl"
         aria-labelledby="contained-modal-title-vcenter"
         centered
       >

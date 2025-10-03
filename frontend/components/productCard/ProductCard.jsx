@@ -16,6 +16,7 @@ import InfoWizard from "../InfoWizard/InfoWizard";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
 import { useSelector } from "react-redux";
+import BrandAmplificationForm from "../brandAmplificationForm/BrandAmplificationForm";
 
 const ProductCard = (props) => {
   const router = useRouter();
@@ -26,28 +27,45 @@ const ProductCard = (props) => {
     _id: sku,
     imageUrlS3,
     score = null,
-    quantity
+    quantity,
+    isAmplifiedBrand // TODO change name once we connect to back
   } = props.product;
   const selectedStore = useSelector(state => state.Global.selectedStore)
   const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
   const {
     shelfId: shelfNumber,
     aisleId: aisleNumber = 'N/A',
-  } = props.product.inventorySummary.length === 1 
-    ? props.product.inventorySummary[0] 
-    : props.product.inventorySummary.find(store => store.storeObjectId === selectedStore)  || {};
+  } = props.product.inventorySummary.length === 1
+      ? props.product.inventorySummary[0]
+      : props.product.inventorySummary.find(store => store.storeObjectId === selectedStore) || {};
   const [openHelpModal, setOpenHelpModal] = useState(false);
+  const [brandAmplificationModalOpen, setBrandAmplificationModalOpen] = useState(false)
 
   return (
     <>
-      <Card onClick={() => console.log(props.product)} className='product-card'>
+      <Card onClick={() => console.log(props.product)} className={`product-card ${isAmplifiedBrand === true ? 'card-lime' : ''}`}>
         <div className='score-container'>
           {score && <Badge className={'scorebadge'} variant="yellow">
             <Icon glyph="Favorite" />
             {score?.toFixed(5)}
           </Badge>}
         </div>
-        <div className='document-container'>
+        <div className='right-side-container'>
+          <InfoWizard
+            open={brandAmplificationModalOpen}
+            setOpen={setBrandAmplificationModalOpen}
+            tooltipText="Create Brand Amplification"
+            iconGlyph="Tag"
+            tabs={[
+              {
+                heading: 'Create Brand Amplification',
+                content: <Container>
+                  <BrandAmplificationForm/>
+                </Container>
+              }
+            ]}
+            openModalIsButton={false}
+          />
           <InfoWizard
             open={openHelpModal}
             setOpen={setOpenHelpModal}
