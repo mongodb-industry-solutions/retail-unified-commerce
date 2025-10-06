@@ -5,6 +5,7 @@ import ClientProvider from "./ClientProvider";
 import { Toaster } from "react-hot-toast";
 import FloatingCard from "@/components/floatingCard/FloatingCard";
 import { APP_NAME } from "@/lib/constant";
+import BrandAmplificationLoader from "@/components/loaders/BrandAmplificationLoader";
 
 export const metadata = {
   title: APP_NAME,
@@ -37,6 +38,7 @@ export default function RootLayout({ children }) {
         />
         <ClientProvider>
           {children}
+          <BrandAmplificationLoader />
           <FloatingCard/>
         </ClientProvider>
       </body>

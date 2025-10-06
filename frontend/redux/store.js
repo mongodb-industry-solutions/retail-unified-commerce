@@ -9,7 +9,7 @@ const store = configureStore({
         "Alerts": AlertReducer,
         "ProductInventory": ProductInventoryReducer,
         "Global": GlobalReducer,
-        "BrandAmplificationFormSlice": BrandAmplificationFormReducer
+        "BrandAmplificationForm": BrandAmplificationFormReducer
     }
 });
 

@@ -59,11 +59,11 @@ export const SEARCH_OPTIONS = {
 }
 export const SEARCH_FUSION_OPTIONS = {
     rankFusion: {
-        id: 1, //this matches with what the backen expects in request.body.fusionMode
+        id: 'rrf', //this matches with what the backen expects in request.body.fusionMode
         label: 'Rank Fusion ($rankFusion)',
     },
     scoreFusion: {
-        id: 2, //this matches with what the backen expects in request.body.fusionMode
+        id: 'scoreFusion', //this matches with what the backen expects in request.body.fusionMode
         label: 'Score Fusion ($scoreFusion)',
     },
 

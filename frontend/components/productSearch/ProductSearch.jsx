@@ -7,7 +7,7 @@ import Icon from '@leafygreen-ui/icon';
 import Button from '@leafygreen-ui/button';
 import { Option, Select } from '@leafygreen-ui/select';
 import { SearchInput } from '@leafygreen-ui/search-input';
-import { setFusionMode, setProductQuery, setSearchType, setSearchWeight, setVectorSearchWeight, toggleForceSearchWithEnter } from '@/redux/slices/ProductInventorySlice';
+import { setFusionMode, setProductQuery, setSearchType, setSearchWeight, setUseBrandAmplification, setVectorSearchWeight, toggleForceSearchWithEnter } from '@/redux/slices/ProductInventorySlice';
 import ProductScan from '../productScan/ProductScan';
 import AtlasSearchLearnMore from './AtlasSearchLearnMore';
 import VectorSearchLearnMore from './VectorSearchLearnMore';
@@ -23,6 +23,7 @@ import Card from '@leafygreen-ui/card';
 import Toggle from '@leafygreen-ui/toggle';
 import { CardHeader } from '../cardHeader/CardHeader';
 import { Label } from '@leafygreen-ui/typography';
+import { InfoSprinkle } from '@leafygreen-ui/info-sprinkle';
 
 const ProductSearch = (props) => {
     const { isToggleVisible = true, isScanProductVisible = true } = props
@@ -64,7 +65,7 @@ const ProductSearch = (props) => {
     }
 
     return (
-        <div className={`d-flex flex-column ${isToggleVisible == true ? 'mt-5' : 'mt-4' } ${searchType === SEARCH_OPTIONS.hybridSearch.id ? '' : 'mb-2'}`}>
+        <div className={`d-flex flex-column ${isToggleVisible == true ? 'mt-5' : 'mt-4'} ${searchType === SEARCH_OPTIONS.hybridSearch.id ? '' : 'mb-2'}`}>
             <Card className='mb-2'>
                 <CardHeader
                     title="Search Configuration"
@@ -88,10 +89,6 @@ const ProductSearch = (props) => {
                                     heading: "Hybrid Search",
                                     content: <HybridSearchLearnMore />
                                 },
-                                //                         {
-                                //     heading: "Hybrid Search + Rerank",
-                                //     content: <VectorSearchLearnMore />
-                                // },
                                 {
                                     heading: "Regex Search",
                                     content: <RegexSearchLearnMore />
@@ -130,74 +127,84 @@ const ProductSearch = (props) => {
                     {
                         isToggleVisible &&
                         <div className='d-flex flex-column'>
-                            <Label className={'mb-1'}>Use Brand Amplifications</Label>
+                            <div className='d-flex align-items-center mb-1'>
+                                <Label className={'mb-1 me-1'}>Use Brand Amplifications</Label>
+                                <InfoSprinkle
+                                    triggerProps={{
+                                        onMouseDown: () => { },
+                                        onMouseOver: () => { },
+                                        'aria-label': 'aria-label',
+                                    }}>
+                                    Amplified products will have a light green background in the results list.
+                                </InfoSprinkle>
+                            </div>
                             <Toggle
                                 id="toggle"
                                 aria-labelledby="label"
                                 label="Use Brand Amplifications"
-                                value={useBrandAmplification}
+                                checked={useBrandAmplification}
                                 onChange={(checked, event) => {
-                                    /* Handle the change event */
+                                    dispatch(setUseBrandAmplification({ useBrandAmplification: checked })) // to force a re-render
                                 }}
                             />
                         </div>
                     }
                 </div>
-                            {
-                searchType === SEARCH_OPTIONS.hybridSearch.id &&
-                <ExpandableCard
-                    className='mt-3'
-                    title="Hybrid search settings"
-                    description="Expand to fine-tune the balance between semantic relevance and keyword matching."
-                    flagText="Fusion mode and weights"
-                >
-                    <div>
-                        <RadioBoxGroup
-                            size="compact"
-                            className="radio-box-group-style"
-                            value={fusionMode}
-                        >
-                            {
-                                Object.values(SEARCH_FUSION_OPTIONS).map((option) => (
-                                    <RadioBox
-                                        key={option.id}
-                                        value={option.id}
-                                        onClick={() => {
-                                            dispatch(setFusionMode({ fusionMode: option.id }))
-                                        }}
-                                    >
-                                        {option.label}
-                                    </RadioBox>
-                                ))
-                            }
-                        </RadioBoxGroup>
-                    </div>
-                    <div className='d-flex flex-row align-items-center mt-3'>
-                        <NumberInput
-                            className='weight-input'
-                            label=""
-                            description="Vector Search Weight"
-                            min={0}
-                            max={1}
-                            value={vectorSearchWeight}
-                            onChange={(e) => dispatch(setVectorSearchWeight({ vectorSearchWeight: e.target.value }))}
-                        />
-                        <NumberInput
-                            className='weight-input ms-1'
-                            label=""
-                            description="Search Weight"
-                            min={0}
-                            max={1}
-                            value={searchWeight}
-                            onChange={(e) => dispatch(setSearchWeight({ searchWeight: e.target.value }))}
-                        />
-                    </div>
-                    <div className='mt-3 mb-3'>
-                        In <code>$rankFusion</code>, rankings are influenced by pipeline weights. In <code>$scoreFusion</code>, weights control the contribution of each pipeline's scores to the final result
-                    </div>
-                </ExpandableCard>
+                {
+                    searchType === SEARCH_OPTIONS.hybridSearch.id &&
+                    <ExpandableCard
+                        className='mt-3'
+                        title="Hybrid search settings"
+                        description="Expand to fine-tune the balance between semantic relevance and keyword matching."
+                        flagText="Fusion mode and weights"
+                    >
+                        <div>
+                            <RadioBoxGroup
+                                size="compact"
+                                className="radio-box-group-style"
+                                value={fusionMode}
+                            >
+                                {
+                                    Object.values(SEARCH_FUSION_OPTIONS).map((option) => (
+                                        <RadioBox
+                                            key={option.id}
+                                            value={option.id}
+                                            onClick={() => {
+                                                dispatch(setFusionMode({ fusionMode: option.id }))
+                                            }}
+                                        >
+                                            {option.label}
+                                        </RadioBox>
+                                    ))
+                                }
+                            </RadioBoxGroup>
+                        </div>
+                        <div className='d-flex flex-row align-items-center mt-3'>
+                            <NumberInput
+                                className='weight-input'
+                                label=""
+                                description="Vector Search Weight"
+                                min={0}
+                                max={1}
+                                value={vectorSearchWeight}
+                                onChange={(e) => dispatch(setVectorSearchWeight({ vectorSearchWeight: e.target.value }))}
+                            />
+                            <NumberInput
+                                className='weight-input ms-1'
+                                label=""
+                                description="Search Weight"
+                                min={0}
+                                max={1}
+                                value={searchWeight}
+                                onChange={(e) => dispatch(setSearchWeight({ searchWeight: e.target.value }))}
+                            />
+                        </div>
+                        <div className='mt-3 mb-3'>
+                            In <code>$rankFusion</code>, rankings are influenced by pipeline weights. In <code>$scoreFusion</code>, weights control the contribution of each pipeline's scores to the final result
+                        </div>
+                    </ExpandableCard>
 
-            }
+                }
             </Card>
             <div className='product-search mb-2 mt-2 justify-content-between'>
                 <ProductScan show={show} setShow={setShow} />

@@ -5,7 +5,7 @@ import store from "@/redux/store";
 import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
 import { setBrandSelector, setMetaSearch } from "@/redux/slices/PromotionFormSlice";
 
-export async function getProductsWithSearchInput(query = '') {
+export async function getProductsWithSearchInput(query = '', useBrandAmplification = false) {
   const searchType = store.getState('ProductInventory').ProductInventory.searchType;
   const storeObjectId = store.getState('Global').Global.selectedStore;
   console.log('getProductsWithSearch', searchType)
@@ -14,12 +14,25 @@ export async function getProductsWithSearchInput(query = '') {
     storeObjectId: storeObjectId,
     option: searchType,
     page: store.getState('ProductInventory').ProductInventory.pagination_page + 1,
-    page_size: PAGINATION_PER_PAGE
+    page_size: PAGINATION_PER_PAGE,
   }
   if (searchType === SEARCH_OPTIONS.hybridSearch.id) {
     body.weightVector = Number(store.getState('ProductInventory').ProductInventory.vectorSearchWeight);
     body.weightText = Number(store.getState('ProductInventory').ProductInventory.searchWeight);
+    body.fusionMode = store.getState('ProductInventory').ProductInventory.fusionMode;
   }
+  if(useBrandAmplification == true && searchType !== SEARCH_OPTIONS.regex.id) {
+    body.brandAmplification = store.getState('BrandAmplificationForm').BrandAmplificationForm.brandAmplificationList.data.map(ba => {
+      let  orm = {
+        name: ba.name,
+        boostLevel: Number(ba.boostLevel) || 1
+      }
+      if(ba.categories)
+        orm.categories = [...ba.categories]
+      return orm
+    })
+  }
+  console.log('Request body for search:', body);
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {
     method: "POST",
     headers: {
@@ -227,8 +240,8 @@ export async function brandAmplificationGetSearchMeta() {
     body: JSON.stringify({
       collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
       indexName: process.env.NEXT_PUBLIC_SEARCH_META_INDEX,
-      brand: store.getState().BrandAmplificationFormSlice.brandAmplification.brand,
-      categories: store.getState().BrandAmplificationFormSlice.brandAmplification.categories
+      brand: store.getState().BrandAmplificationForm.brandAmplification.brand,
+      categories: store.getState().BrandAmplificationForm.brandAmplification.categories
     }),
   });
   if (!response.ok) {
@@ -236,7 +249,7 @@ export async function brandAmplificationGetSearchMeta() {
   }
   let data = await response.json();
   console.log('brandAmplificationGetSearchMeta searchMeta res', data)
-  store.dispatch(setMetaSearch({metaSearch: data}))
+  store.dispatch(setMetaSearch({ metaSearch: data }))
   return data.meta
 }
 

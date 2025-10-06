@@ -24,11 +24,13 @@ const ProductCard = (props) => {
     _id,
     id,
     productName: title,
+    brand,
+    category,
     _id: sku,
     imageUrlS3,
     score = null,
     quantity,
-    isAmplifiedBrand // TODO change name once we connect to back
+    isBoosted
   } = props.product;
   const selectedStore = useSelector(state => state.Global.selectedStore)
   const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
@@ -43,7 +45,7 @@ const ProductCard = (props) => {
 
   return (
     <>
-      <Card onClick={() => console.log(props.product)} className={`product-card ${isAmplifiedBrand === true ? 'card-lime' : ''}`}>
+      <Card onClick={() => console.log(props.product)} className={`product-card ${isBoosted === true ? 'card-lime' : ''}`}>
         <div className='score-container'>
           {score && <Badge className={'scorebadge'} variant="yellow">
             <Icon glyph="Favorite" />
@@ -60,7 +62,7 @@ const ProductCard = (props) => {
               {
                 heading: 'Create Brand Amplification',
                 content: <Container>
-                  <BrandAmplificationForm/>
+                  <BrandAmplificationForm />
                 </Container>
               }
             ]}
@@ -119,12 +121,16 @@ const ProductCard = (props) => {
         <Body className="mb-2"><strong>SKU: </strong>{sku || id}</Body>
         <div className="w-100 d-flex flex-column" style={{ marginBottom: 8 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Icon glyph="Pin" size="large" /> {/* Aisle icon */}
-            <span style={{ fontSize: 13 }}>Aisle: {aisleNumber}</span>
+            <Icon glyph="Tag" size="large" /> {/* Tag icon */}
+            <span style={{ fontSize: 13 }}>
+              Brand: {brand ?? 'N/A'}
+              &nbsp;
+              (Category '{category ?? 'N/A'}')
+            </span>
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Icon glyph="Package" size="large" /> {/* Shelf icon */}
-            <span style={{ fontSize: 13 }}>Shelf: {shelfNumber ?? 'N/A'}</span>
+            <Icon glyph="Pin" size="large" /> {/* Aisle icon */}
+            <span style={{ fontSize: 13 }}>Aisle: {aisleNumber}</span>
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <Icon glyph="Package" size="large" /> {/* Shelf icon */}

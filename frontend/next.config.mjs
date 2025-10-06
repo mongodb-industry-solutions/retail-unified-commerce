@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: false,
   images: {
     domains: [
       'retail-unified-commerce-product-images.s3.eu-west-1.amazonaws.com',

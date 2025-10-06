@@ -1,6 +1,39 @@
 import { BA_DEFAULT_NAME, BOOST_VALUES } from "@/lib/constant";
 import { createSlice } from "@reduxjs/toolkit";
 
+const getLocalBrandAmplifications = () => {
+    try {
+        const data = localStorage.getItem('brandAmplifications');
+        return data ? JSON.parse(data) : [];
+    } catch {
+        return [];
+    }
+};
+
+export const fetchBrandAmplifications = () => async (dispatch) => {
+    // Fetch from MongoDB API
+    const response = await fetch('/api/findDocuments', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            filter: { },
+            options: { limit: 1 },
+            collectionName: 'brand-amplification'
+        }),
+    });
+    const mongoBrandAmplifications = await response.json();
+    console.log('mongoBrandAmplifications', mongoBrandAmplifications)
+    // Fetch from local storage
+    const localBrandAmplifications = getLocalBrandAmplifications();
+
+    // Merge and dispatch
+    dispatch(setBrandAmplificationList({
+        list: [...mongoBrandAmplifications.result, ...localBrandAmplifications]
+    }));
+};
+
 const BrandAmplificationFormSlice = createSlice({
     name: "BrandAmplificationForm",
     initialState: {
@@ -9,7 +42,7 @@ const BrandAmplificationFormSlice = createSlice({
             brand: "",
             categories: [],
             name: BA_DEFAULT_NAME,
-            boostValue: BOOST_VALUES[0].value, // default to 'low' boost value
+            boostLevel: BOOST_VALUES[0].value, // default to 'low' boost value
         },
         // for select options for brand
         brandSelector: {
@@ -36,7 +69,14 @@ const BrandAmplificationFormSlice = createSlice({
             error: null,
             data: []
         },
-        metaSearch: null
+        metaSearch: null,
+        testBrandAmplifications: {
+            initialLoad: false,
+            loading: false,
+            error: null,
+            resultsWithAmplification: [],
+            resultsWithoutAmplification: []
+        }
     },
     reducers: {
         setBrandSelectorLoading(state, action) {
@@ -60,7 +100,7 @@ const BrandAmplificationFormSlice = createSlice({
             }
             state.brandAmplification.brand = action.payload.brand || '';
             state.categoriesSelector.data = action.payload.categories || [];
-            if(!action.payload.brand)
+            if (!action.payload.brand)
                 state.brandAmplification.categories = []
 
         },
@@ -72,12 +112,8 @@ const BrandAmplificationFormSlice = createSlice({
             console.log('setBrandAmplificationList action payload:', action.payload.list);
             state.brandAmplificationList.data = [...action.payload.list];
         },
-        addBrandAmplifications(state, action) {
-            // action.payload should be an array of brandAmplifications
-            state.brandAmplificationList.data = [
-                ...state.brandAmplificationList.data,
-                ...action.payload
-            ];
+        addBrandAmplification(state, action) {
+            state.brandAmplificationList.data.push(action.payload);
         },
         removeBrandAmplification(state, action) {
             // action.payload should be the brandAmplification to remove (by id or unique property)
@@ -87,7 +123,14 @@ const BrandAmplificationFormSlice = createSlice({
         },
         setMetaSearch(state, action) {
             state.metaSearch = action.payload.metaSearch;
-        }
+        },
+        setTestBrandAmplifications(state, action) {
+            state.testBrandAmplifications = {
+                ...state.testBrandAmplifications,
+                ...action.payload,
+                initialLoad: false
+            }
+        },
     }
 })
 
@@ -95,12 +138,13 @@ export const {
     setBrand,
     setBrandAmplificationField,
     setBrandAmplificationList,
-    addBrandAmplifications,
     removeBrandAmplification,
     setMetaSearch,
     setBrandSelectorLoading,
     setBrandSelectorError,
-    setBrandSelector
+    setBrandSelector,
+    setTestBrandAmplifications,
+    addBrandAmplification
 } = BrandAmplificationFormSlice.actions
 
 export default BrandAmplificationFormSlice.reducer

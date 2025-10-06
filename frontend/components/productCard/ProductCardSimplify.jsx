@@ -1,49 +1,38 @@
 "use client";
-
-import "./productCard.css";
 import PropTypes from "prop-types";
 import Icon from "@leafygreen-ui/icon";
-import { useRouter } from 'next/navigation';
-
 import Card from "@leafygreen-ui/card";
 import { Body, Subtitle } from "@leafygreen-ui/typography";
-import Button from "@leafygreen-ui/button";
 import Badge from "@leafygreen-ui/badge";
 import Image from "next/image";
-import { productInventoryURL } from "@/lib/constant";
 import { useState } from "react";
 import InfoWizard from "../InfoWizard/InfoWizard";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
 import { useSelector } from "react-redux";
-import BrandAmplificationForm from "../brandAmplificationForm/BrandAmplificationForm";
+
+import "./productCard.css";
 
 const ProductCardSimplify = (props) => {
-    const router = useRouter();
     const {
-        _id,
-        id,
         productName: title,
         _id: sku,
         imageUrlS3,
         score = null,
-        quantity,
-        isAmplifiedBrand // TODO change name once we connect to back
+        brand,
+        category,
+        isBoosted = true
     } = props.product;
-    const selectedStore = useSelector(state => state.Global.selectedStore)
     const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
-    const {
-        shelfId: shelfNumber,
-        aisleId: aisleNumber = 'N/A',
-    } = props.product.inventorySummary.length === 1
-            ? props.product.inventorySummary[0]
-            : props.product.inventorySummary.find(store => store.storeObjectId === selectedStore) || {};
     const [openHelpModal, setOpenHelpModal] = useState(false);
-    const [brandAmplificationModalOpen, setBrandAmplificationModalOpen] = useState(false)
 
     return (
         <>
-            <Card onClick={() => console.log(props.product)} className={`product-card pt-2 pb-2 mb-2`}>
+            <Card
+                onClick={() => console.log(props.product)}
+                style={{ maxHeight: '122px', height: '122px' }}
+                className={`product-card pt-2 pb-2 mb-2 ${isBoosted === true ? 'card-lime' : ''}`}
+            >
                 <div className='right-side-container'>
                     <InfoWizard
                         open={openHelpModal}
@@ -95,9 +84,14 @@ const ProductCardSimplify = (props) => {
                             </div>
                         )}
                     </div>
-                    <div>
-                        <Subtitle className="mb-1">{title}</Subtitle>
-                        <Body className="mb-2"><strong>SKU: </strong>{sku || id}</Body>
+                    <div className="w-100">
+                        <Subtitle
+                            className="mb-1 subtitle-ellipsis"
+                        >{title}</Subtitle>
+                        <Body className="mb-2">
+                            <strong>Brand: </strong>{brand || ''}  &nbsp;&nbsp;&nbsp;
+                            <strong>Category: </strong>{category || ''}
+                        </Body>
                         {score && <Badge className={''} variant="yellow">
                             <Icon glyph="Favorite" />
                             {score?.toFixed(5)}
@@ -113,7 +107,6 @@ ProductCardSimplify.propTypes = {
         _id: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,
         sku: PropTypes.string.isRequired,
-        // description: PropTypes.string,
         score: PropTypes.number
     }).isRequired
 };

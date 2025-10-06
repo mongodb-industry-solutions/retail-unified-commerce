@@ -9,7 +9,7 @@ import Button from '@leafygreen-ui/button';
 import ExpandableCard from '@leafygreen-ui/expandable-card';
 import Code from '@leafygreen-ui/code'
 import { useDispatch, useSelector } from 'react-redux';
-import { setBrand, setBrandAmplificationField } from '@/redux/slices/PromotionFormSlice';
+import { addBrandAmplification, setBrand, setBrandAmplificationField } from '@/redux/slices/PromotionFormSlice';
 import { BOOST_VALUES } from '@/lib/constant';
 import BrandAmplificationMeta from '../brandAmplificationMeta/BrandAmplificationMeta';
 import { brandAmplificationGetSearchMeta } from '@/lib/api';
@@ -22,7 +22,7 @@ const isFormValid = (brandAmplification) => {
     if (!brandAmplification.brand || brandAmplification.brand.trim() === '') {
         isFormValid = false;
     }
-    if (!brandAmplification.boostValue || isNaN(brandAmplification.boostValue) || brandAmplification.boostValue <= 0) {
+    if (!brandAmplification.boostLevel || isNaN(brandAmplification.boostLevel) || brandAmplification.boostLevel <= 0) {
         isFormValid = false;
     }
     return isFormValid
@@ -34,17 +34,31 @@ const BrandAmplificationForm = () => {
         brandSelector,
         categoriesSelector,
         metaSearch
-    } = useSelector(state => state.BrandAmplificationFormSlice)
+    } = useSelector(state => state.BrandAmplificationForm)
     const dispatch = useDispatch();
 
-    const handleClick = () => {
+    const handleCreate = () => {
+        let brandAmplificationToSave = {...brandAmplification}
+        if(brandAmplificationToSave.categories.length === 0)
+            delete brandAmplificationToSave.categories
+        // Assuming brandAmplification is the new object to add
+        // Add to local storage
+        let localBrandAmplifications = [];
+        try {
+            localBrandAmplifications = JSON.parse(localStorage.getItem('brandAmplifications')) || [];
+        } catch {
+            localBrandAmplifications = [];
+        }
+        localBrandAmplifications.push(brandAmplificationToSave);
+        localStorage.setItem('brandAmplifications', JSON.stringify(localBrandAmplifications));
 
-    }
+        // Add to Redux
+        dispatch(addBrandAmplification(brandAmplificationToSave));
+    };
 
     const calcBrandAmplificationGetSearchMeta = async () => {
         // Call the API to get the search meta
         let res = await brandAmplificationGetSearchMeta()
-        console.log('calcBrandAmplificationGetSearchMeta res page', res)
     }
 
     //deletes or adds a string to an array field
@@ -56,15 +70,17 @@ const BrandAmplificationForm = () => {
             dispatch(setBrandAmplificationField({ field: field, value: arr.filter((item) => item !== value) }))
         }
         else {
-            dispatch(setBrandAmplificationField({ field: field, value: [ value] }))
+            dispatch(setBrandAmplificationField({ field: field, value: [value] }))
         }
         calcBrandAmplificationGetSearchMeta()
     };
 
-    const onBrandChange = (brand = null) => {
+    const onBrandChange = (brandId = null) => {
+        const brand = brandSelector.data.find(brand => brand._id === brandId);
         dispatch(setBrand({ brand: brand?._id, categories: brand?.categories }))
         calcBrandAmplificationGetSearchMeta()
     }
+
     const onCategoryChange = (value) => {
         if (value === "") {
             dispatch(setBrandAmplificationField({ field: "categories", value: [] }))
@@ -85,8 +101,10 @@ const BrandAmplificationForm = () => {
                             description="Select the brand you wish to amplify in the search results"
                             className={'selectInput'}
                             onChange={(value) => {
-                                if(value === null)
+                                if (value === null)
                                     onBrandChange(null)
+                                else
+                                    onBrandChange(value)
                             }}
                         >
                             {(Array.isArray(brandSelector.data)
@@ -95,11 +113,8 @@ const BrandAmplificationForm = () => {
                             ).map((brand, index) => (
                                 <ComboboxOption
                                     key={`brand-${index}`}
-                                    value={`${brand._id} (${brand.count} products)`}
-                                    onClick={() => {
-                                        //let name = value === null ? '' : value
-                                        onBrandChange(brand)
-                                    }}
+                                    value={`${brand._id}`}
+                                    displayName={`${brand._id} (${brand.count} products)`}
                                 />
                             ))}
                         </Combobox>
@@ -146,8 +161,8 @@ const BrandAmplificationForm = () => {
                             label="Boost value"
                             allowDeselect={false}
                             description="Recommended boost value (i)"
-                            value={brandAmplification.boostValue}
-                            onChange={(value) => dispatch(setBrandAmplificationField({ field: "boostValue", value: Number(value) }))}
+                            value={brandAmplification.boostLevel}
+                            onChange={(value) => dispatch(setBrandAmplificationField({ field: "boostLevel", value: Number(value) }))}
                         >
                             {BOOST_VALUES.map((boost) => (
                                 <Option key={`boost-${boost.value}`} value={boost.value}>
@@ -158,7 +173,7 @@ const BrandAmplificationForm = () => {
                     </div>
                     <Button
                         variant="primary"
-                        onClick={handleClick}
+                        onClick={handleCreate}
                         disabled={!isFormValid(brandAmplification)}
                     >
                         Create

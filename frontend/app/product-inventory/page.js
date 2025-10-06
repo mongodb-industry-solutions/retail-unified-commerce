@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Container } from "react-bootstrap";
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -22,9 +22,12 @@ export default function ProductInventoryPage() {
     error,
     searchResults,
     query,
+    useBrandAmplification,
     initialLoad,
     forceSearchWithEnterToggle
   } = useSelector(state => state.ProductInventory);
+  const hasMounted = useRef(false);
+
   const tabs = [
     {
       heading: 'How to demo',
@@ -41,10 +44,11 @@ export default function ProductInventoryPage() {
   ]
 
   const fetchResults = async () => {
+    console.log('FETCHING RESULTS PI')
     if (!query) return;
     dispatch(searchIsLoading());
     try {
-      let results = await getProductsWithSearchInput(query);
+      let results = await getProductsWithSearchInput(query, useBrandAmplification);
       dispatch(setSearchResults({ results: results.products || [], totalItems: results.totalItems || 0 }));
     } catch (err) {
       dispatch(searchProductError({ error: err }));
@@ -52,6 +56,13 @@ export default function ProductInventoryPage() {
   };
 
   useEffect(() => {
+    if (!hasMounted.current) {
+      console.log('SKIP FETCHING RESULTS PI')
+      hasMounted.current = true;
+      return;
+    }
+
+    // Only run this after first render
     fetchResults();
   }, [query, forceSearchWithEnterToggle, dispatch]);
 
