@@ -9,7 +9,7 @@ import Button from '@leafygreen-ui/button';
 import ExpandableCard from '@leafygreen-ui/expandable-card';
 import Code from '@leafygreen-ui/code'
 import { useDispatch, useSelector } from 'react-redux';
-import { addBrandAmplification, setBrand, setBrandAmplificationField } from '@/redux/slices/PromotionFormSlice';
+import { addBrandAmplification, resetBrandAmplificationForm, setBrand, setBrandAmplificationField } from '@/redux/slices/PromotionFormSlice';
 import { BOOST_VALUES } from '@/lib/constant';
 import BrandAmplificationMeta from '../brandAmplificationMeta/BrandAmplificationMeta';
 import { brandAmplificationGetSearchMeta } from '@/lib/api';
@@ -28,17 +28,18 @@ const isFormValid = (brandAmplification) => {
     return isFormValid
 }
 
-const BrandAmplificationForm = () => {
+const BrandAmplificationForm = (props) => {
     const {
         brandAmplification,
         brandSelector,
         categoriesSelector,
         metaSearch
     } = useSelector(state => state.BrandAmplificationForm)
+    const {onCreateSuccess} = props;
     const dispatch = useDispatch();
 
     const handleCreate = () => {
-        let brandAmplificationToSave = {...brandAmplification}
+        let brandAmplificationToSave = {...brandAmplification, name: brandAmplification.brand, _id: brandAmplification.name, isLocal: true}
         if(brandAmplificationToSave.categories.length === 0)
             delete brandAmplificationToSave.categories
         // Assuming brandAmplification is the new object to add
@@ -51,9 +52,10 @@ const BrandAmplificationForm = () => {
         }
         localBrandAmplifications.push(brandAmplificationToSave);
         localStorage.setItem('brandAmplifications', JSON.stringify(localBrandAmplifications));
-
         // Add to Redux
         dispatch(addBrandAmplification(brandAmplificationToSave));
+        dispatch(resetBrandAmplificationForm());
+        onCreateSuccess();
     };
 
     const calcBrandAmplificationGetSearchMeta = async () => {

@@ -1,4 +1,4 @@
-import { BA_DEFAULT_NAME, BOOST_VALUES } from "@/lib/constant";
+import { BA_DEFAULT_NAME, BOOST_VALUES, INIT_BRAND_AMPLIFICATION } from "@/lib/constant";
 import { createSlice } from "@reduxjs/toolkit";
 
 const getLocalBrandAmplifications = () => {
@@ -38,12 +38,7 @@ const BrandAmplificationFormSlice = createSlice({
     name: "BrandAmplificationForm",
     initialState: {
         // the form values are in 'brandAmplification'
-        brandAmplification: {
-            brand: "",
-            categories: [],
-            name: BA_DEFAULT_NAME,
-            boostLevel: BOOST_VALUES[0].value, // default to 'low' boost value
-        },
+        brandAmplification: INIT_BRAND_AMPLIFICATION,
         // for select options for brand
         brandSelector: {
             loading: true,
@@ -90,6 +85,9 @@ const BrandAmplificationFormSlice = createSlice({
         setBrandSelector(state, action) {
             console.log('setBrandSelector action payload:', action.payload);
             state.brandSelector.data = action.payload.brands || [];
+        },
+        resetBrandAmplificationForm(state, action){
+            state.brandAmplification = INIT_BRAND_AMPLIFICATION
         },
         setBrand(state, action) {
             console.log('setBrand action payload:', action.payload);
@@ -144,7 +142,8 @@ export const {
     setBrandSelectorError,
     setBrandSelector,
     setTestBrandAmplifications,
-    addBrandAmplification
+    addBrandAmplification,
+    resetBrandAmplificationForm
 } = BrandAmplificationFormSlice.actions
 
 export default BrandAmplificationFormSlice.reducer

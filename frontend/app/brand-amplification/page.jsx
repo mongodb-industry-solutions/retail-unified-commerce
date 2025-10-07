@@ -6,7 +6,7 @@ import { Tabs, Tab } from '@leafygreen-ui/tabs';
 import BrandAmplificationForm from '@/components/brandAmplificationForm/BrandAmplificationForm';
 import { getAllBrands, getProductsWithSearchInput } from '@/lib/api';
 import { useDispatch, useSelector } from 'react-redux';
-import { setBrandSelectorError, setBrandSelectorLoading, setTestBrandAmplifications } from '@/redux/slices/PromotionFormSlice';
+import { removeBrandAmplification, setBrandSelectorError, setBrandSelectorLoading, setTestBrandAmplifications } from '@/redux/slices/PromotionFormSlice';
 import TestBrandAmplificationsTab from '@/components/testBrandAmplificationsTab/TestBrandAmplificationsTab';
 import Card from '@leafygreen-ui/card';
 import Button from '@leafygreen-ui/button';
@@ -18,15 +18,27 @@ export default function ProductInventoryPage() {
         forceSearchWithEnterToggle
     } = useSelector(state => state.ProductInventory);
     const {
-        data : brandAmplifications
+        data: brandAmplifications
     } = useSelector(state => state.BrandAmplificationForm.brandAmplificationList)
     const [selected, setSelected] = useState(0);
     const hasMounted = useRef(false);
     const tabs = []
 
 
-    const deleteBrandAmplification = () => {
-
+    const deleteBrandAmplification = (baToDelete) => {
+        // Remove from localStorage
+        let localBrandAmplifications = [];
+        try {
+            localBrandAmplifications = JSON.parse(localStorage.getItem('brandAmplifications')) || [];
+        } catch {
+            localBrandAmplifications = [];
+        }
+        localBrandAmplifications = localBrandAmplifications.filter(
+            ba => ba._id !== baToDelete._id // or use ba._id if available
+        );
+        localStorage.setItem('brandAmplifications', JSON.stringify(localBrandAmplifications));
+        // Remove from Redux
+        dispatch(removeBrandAmplification({ _id: baToDelete._id }));
     }
 
     const fetchResults = async () => {
@@ -89,23 +101,23 @@ export default function ProductInventoryPage() {
                 subtitle="Module for managers to amplify brands, increase product relevance, and reach KPIs"
             />
             <Tabs aria-label="Brand amplification tabs" className='mt-4' setSelected={setSelected} selected={selected}>
-                <Tab id='create-promotion' name="Create brand amplification"><BrandAmplificationForm /></Tab>
+                <Tab id='create-promotion' name="Create brand amplification"><BrandAmplificationForm onCreateSuccess={() => setSelected(1)} /></Tab>
                 <Tab id='active-promotions' name="Active brand amplifications">
-                    <div className='mt-4'>
+                    <div className='mt-4 mb-4'>
                         {
-                        brandAmplifications?.map((ba, index) => (
-                            <Card className='mt-3' key={index} onClick={() => console.log(ba)}>
-                                <p><strong>Brand: </strong>{ba.name}</p>
-                                <p><strong>Boost Level: </strong>{ba.boostLevel}</p>
-                                <p><strong>Categories: </strong>{ba.categories ? ba.categories.join(", ") : "All"}</p>
-                                {
-                                    !ba._id && <Button onClick={() => deleteBrandAmplification()}>
-                                        Delete
-                                    </Button>
-                                }
-                            </Card>
-                        ))
-                    }
+                            brandAmplifications?.map((ba, index) => (
+                                <Card className='mt-3' key={index} onClick={() => console.log(ba)}>
+                                    <p><strong>Brand: </strong>{ba.name}</p>
+                                    <p><strong>Boost Level: </strong>{ba.boostLevel}</p>
+                                    <p><strong>Categories: </strong>{ba.categories ? ba.categories.join(", ") : "All"}</p>
+                                    {
+                                        ba.isLocal && <Button onClick={() => deleteBrandAmplification(ba)}>
+                                            Delete
+                                        </Button>
+                                    }
+                                </Card>
+                            ))
+                        }
                     </div>
                 </Tab>
                 <Tab id='active-promotions' name="Test brand amplifications"> <TestBrandAmplificationsTab /> </Tab>

@@ -31,6 +31,13 @@ export const BOOST_VALUES = [
 ]
 export const BA_DEFAULT_NAME = `ba-${Date.now()}`
 
+export const INIT_BRAND_AMPLIFICATION = {
+    brand: "",
+    categories: [],
+    name: BA_DEFAULT_NAME,
+    boostLevel: BOOST_VALUES[0].value, // default to 'low' boost value
+}
+
 export const SEARCH_OPTIONS = {
     search: {
         id: 2,
