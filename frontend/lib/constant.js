@@ -10,10 +10,10 @@ export const modules = [
     },
     { 
         name: 'Brand Amplification', 
-        description: 'Create and manage brand amplifications to boost product visibility inside the catalog to reach monthly KPIs.', 
+        description: 'Create and manage brand amplifications to boost product visibility inside the catalog.', 
         url: brandAmplificationURL, 
         disabled: false ,
-        labelText: "Only accessible for manager users."
+        labelText: "Only accessible for authorized users."
     },
     { 
         name: 'Spoiled Inventory', 
