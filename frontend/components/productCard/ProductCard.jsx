@@ -17,6 +17,8 @@ import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
 import { useSelector } from "react-redux";
 import BrandAmplificationForm from "../brandAmplificationForm/BrandAmplificationForm";
+import { setBrandInForm, setCategoryInForm } from "@/lib/helpers";
+import BrandAmplificationList from "../brandAmplificationList/BrandAmplificationList";
 
 const ProductCard = (props) => {
   const router = useRouter();
@@ -43,28 +45,49 @@ const ProductCard = (props) => {
   const [openHelpModal, setOpenHelpModal] = useState(false);
   const [brandAmplificationModalOpen, setBrandAmplificationModalOpen] = useState(false)
 
+
+  const onCreateBrandAmplificationSuccess = () => {
+    setBrandAmplificationModalOpen(false)
+    alert('Brand Amp created')
+  }
+  const onOpenBrandAmplificationModal = () => {
+    setBrandAmplificationModalOpen(true)
+    setBrandInForm(brand)
+    setCategoryInForm(category)
+  }
+
   return (
     <>
-      <Card onClick={() => console.log(props.product)} className={`product-card ${isBoosted === true ? 'card-lime' : ''}`}>
-        <div className='score-container'>
+      <Card onClick={() => console.log(props.product)} className={`product-card ${isBoosted === true ? 'card-lime-light' : ''}`}>
+        <div className='score-container d-flex flex-column align-items-start'>
           {score && <Badge className={'scorebadge'} variant="yellow">
             <Icon glyph="Favorite" />
             {score?.toFixed(5)}
+          </Badge>}
+          {isBoosted === true && <Badge className={'mt-2 scorebadge'} variant="green">
+            Store's Favorite
           </Badge>}
         </div>
         <div className='right-side-container'>
           <InfoWizard
             open={brandAmplificationModalOpen}
             setOpen={setBrandAmplificationModalOpen}
+            setOpenCallback={onOpenBrandAmplificationModal}
             tooltipText="Create Brand Amplification"
             iconGlyph="Tag"
             tabs={[
               {
                 heading: 'Create Brand Amplification',
                 content: <Container>
-                  <BrandAmplificationForm />
+                  <BrandAmplificationForm onCreateSuccess={onCreateBrandAmplificationSuccess} />
                 </Container>
-              }
+              },
+              {
+                heading: 'Brand Amplifications',
+                content: <Container>
+                  <BrandAmplificationList />
+                </Container>
+              },
             ]}
             openModalIsButton={false}
           />

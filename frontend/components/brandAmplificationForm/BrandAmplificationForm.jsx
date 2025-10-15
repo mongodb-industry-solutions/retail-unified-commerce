@@ -13,6 +13,7 @@ import { addBrandAmplification, resetBrandAmplificationForm, setBrand, setBrandA
 import { BOOST_VALUES } from '@/lib/constant';
 import BrandAmplificationMeta from '../brandAmplificationMeta/BrandAmplificationMeta';
 import { brandAmplificationGetSearchMeta } from '@/lib/api';
+import { setBrandInForm } from '@/lib/helpers';
 
 const isFormValid = (brandAmplification) => {
     let isFormValid = true;
@@ -35,7 +36,9 @@ const BrandAmplificationForm = (props) => {
         categoriesSelector,
         metaSearch
     } = useSelector(state => state.BrandAmplificationForm)
-    const {onCreateSuccess} = props;
+    const {
+        onCreateSuccess
+    } = props;
     const dispatch = useDispatch();
 
     const handleCreate = () => {
@@ -78,9 +81,7 @@ const BrandAmplificationForm = (props) => {
     };
 
     const onBrandChange = (brandId = null) => {
-        const brand = brandSelector.data.find(brand => brand._id === brandId);
-        dispatch(setBrand({ brand: brand?._id, categories: brand?.categories }))
-        calcBrandAmplificationGetSearchMeta()
+        setBrandInForm(brandId)
     }
 
     const onCategoryChange = (value) => {
@@ -102,6 +103,7 @@ const BrandAmplificationForm = (props) => {
                             label="Brand"
                             description="Select the brand you wish to amplify in the search results"
                             className={'selectInput'}
+                            value={brandAmplification.brand}
                             onChange={(value) => {
                                 if (value === null)
                                     onBrandChange(null)
@@ -127,6 +129,7 @@ const BrandAmplificationForm = (props) => {
                             allowDeselect={true}
                             disabled={brandAmplification.brand?.length === 0}
                             onChange={(value) => onCategoryChange(value)}
+                            value={brandAmplification.categories.length === 1 ? brandAmplification.categories[0] : ""} //only one category allowed
                         >
                             {(Array.isArray(categoriesSelector.data)
                                 ? categoriesSelector.data
@@ -188,7 +191,7 @@ const BrandAmplificationForm = (props) => {
                     {JSON.stringify(brandAmplification, null, 2)}
                 </Code>
                 <br /><br />
-                <CardHeader title="Meta Search" subtitle="Watch $metaSearch result" glyphIcon="CurlyBraces" />
+                <CardHeader title="Meta Search" subtitle="Watch $searchMeta result" glyphIcon="CurlyBraces" />
                 <Code className="brand-amplification-json mt-4" language="javascript" showLineNumbers>
                     {JSON.stringify(metaSearch?.meta?.meta, null, 2)}
                 </Code>

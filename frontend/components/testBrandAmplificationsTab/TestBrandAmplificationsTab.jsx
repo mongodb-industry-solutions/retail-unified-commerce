@@ -7,7 +7,7 @@ import LoadingSearchBanner from '../loadingSearchBanner/LoadingSearchBanner';
 import EnterSearchBanner from '../enterSearchBanner/EnterSearchBannet';
 import ErrorSearchBanner from '../errorSearchBanner/EnterSearchBannet';
 
-const TestBrandAmplificationsTab = () => {
+const TestBrandAmplificationsTab = (props) => {
     const {
         loading,
         error,
@@ -16,6 +16,7 @@ const TestBrandAmplificationsTab = () => {
         resultsWithoutAmplification
     } = useSelector(state => state.BrandAmplificationForm.testBrandAmplifications);
     const { query } = useSelector(state => state.ProductInventory);
+    const { onBrandAmplificationClick } = props;
 
     return (
         <div>
@@ -46,6 +47,7 @@ const TestBrandAmplificationsTab = () => {
                                                 <ProductCardSimplify
                                                     key={index}
                                                     product={product}
+                                                    onBrandAmplificationClick={onBrandAmplificationClick}
                                                 />
                                             ))}
                                         </>
@@ -69,6 +71,7 @@ const TestBrandAmplificationsTab = () => {
                                                 <ProductCardSimplify
                                                     key={index}
                                                     product={product}
+                                                    onBrandAmplificationClick={onBrandAmplificationClick}
                                                 />
                                             ))}
                                         </>

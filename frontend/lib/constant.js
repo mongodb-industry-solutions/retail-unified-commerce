@@ -43,25 +43,29 @@ export const SEARCH_OPTIONS = {
         id: 2,
         label: 'MongoDB Search',
         description: 'Full-text search',
-        enabled: process.env.NEXT_PUBLIC_ENABLE_ATLAS_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_ATLAS_SEARCH
+        enabled: process.env.NEXT_PUBLIC_ENABLE_ATLAS_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_ATLAS_SEARCH,
+        recommendedTerms: ['green tea', 'cukie', 'chips']
     },
     vectorSearch: {
         id: 3,
         label: 'MongoDB Vector Search',
         description: 'Semantic search with vector embeddings',
-        enabled: process.env.NEXT_PUBLIC_ENABLE_VECTOR_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_VECTOR_SEARCH
+        enabled: process.env.NEXT_PUBLIC_ENABLE_VECTOR_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_VECTOR_SEARCH,
+        recommendedTerms: ['gift for a teen girl']
     },
     hybridSearch: {
         id: 4,
         label: 'Hybrid Search',
         description: 'Hybrid search',
-        enabled: process.env.NEXT_PUBLIC_ENABLE_HYBRID_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_HYBRID_SEARCH
+        enabled: process.env.NEXT_PUBLIC_ENABLE_HYBRID_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_HYBRID_SEARCH,
+        recommendedTerms: ['gift for a teen girl']
     },
     regex: {
         id: 1,
         label: 'Regex Search',
         description: 'Regular expression',
-        enabled: process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH
+        enabled: process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH,
+        recommendedTerms: ['high protein snack']
     }
 }
 export const SEARCH_FUSION_OPTIONS = {

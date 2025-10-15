@@ -17,9 +17,7 @@ import InventoryContainer from '@/components/iventoryContainer/InventoryContaine
 import LocationsContainer from '@/components/locationsContainer/LocationsContainer';
 import BusinessIntelligenceContainer from '@/components/businessIntelligence/BusinessIntelligenceContainer';
 import { setStores } from '@/redux/slices/GlobalSlice';
-import HowToInventoryPage from '@/components/talkTracks/HowToInventoryPage';
-import BehindTheScenes from '@/components/talkTracks/BehindTheScenes';
-import ProductInventoryWyMDB from '@/components/talkTracks/ProductInventoryWyMDB';
+import { prodInventoryPage } from '@/lib/talkTrack';
 
 export default function ProductInventoryDetailePage({ params }) {
     const router = useRouter();
@@ -87,20 +85,7 @@ export default function ProductInventoryDetailePage({ params }) {
                         setOpen={setOpenHelpModal}
                         tooltipText="Talk track!"
                         iconGlyph="Wizard"
-                        tabs={[
-                            {
-                                heading: 'How to demo',
-                                content: <HowToInventoryPage isSearchPage={false} />
-                            },
-                            {
-                                heading: 'Behind the scenes',
-                                content: <BehindTheScenes />
-                            },
-                            {
-                                heading: 'Why MongoDB?',
-                                content: <ProductInventoryWyMDB />
-                            }
-                        ]}
+                        tabs={prodInventoryPage}
                         openModalIsButton={true}
                     />
                 </div>

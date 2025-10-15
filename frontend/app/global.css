@@ -23,7 +23,9 @@
 .myMap{
   position: relative;
 }
-
+.cursor-pointer{
+  cursor: pointer;
+}
 
 .card-blue{
     background-color: rgb(225, 247, 255);;
@@ -56,6 +58,11 @@
 
 .card-lime{
     background-color: #e9ff99;
+    border: 1px solid #e9ff99;
+    color: black;
+}
+.card-lime-light{
+    background-color: #e9ff9963;
     border: 1px solid #e9ff99;
     color: black;
 }

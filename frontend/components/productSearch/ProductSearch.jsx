@@ -24,6 +24,7 @@ import Toggle from '@leafygreen-ui/toggle';
 import { CardHeader } from '../cardHeader/CardHeader';
 import { Label } from '@leafygreen-ui/typography';
 import { InfoSprinkle } from '@leafygreen-ui/info-sprinkle';
+import Badge from '@leafygreen-ui/badge';
 
 const ProductSearch = (props) => {
     const { isToggleVisible = true, isScanProductVisible = true } = props
@@ -40,10 +41,11 @@ const ProductSearch = (props) => {
         useBrandAmplification
     } = useSelector(state => state.ProductInventory);
 
-    const handleSearch = () => {
+    const handleSearch = (searchValueLocal = searchValue) => {
+        searchValueLocal = searchValueLocal || '';
         // Placeholder: implement search logic here
-        console.log('Searching for:', searchValue);
-        if (searchValue.trim() === '') {
+        console.log('Searching for:', searchValue, searchValueLocal);
+        if (searchValueLocal.trim() === '') {
             toast.error('Please enter a search term.');
             return;
         }
@@ -53,7 +55,7 @@ const ProductSearch = (props) => {
                 return; // Stop execution if validation fails
             }
         }
-        dispatch(setProductQuery({ query: searchValue.trim() }));
+        dispatch(setProductQuery({ query: searchValueLocal.trim() }));
         dispatch(toggleForceSearchWithEnter());
     };
 
@@ -126,7 +128,7 @@ const ProductSearch = (props) => {
                     </Select>
                     {
                         isToggleVisible &&
-                        <div className='d-flex flex-column'>
+                        <div className='d-flex flex-column me-3'>
                             <div className='d-flex align-items-center mb-1'>
                                 <Label className={'mb-1 me-1'}>Use Brand Amplifications</Label>
                                 <InfoSprinkle
@@ -135,7 +137,7 @@ const ProductSearch = (props) => {
                                         onMouseOver: () => { },
                                         'aria-label': 'aria-label',
                                     }}>
-                                    Amplified products will have a light green background in the results list.
+                                    Amplified products will have a 'Brand's Favorite' label and light green background.
                                 </InfoSprinkle>
                             </div>
                             <Toggle
@@ -148,7 +150,25 @@ const ProductSearch = (props) => {
                                 }}
                             />
                         </div>
+
                     }
+                    <div >
+                        <Label className={'mb-1 me-1'}>Recommended <i>{Object.values(SEARCH_OPTIONS).find(opt => opt.id === searchType)?.label || "search"}</i> terms:</Label>
+                        <br></br>{
+                            Object.values(SEARCH_OPTIONS).find(opt => opt.id === searchType)?.recommendedTerms?.map((term, index) => (
+                                <Badge
+                                    key={index}
+                                    className='me-2 mb-2 cursor-pointer'
+                                    onClick={() => {
+                                        setSearchValue(term);
+                                        handleSearch(term);
+                                    }}
+                                >
+                                    {term}
+                                </Badge>
+                            )) || "No recommended terms available for this search type."
+                        }
+                    </div>
                 </div>
                 {
                     searchType === SEARCH_OPTIONS.hybridSearch.id &&
@@ -221,7 +241,7 @@ const ProductSearch = (props) => {
                     <Button
                         className="ms-2"
                         variant="primary"
-                        onClick={handleSearch}
+                        onClick={() => handleSearch()}
                     >
                         Search
                     </Button>

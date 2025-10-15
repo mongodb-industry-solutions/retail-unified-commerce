@@ -12,6 +12,8 @@ import Code from "@leafygreen-ui/code";
 import { useSelector } from "react-redux";
 
 import "./productCard.css";
+import Tooltip from "@leafygreen-ui/tooltip";
+import IconButton from "@leafygreen-ui/icon-button";
 
 const ProductCardSimplify = (props) => {
     const {
@@ -21,8 +23,11 @@ const ProductCardSimplify = (props) => {
         score = null,
         brand,
         category,
-        isBoosted = true
+        isBoosted = true,
     } = props.product;
+    const {
+        onBrandAmplificationClick
+    } = props;
     const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
     const [openHelpModal, setOpenHelpModal] = useState(false);
 
@@ -31,9 +36,20 @@ const ProductCardSimplify = (props) => {
             <Card
                 onClick={() => console.log(props.product)}
                 style={{ maxHeight: '122px', height: '122px' }}
-                className={`product-card pt-2 pb-2 mb-2 ${isBoosted === true ? 'card-lime' : ''}`}
+                className={`product-card pt-2 pb-2 mb-2 ${isBoosted === true ? 'card-lime-light' : ''}`}
             >
                 <div className='right-side-container'>
+                    <Tooltip
+                        trigger={
+                            <IconButton aria-label="Info" onClick={() => onBrandAmplificationClick(brand, category)}>
+                                <Icon glyph="Tag" />
+                            </IconButton>
+                        }
+                    >
+                        Create Brand Amplification
+                    </Tooltip>
+
+
                     <InfoWizard
                         open={openHelpModal}
                         setOpen={setOpenHelpModal}
@@ -92,10 +108,16 @@ const ProductCardSimplify = (props) => {
                             <strong>Brand: </strong>{brand || ''}  &nbsp;&nbsp;&nbsp;
                             <strong>Category: </strong>{category || ''}
                         </Body>
-                        {score && <Badge className={''} variant="yellow">
-                            <Icon glyph="Favorite" />
-                            {score?.toFixed(5)}
-                        </Badge>}
+                        <div className="d-flex">
+                            {score && <Badge className={''} variant="yellow">
+                                <Icon glyph="Favorite" />
+                                {score?.toFixed(5)}
+                            </Badge>}
+                            {isBoosted === true && <Badge className={'ms-1'} variant="green">
+                                Store's Favorite
+                            </Badge>}
+                        </div>
+
                     </div>
                 </div>
             </Card>

@@ -2,6 +2,7 @@ import React from 'react'
 
 import './brandAmplificationMeta.css'
 import { useSelector } from 'react-redux';
+import {Callout} from '@leafygreen-ui/callout';
 
 const BrandAmplificationMeta = () => {
   const { metaSearch } = useSelector(state => state.BrandAmplificationForm)
@@ -25,6 +26,9 @@ const BrandAmplificationMeta = () => {
           }
         </div>
       </div>
+      <Callout>
+          Dynamic queries to retrieve the count of products matching the brand amplification criteria using <a href='https://www.mongodb.com/docs/atlas/atlas-search/aggregation-stages/searchMeta/' target='_blank'>$searchMeta</a>. This helps in understanding the impact of the amplification settings before applying them.
+      </Callout>
     </div>
   )
 }

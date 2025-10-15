@@ -19,22 +19,30 @@ const InfoWizard = ({
   iconGlyph = "Wizard",
   sections = [],
   openModalIsButton = false,
+  setOpenCallback = null,
   tabs = []
 }) => {
   const [selected, setSelected] = useState(0);
+
+  const onOpen = () => {
+    if (setOpenCallback) {
+      setOpenCallback();
+    }
+    setOpen(true);
+  };
 
   return (
     <>
       {
         openModalIsButton
           /* Bigger button for navbars */
-          ? <Button onClick={() => setOpen((prev) => !prev)} leftGlyph={<Icon glyph={iconGlyph} />}>
+          ? <Button onClick={onOpen} leftGlyph={<Icon glyph={iconGlyph} />}>
             {tooltipText}
           </Button>
           /* Small icon button */
           : <Tooltip
             trigger={
-              <IconButton aria-label="Info" onClick={() => setOpen((prev) => !prev)}>
+              <IconButton aria-label="Info" onClick={onOpen}>
                 <Icon glyph={iconGlyph} />
               </IconButton>
             }
