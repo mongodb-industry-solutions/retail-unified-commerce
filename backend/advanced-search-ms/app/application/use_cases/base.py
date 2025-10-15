@@ -66,21 +66,8 @@ class SearchUseCase(ABC):
             query, store_object_id, page, page_size,
         )
 
-        brand_amp_dicts: Optional[List[Dict]] = None
-        if brand_amplification:
-            try:
-                brand_amp_objs = [BrandAmplification(**b) for b in brand_amplification]
-                with_cats = sum(1 for b in brand_amp_objs if b.categories)
-                total_cats = sum(len(b.categories or []) for b in brand_amp_objs)
-                logger.info(
-                    "✨ [USECASE base] Brand amplification: %d brand(s) | withCategories=%d | categoriesTotal=%d",
-                    len(brand_amp_objs), with_cats, total_cats
-                )
-                # ✅ Forward dicts to repo
-                brand_amp_dicts = [b.dict() for b in brand_amp_objs]
-            except Exception as exc:
-                logger.error("❌ [USECASE base] Invalid brandAmplification input: %s", exc)
-                raise UseCaseError(f"Invalid brandAmplification input: {exc}") from exc
+        # ▷ Validación + normalización de Brand Amplification (mantiene los mismos logs)
+        brand_amp_dicts = self._validate_and_prepare_brand_amp(brand_amplification)
 
         try:
             raw_docs, total = await self._run_repo_query(
@@ -99,6 +86,36 @@ class SearchUseCase(ABC):
         logger.info("📦 [USECASE base] Parsed %d product(s) from raw documents", len(products))
 
         return {"products": products, "total": total}
+
+    # ------------------------------------------------------------------ #
+    # Helpers                                                            #
+    # ------------------------------------------------------------------ #
+    def _validate_and_prepare_brand_amp(
+        self,
+        brand_amplification: Optional[List[Dict]],
+    ) -> Optional[List[Dict]]:
+        """
+        - Valida la entrada (lista de dicts) con el Domain DTO `BrandAmplification`.
+        - Emite los mismos logs de métricas/errores que antes.
+        - Devuelve lista de dicts normalizada (para infra), o None.
+        """
+        if not brand_amplification:
+            return None
+
+        try:
+            brand_amp_objs = [BrandAmplification(**b) for b in brand_amplification]
+            with_cats = sum(1 for b in brand_amp_objs if b.categories)
+            total_cats = sum(len(b.categories or []) for b in brand_amp_objs)
+            logger.info(
+                "✨ [USECASE base] Brand amplification: %d brand(s) | withCategories=%d | categoriesTotal=%d",
+                len(brand_amp_objs), with_cats, total_cats
+            )
+            # ✅ Forward dicts to repo
+            return [b.dict() for b in brand_amp_objs]
+
+        except Exception as exc:
+            logger.error("❌ [USECASE base] Invalid brandAmplification input: %s", exc)
+            raise UseCaseError(f"Invalid brandAmplification input: {exc}") from exc
 
     # ------------------------------------------------------------------ #
     #            Hook to be implemented by concrete subclasses           #

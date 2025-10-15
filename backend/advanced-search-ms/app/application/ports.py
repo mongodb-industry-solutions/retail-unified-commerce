@@ -37,9 +37,14 @@ class BrandAmpSpec(TypedDict, total=False):
     """
     Minimal, app-local spec to avoid coupling Application ↔ Domain.
 
-    name         → brand name to match against product.brand
-    boostLevel   → 1 (low), 2 (medium), 3 (high)
-    categories   → optional list of categories for brand+category rules
+    Fields
+    ------
+    name : str
+        Brand name to match against product.brand (case-insensitive matching handled downstream).
+    boostLevel : int
+        1 (low), 2 (medium), 3 (high). Infra maps this to numeric multipliers/deltas.
+    categories : List[str], optional
+        Optional list. When present, boosts apply only when brand AND category match.
     """
     name: str
     boostLevel: int
@@ -54,7 +59,17 @@ class EmbeddingProvider(Protocol):
 
 # ─────────────────────── Product-search repository ─────────────────────
 class SearchRepository(Protocol):
-    """Repository interface for product search strategies."""
+    """
+    Repository interface for product search strategies.
+
+    Hybrid (text + vector) behavior
+    -------------------------------
+    - When `fusion_mode is None or "rrf"`, implementations SHOULD use Reciprocal Rank Fusion (RRF).
+    - When `fusion_mode == "scoreFusion"`, implementations SHOULD fuse normalized text/vector scores
+      using `weight_text` and `weight_vector` (sensible defaults MAY be applied if omitted).
+    - Implementations MAY expose the fused score under `scoreDetails.value` and/or mirror it into
+      the flat `score` field to keep response shape uniform.
+    """
 
     # Option 1 – keyword / regex (no brand amplification)
     async def search_keyword(
@@ -88,7 +103,7 @@ class SearchRepository(Protocol):
     ) -> SearchResult: ...
 
     # Option 4 – Hybrid (text + vector) with RRF / score fusion
-    async def search_hybrid_rrf(
+    async def search_hybrid(
         self,
         query: str,
         embedding: List[float],
