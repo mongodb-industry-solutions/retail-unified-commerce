@@ -21,15 +21,15 @@ Brand Amplification
 -------------------
 - Accepts `brand_amplification: Sequence[BrandAmpSpec]` (app-local spec).
 - Pipeline builders are responsible for translating `boostLevel` (1|2|3) to numeric
-  boosts/weights and for optionally projecting `isBoosted` and `scoreDetails`.
+  boosts/weights and for optionally projecting `isBoosted`.
 
 Hybrid modes (RRF & scoreFusion)
 --------------------------------
 - When `fusion_mode is None or "rrf"`, this repository builds the RRF pipeline via
   `build_hybrid_rrf_pipeline(...)`.
 - When `fusion_mode == "scoreFusion"`, it builds the score-fusion pipeline via
-  `build_hybrid_score_fusion_pipeline(...)`, which fuses normalized text/vector scores
-  using `weight_text` and `weight_vector`.
+  `build_hybrid_score_fusion_pipeline(...)`, which fuses text/vector rankings according
+  to provided weights.
 
 Why it matters in this demo
 ---------------------------
@@ -38,8 +38,6 @@ end-to-end (inputs, strategy, pagination, totals). The adapter guarantees a stab
 shape for the upstream layers:
 - If a pipeline does not project `isBoosted`, this adapter defaults it to **False**,
   so the API layer consistently exposes the field.
-- If a pipeline exposes a fused score under `scoreDetails.value`, we mirror it into
-  the flat `score` field to keep the domain/API response uniform.
 """
 
 from __future__ import annotations
@@ -155,7 +153,7 @@ class MongoSearchRepository(SearchRepository):
         brand_amplification : Optional[Sequence[BrandAmpSpec]]
             List of app-local specs `{name, boostLevel, categories?}`. The pipeline
             builder decides how to reflect this in the `$search` stage (boosting and/or
-            `isBoosted` / `scoreDetails` projection).
+            `isBoosted` projection).
         """
         logger.info(
             "[INFRA] 🔎 Atlas text | q=%r | store=%s | page=%d | size=%d | brandAmp=%d",
@@ -323,9 +321,6 @@ class MongoSearchRepository(SearchRepository):
         Execute the aggregation, filter inventory by store, and perform minimal shaping.
 
         Shaping performed here (kept intentionally small and documented):
-        - **`score` fallback**: if the pipeline exposes a fused score under
-          `scoreDetails.value`, mirror it into the flat `score` field when the latter is
-          missing/zero. This keeps API responses consistent across strategies.
         - **`isBoosted` default**: if a pipeline does not project `isBoosted`, we set it to
           `False` explicitly to honor the public API schema contract.
         """
@@ -343,15 +338,8 @@ class MongoSearchRepository(SearchRepository):
 
             logger.info("[INFRA] ✅ %d doc(s) returned | total=%d", len(docs), total)
 
-            # Mirror fused score (if present) into flat `score`
+            # Guarantee isBoosted in the outgoing shape
             for doc in docs:
-                sd: Dict[str, Any] | None = doc.get("scoreDetails")
-                if sd and isinstance(sd, dict):
-                    fused = sd.get("value")
-                    if fused is not None and (doc.get("score") in (None, 0, 0.0)):
-                        doc["score"] = round(float(fused), 4)
-
-                # Guarantee isBoosted in the outgoing shape
                 if "isBoosted" not in doc:
                     doc["isBoosted"] = False
 
