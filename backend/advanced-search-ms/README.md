@@ -16,13 +16,13 @@ Brand Amplification: optional feature to boost specific brands in the ranking by
   This helps associates balance personalized recommendations with operational KPIs, enabling **real-time dynamics** such as weekly sales goals related to vendor agreements.
 
 
+---
 
+Explore this microservice taking in consideration: 
 
 -   [Clean Architecture](../../docs/adr/adr-2025-07-clean-architecture-advanced-search-ms.md/) (domain → application → infrastructure → interface).
-- MongoDB Atlas Lucene `$vectorSearch` **and** `$search` text indexes.
-- Reciprocal Rank Fusion to blend vector & text results.
 - Voyage AI embeddings (`voyage‑3‑large`).
-- FastAPI on Python 3.11.
+- FastAPI on Python 3.11. -> * **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
@@ -48,8 +48,14 @@ Brand Amplification: optional feature to boost specific brands in the ranking by
 
 > **Brand Amplification in options 2–4:**  
 > Clients may optionally provide a list of brands with a boost level (`1`, `2`, or `3`) to prioritize those brands in the ranking.  
-> If the `brandAmplification` field is not provided, the search runs normally without amplification.  
-> This is especially useful for real-time retail scenarios, such as highlighting promoted brands during weekly campaigns or meeting vendor sales targets.
+> Boosts can be defined for:
+> - A brand alone (e.g., `"brand": "Plum"`).
+> - A brand within specific categories (e.g., `"brand": "Plum", "categories": ["Face Care", "Hair Care"]`).
+> 
+> This allows for fine-grained control: promote a brand across all its products, or only in targeted verticals.
+> 
+> If the `brandAmplification` field is not provided, the search runs normally without amplification.
+
 
 ---
 
@@ -98,7 +104,6 @@ poetry run uvicorn main:app --reload --port 8000
 
 Verify:
 
-* **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 * **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
 
 ---
@@ -138,10 +143,18 @@ Content-Type: application/json
   "page": 1,
   "page_size": 20,
   "brandAmplification": [
-    { "name": "Oatly", "boostLevel": 3 },
-    { "name": "Alpro", "boostLevel": 2 }
+    {
+      "name": "Oatly",
+      "boostLevel": 3
+    },
+    {
+      "name": "Plum",
+      "boostLevel": 1,
+      "categories": ["Face Care"]
+    }
   ]
 }
+
 
 ```
 ### Option 3 (Vector)
@@ -159,9 +172,7 @@ Content-Type: application/json
   "page": 1,
   "page_size": 20,
   "brandAmplification": [
-    { "name": "MCaffeine", "boostLevel": 2 },
-    { "name": "Innisfree", "boostLevel": 1 },
-    { "name": "Olay", "boostLevel": 3 }
+    { "name": "MCaffeine", "boostLevel": 2 }
   ]
 }
 ```
@@ -180,13 +191,14 @@ Content-Type: application/json
   "page_size": 20,
   "weightVector": 0.5,
   "weightText": 0.5,
-  "fusionMode": "rrf",
-  "brandAmplification": [
+  "fusionMode": "rrf",         // you can also use "scoreFusion"
+   "brandAmplification": [
     { "name": "Innisfree", "boostLevel": 1 },
-    { "name": "Olay", "boostLevel": 2 },
+    { "name": "Olay", "boostLevel": 2, "categories": ["Face Care", "Skincare"] },s
     { "name": "The Body Shop", "boostLevel": 3 }
   ]
 }
+
 
 ```
 
