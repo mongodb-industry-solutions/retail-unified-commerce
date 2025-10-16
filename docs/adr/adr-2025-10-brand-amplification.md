@@ -75,7 +75,6 @@ score = originalScore / maxScore
 
 #### 4.1 Vector Search  
 
-`$vectorSearch` computes similarity using embeddings and a similarity function such as `dotProduct` or `cosine`.  
 The engine returns a numeric score reflecting the proximity in embedding space. Because it doesn’t expose term-level boosting, we apply amplification externally:
 
 ```js
@@ -96,15 +95,12 @@ See [MongoDB Vector Search reference](https://www.mongodb.com/docs/atlas/atlas-v
 
 MongoDB supports two hybrid ranking techniques that combine text and vector results:
 
-| Method | Basis | When to Use | Normalization |
-|:-------|:-------|:-------------|:---------------|
-| **Reciprocal Rank Fusion (RRF)** | Rank-based: computes `1 / (rank + 60)` per document, weighted by pipeline importance. | When you want stable, order-driven blending (great for demos comparing modalities). | Uses document positions; independent of absolute score ranges. |
-| **ScoreFusion** | Score-based: combines raw numeric scores using averaging or custom expressions. | When score magnitudes matter, or you want proportional blending (e.g., weight vector = 0.6, text = 0.4). | Supports built-in normalization modes: `none`, `sigmoid`, or `minMaxScaler`. Default: `sigmoid`. |
+While $rankFusion ranks documents based on their positions (relative ranks) in input pipelines using the Reciprocal Rank Fusion algorithm, $scoreFusion ranks documents based on scores assigned by the input pipelines, using mathematical expressions for combining the results.
+In $rankFusion, rankings are influenced by pipeline weights. In $scoreFusion, weights control the contribution of each pipeline's scores to the final result.
 
-Example normalization from MongoDB docs:
-```js
-"input": { "normalization": "sigmoid" }
-```
+***
+
+Default normalization for scoreFusion used in the pipeline: sigmoid
 This rescales text and vector scores to the [0,1] range before weighting, ensuring cross-modality comparability.  
 
 Official docs:  
