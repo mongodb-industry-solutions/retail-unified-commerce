@@ -1,6 +1,6 @@
-## ADR: Brand Amplification: Level Mapping and Pipeline Application  
+## ADR: Brand Amplification – Level Mapping and Pipeline Application
 
-**Date:** 2025-10
+**Date:** 2025-10  
 
 ---
 
@@ -39,14 +39,13 @@ This unified model ensures predictable amplification behavior across search mode
 
 ### 3. Text Pipeline (Atlas Search)  
 
-The text pipeline uses `$search.compound` See [Atlas Search compound operator docs](https://www.mongodb.com/docs/atlas/atlas-search/compound/).  with three main components:
+The text pipeline uses `$search.compound` (see [Atlas Search compound operator docs](https://www.mongodb.com/docs/atlas/atlas-search/compound/)) with three main components:
 
 1. **filter:** Limits results to the selected store (`inventorySummary.storeObjectId`). This does **not** affect score calculation.  
 2. **must:** Executes the user query across weighted fields (`productName`, `aboutTheProduct`, `brand`, `category`, `subCategory`) with field boosts from ×3.0 to ×1.0.  
 3. **should:** Injects brand amplification rules dynamically using `BOOST_MAP`:
    - Brand-only → e.g., `brand == "Teamonk"` → ×2.5 (high).  
    - Brand + Category → e.g., `brand == "Plum"` + `category == "Face Care"` → ×2.0 (medium).  
-
 
 #### Boost Value Strategy
 
@@ -70,7 +69,6 @@ All text-based results are normalized to the [0, 1] range using `$setWindowField
 score = originalScore / maxScore
 ```
 
-This normalization ensures consistent behavior across datasets and prevents outliers from dominating the final rankings.
 ---
 
 ### 4. Vector & Hybrid Pipelines  
@@ -115,7 +113,58 @@ Official docs:
 
 ---
 
-### 5. Summary  
+### 5. Brand Amplification Rules (Vector & Hybrid)
+
+In vector and hybrid pipelines, amplification rules are **constructed dynamically** based on configuration received from the API layer.
+
+#### How Rules Are Built
+
+The builder translates each brand amplification rule into conditional branches using `$switch`:
+
+```js
+boostFactor = {
+  $switch: {
+    branches: [
+      {
+        case: { $and: [{ $eq: ["$brand", "Acme"] }, { $eq: ["$category", "Skincare"] }] },
+        then: 0.10 // Level 2 (medium)
+      },
+      {
+        case: { $eq: ["$brand", "Acme"] },
+        then: 0.05 // Level 1 (low)
+      }
+    ],
+    default: 0
+  }
+}
+```
+
+Each document is evaluated against these branches, producing a deterministic `boostFactor`.
+
+#### How Rules Are Applied
+
+Once `boostFactor` is computed:
+```js
+boostedScore = baseScore * (1 + boostFactor)
+isBoosted = boostFactor > 0
+```
+
+- For **Vector Search**, `baseScore` = `$meta: "vectorSearchScore"`.  
+- For **Hybrid (RRF/ScoreFusion)**, `baseScore` = the combined fusion score (`rrfScore` or fused numeric score).  
+
+This method ensures the boost is **proportional and non-destructive**:  
+documents keep their semantic relevance ordering, but boosted entries gain slight promotion.
+
+#### Example
+| Brand | Category | Base Score | Rule | Final Score | isBoosted |
+|:-------|:----------|:------------|:------|:-------------|:------------|
+| Acme | Skincare | 0.72 | Level 2 (0.10) | 0.72 × 1.10 = **0.792** | ✅ |
+| Acme | Haircare | 0.70 | Level 1 (0.05) | 0.70 × 1.05 = **0.735** | ✅ |
+| Other | Skincare | 0.69 | — | 0.69 × 1.00 = **0.690** | ❌ |
+
+---
+
+### 6. Summary  
 
 By implementing brand amplification **inside the pipelines**, we achieve:  
 - Full visibility of scoring logic (`BOOST_MAP`, boosts, and filters).  
@@ -124,4 +173,3 @@ By implementing brand amplification **inside the pipelines**, we achieve:
 - Clear correspondence between UI input and query-level behavior.
 
 MongoDB’s `$search`, `$vectorSearch`, and `$scoreFusion` stages together enable a flexible hybrid ranking model where **boost rules are first-class citizens** of the data pipeline — not hidden in application code.
-
