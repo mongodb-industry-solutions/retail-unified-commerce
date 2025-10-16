@@ -194,7 +194,7 @@ Content-Type: application/json
   "fusionMode": "rrf",         // you can also use "scoreFusion"
    "brandAmplification": [
     { "name": "Innisfree", "boostLevel": 1 },
-    { "name": "Olay", "boostLevel": 2, "categories": ["Face Care", "Skincare"] },s
+    { "name": "Olay", "boostLevel": 2, "categories": ["Face Care", "Skincare"] },
     { "name": "The Body Shop", "boostLevel": 3 }
   ]
 }
