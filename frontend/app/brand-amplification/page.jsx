@@ -70,13 +70,13 @@ export default function ProductInventoryPage() {
         <Container>
             <PageSubheader
                 header="Brand Amplification"
-                subtitle="Module for managers to amplify brands, increase product relevance, and reach KPIs"
+                subtitle="Module for authorized users to amplify brands, increase product relevance, and reach KPIs"
                 tabs={brandAmplificationPage}
             />
             <Tabs aria-label="Brand amplification tabs" className='mt-4' setSelected={setSelected} selected={selected}>
-                <Tab id='test-promotions' name="Test brand amplifications"> <TestBrandAmplificationsTab onBrandAmplificationClick={moveToForm}/> </Tab>
-                <Tab id='create-promotion' name="Create brand amplification"><BrandAmplificationForm onCreateSuccess={() => setSelected(2)} /></Tab>
-                <Tab id='active-promotions' name="Active brand amplifications"><BrandAmplificationList /></Tab>
+                <Tab id='test-promotions' name="Test brand amplifications"> <TestBrandAmplificationsTab onBrandAmplificationClick={moveToForm}/></Tab>
+                <Tab id='create-promotion' name="Create brand amplification"><BrandAmplificationForm onCreateSuccess={() => setSelected(2)}/></Tab>
+                <Tab id='active-promotions' name="Active brand amplifications"><BrandAmplificationList/></Tab>
             </Tabs>
         </Container>
     );

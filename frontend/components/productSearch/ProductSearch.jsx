@@ -25,6 +25,7 @@ import { CardHeader } from '../cardHeader/CardHeader';
 import { Label } from '@leafygreen-ui/typography';
 import { InfoSprinkle } from '@leafygreen-ui/info-sprinkle';
 import Badge from '@leafygreen-ui/badge';
+import { Callout } from '@leafygreen-ui/callout';
 
 const ProductSearch = (props) => {
     const { isToggleVisible = true, isScanProductVisible = true } = props
@@ -220,10 +221,13 @@ const ProductSearch = (props) => {
                             />
                         </div>
                         <div className='mt-3 mb-3'>
-                            In <code>$rankFusion</code>, rankings are influenced by pipeline weights. In <code>$scoreFusion</code>, weights control the contribution of each pipeline's scores to the final result
+                            <Callout>
+                                While <code>$rankFusion</code> ranks documents based on their positions (relative ranks) in input pipelines using the Reciprocal Rank Fusion algorithm, <code>$scoreFusion</code> ranks documents based on scores assigned by the input pipelines, using mathematical expressions for combining the results.
+                                In <code>$scoreFusion</code>, rankings are influenced by pipeline weights. In <code>$scoreFusion</code>, weights control the contribution of each pipeline's scores to the final result.
+                            </Callout>
+
                         </div>
                     </ExpandableCard>
-
                 }
             </Card>
             <div className='product-search mb-2 mt-2 justify-content-between'>
