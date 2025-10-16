@@ -235,7 +235,6 @@ def build_hybrid_score_fusion_pipeline(
                         ]
                     },
                 },
-                # No scoreDetails here (keep pipeline clean & fast).
             }
         },
         # Capture the fused score for amplification and sorting.

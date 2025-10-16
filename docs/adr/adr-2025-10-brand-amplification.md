@@ -1,6 +1,6 @@
 ## ADR: Brand Amplification: Level Mapping and Pipeline Application  
 
-**Date:** 2025-10-16  
+**Date:** 2025-10
 
 ---
 
@@ -25,9 +25,9 @@ We adopted a consistent three-level mapping of brand amplification intensity, ap
 
 | Search Type | How Boost Is Applied | Mapping Logic | Notes |
 |:-------------|:--------------------|:--------------|:------|
-| **Text (Atlas Search)** | Applied natively inside `$search.compound.should` via `score.boost.value`. | `low → ×1.5`, `medium → ×2.0`, `high → ×2.5`. | Boosting is fully integrated in Lucene’s scoring model, influencing term-level relevance during ranking. See [Atlas Search compound operator docs](https://www.mongodb.com/docs/atlas/atlas-search/compound/). |
-| **Vector (Atlas Lucene)** | Post-processing multiplier applied to `$meta: vectorSearchScore`. | `low → +5%`, `medium → +10%`, `high → +15%` → `finalScore = base × (1 + factor)`. | `$vectorSearch` doesn’t support internal boosts. The operator retrieves top-k results by similarity (e.g., dotProduct) — filtered by store — then the multiplier is applied in `$set`. See [MongoDB Vector Search](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/). |
-| **Hybrid (RRF / ScoreFusion)** | Boost applied *after fusion* to maintain consistency between text and vector scores. | Same factors as vector: `+5% / +10% / +15%`. | `$rankFusion` and `$scoreFusion` combine results from text and vector searches differently: <br> • **RRF** ranks by reciprocal document order (rank-based). <br> • **ScoreFusion** merges numeric scores using a weighted average or expression. See [Rank Fusion](https://www.mongodb.com/docs/atlas/atlas-vector-search/rank-fusion/) and [Score Fusion](https://www.mongodb.com/docs/atlas/atlas-vector-search/score-fusion/). |
+| **Text (Atlas Search)** | Applied natively inside `$search.compound.should` via `score.boost.value`. | `low → ×1.5`, `medium → ×2.0`, `high → ×2.5`. | Boosting is fully integrated in Lucene’s scoring model, influencing term-level relevance during ranking. |
+| **Vector (Atlas Lucene)** | Post-processing multiplier applied to `$meta: vectorSearchScore`. | `low → +5%`, `medium → +10%`, `high → +15%` → `finalScore = base × (1 + factor)`. | `$vectorSearch` doesn’t support internal boosts. The operator retrieves top-k results by similarity (e.g., dotProduct) — filtered by store — then the multiplier is applied in `$set`. |
+| **Hybrid (RRF / ScoreFusion)** | Boost applied *after fusion* to maintain consistency between text and vector scores. | Same factors as vector: `+5% / +10% / +15%`. | `$rankFusion` and `$scoreFusion` combine results from text and vector searches differently: <br> • **RRF** ranks by reciprocal document order (rank-based). <br> • **ScoreFusion** merges numeric scores using a weighted average or expression. |
 
 UI input → `"low" | "medium" | "high"`  
 Builder translation → `{1, 2, 3}`  
@@ -39,7 +39,7 @@ This unified model ensures predictable amplification behavior across search mode
 
 ### 3. Text Pipeline (Atlas Search)  
 
-The text pipeline uses `$search.compound` with three main components:
+The text pipeline uses `$search.compound` See [Atlas Search compound operator docs](https://www.mongodb.com/docs/atlas/atlas-search/compound/).  with three main components:
 
 1. **filter:** Limits results to the selected store (`inventorySummary.storeObjectId`). This does **not** affect score calculation.  
 2. **must:** Executes the user query across weighted fields (`productName`, `aboutTheProduct`, `brand`, `category`, `subCategory`) with field boosts from ×3.0 to ×1.0.  
@@ -47,13 +47,30 @@ The text pipeline uses `$search.compound` with three main components:
    - Brand-only → e.g., `brand == "Teamonk"` → ×2.5 (high).  
    - Brand + Category → e.g., `brand == "Plum"` + `category == "Face Care"` → ×2.0 (medium).  
 
-The pipeline then:
-- Logs `originalScore` = `$meta: "searchScore"`.  
-- Normalizes scores with `$setWindowFields` → `score = originalScore / maxScore`.  
-- Projects an `isBoosted` flag for documents matching amplification rules.  
 
-See [Atlas Search `$meta: searchScore`](https://www.mongodb.com/docs/atlas/atlas-search/scoring/#std-label-scoring-details).
+#### Boost Value Strategy
 
+The base query applies weighted field-level boosts (e.g. `productName ×3.0`, `brand ×1.2`, etc.) to reflect semantic importance.
+
+To avoid interference with these core weights, brand amplification levels are capped below the maximum field boost:
+
+- `low` → ×1.5  
+- `medium` → ×2.0  
+- `high` → ×2.5
+
+This separation guarantees that amplification **elevates visibility** of relevant branded products without **overruling the primary query relevance**.
+
+Even a high boost (×2.5) remains lower than `productName`'s ×3.0, preserving the dominance of strong lexical matches.
+
+#### Normalization and Boost Value Ranges
+
+All text-based results are normalized to the [0, 1] range using `$setWindowFields`, where each document’s score is divided by the maximum raw score observed in the set:
+
+```js
+score = originalScore / maxScore
+```
+
+This normalization ensures consistent behavior across datasets and prevents outliers from dominating the final rankings.
 ---
 
 ### 4. Vector & Hybrid Pipelines  
@@ -93,8 +110,8 @@ Example normalization from MongoDB docs:
 This rescales text and vector scores to the [0,1] range before weighting, ensuring cross-modality comparability.  
 
 Official docs:  
-- [Reciprocal Rank Fusion (RRF)](https://www.mongodb.com/docs/atlas/atlas-vector-search/rank-fusion/)  
-- [Score Fusion ($scoreFusion)](https://www.mongodb.com/docs/atlas/atlas-vector-search/score-fusion/)  
+- [Reciprocal Rank Fusion (RRF)](https://www.mongodb.com/docs/manual/reference/operator/aggregation/rankFusion/)  
+- [Score Fusion ($scoreFusion)](https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/)  
 
 ---
 
