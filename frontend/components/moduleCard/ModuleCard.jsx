@@ -3,13 +3,15 @@ import { useRouter } from 'next/navigation';
 import Card from '@leafygreen-ui/card';
 import './moduleCard.css';
 import Button from '@leafygreen-ui/button';
+import Banner from '@leafygreen-ui/banner';
 
 const ModuleCard = (props) => {
     const { 
         moduleName, 
         description,
         url,
-        disabled = false
+        disabled = false,
+        labelText = null
     } = props;
     const router = useRouter();
 
@@ -23,6 +25,9 @@ const ModuleCard = (props) => {
         <Card className={`module-card m-3 p-3 ${disabled ? 'disabled' : ''}`} style={{ width: '100%' }} >
             <h3>{moduleName}</h3>
             <p>{description}</p>
+            {
+                labelText && <Banner className='mb-2'>{labelText}</Banner>
+            }
             <Button onClick={handleClick}>
                 Visit Module
             </Button>

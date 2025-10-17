@@ -14,11 +14,7 @@ const ProductList = (props) => {
   const { onCurrentPageChange } = props;
   const dispatch = useDispatch();
     const { 
-      loading, 
-      error, 
       searchResults,
-      query,
-      searchType, // 'search' or 'vector-search'
       pagination_page: currentPage,
       totalItems
     } = useSelector(state => state.ProductInventory);  

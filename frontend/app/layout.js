@@ -4,9 +4,11 @@ import './global.css';
 import ClientProvider from "./ClientProvider";
 import { Toaster } from "react-hot-toast";
 import FloatingCard from "@/components/floatingCard/FloatingCard";
+import { APP_NAME } from "@/lib/constant";
+import BrandAmplificationLoader from "@/components/loaders/BrandAmplificationLoader";
 
 export const metadata = {
-  title: "Leafy Associate",
+  title: APP_NAME,
   description: "Unified Commerce tool to empower store associates",
   icons: [
     {
@@ -36,6 +38,7 @@ export default function RootLayout({ children }) {
         />
         <ClientProvider>
           {children}
+          <BrandAmplificationLoader />
           <FloatingCard/>
         </ClientProvider>
       </body>

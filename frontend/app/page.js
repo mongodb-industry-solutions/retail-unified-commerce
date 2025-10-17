@@ -7,7 +7,7 @@ import { MongoDBLogoMark } from '@leafygreen-ui/logo';
 import { Option, Select, Size } from '@leafygreen-ui/select';
 
 import ModuleCard from '@/components/moduleCard/ModuleCard';
-import { modules } from '@/lib/constant';
+import { APP_NAME, modules } from '@/lib/constant';
 import { setSelectedStore, setStores } from '@/redux/slices/GlobalSlice';
 import { getStores } from '@/lib/api';
 import Card from '@leafygreen-ui/card';
@@ -40,7 +40,7 @@ export default function Home() {
   return (
     <Container>
       <div className='d-flex flex-row justify-content-center mt-4'>
-        <H1>Leafy Associate <MongoDBLogoMark /></H1>
+        <H1>{APP_NAME}<MongoDBLogoMark /></H1>
       </div>
       <div className='mt-4'>
         <Select
@@ -79,6 +79,7 @@ export default function Home() {
               description={`${card.description}`}
               url={`${card.url}`}
               disabled={card.disabled || selectedStore === null}
+              labelText={card.labelText}
             />
           ))
         }

@@ -17,9 +17,9 @@ import InventoryContainer from '@/components/iventoryContainer/InventoryContaine
 import LocationsContainer from '@/components/locationsContainer/LocationsContainer';
 import BusinessIntelligenceContainer from '@/components/businessIntelligence/BusinessIntelligenceContainer';
 import { setStores } from '@/redux/slices/GlobalSlice';
-import HowToInventoryPage from '@/components/talkTracks/HowToInventoryPage';
-import BehindTheScenes from '@/components/talkTracks/BehindTheScenes';
-import ProductInventoryWyMDB from '@/components/talkTracks/ProductInventoryWyMDB';
+import { prodInventoryPage } from '@/lib/talkTrack';
+import Card from '@leafygreen-ui/card';
+import { CardHeader } from '@/components/cardHeader/CardHeader';
 
 export default function ProductInventoryDetailePage({ params }) {
     const router = useRouter();
@@ -31,6 +31,16 @@ export default function ProductInventoryDetailePage({ params }) {
     const [selected, setSelected] = useState(0)
     const { productDetails: product } = useSelector(state => state.ProductInventory);
     const { selectedStore } = useSelector(state => state.Global);
+    const brandAmplifications = useSelector(state => state.BrandAmplificationForm.brandAmplificationList.data)
+
+    const matchingAmplifications = brandAmplifications?.filter(ba =>
+        ba.name === product?.brand &&
+        (
+            !ba.categories ||
+            ba.categories.length === 0 ||
+            (product?.category && ba.categories.includes(product?.category))
+        )
+    );
 
     useEffect(() => {
         if (!_id || !selectedStore) {
@@ -87,20 +97,7 @@ export default function ProductInventoryDetailePage({ params }) {
                         setOpen={setOpenHelpModal}
                         tooltipText="Talk track!"
                         iconGlyph="Wizard"
-                        tabs={[
-                            {
-                                heading: 'How to demo',
-                                content: <HowToInventoryPage isSearchPage={false} />
-                            },
-                            {
-                                heading: 'Behind the scenes',
-                                content: <BehindTheScenes />
-                            },
-                            {
-                                heading: 'Why MongoDB?',
-                                content: <ProductInventoryWyMDB />
-                            }
-                        ]}
+                        tabs={prodInventoryPage}
                         openModalIsButton={true}
                     />
                 </div>
@@ -117,6 +114,33 @@ export default function ProductInventoryDetailePage({ params }) {
                                 <Tab name="Inventory"><InventoryContainer /></Tab>
                                 <Tab name="Locations"><LocationsContainer /></Tab>
                                 <Tab name="AI Business Intelligence"><BusinessIntelligenceContainer selectedStore={selectedStore} /></Tab>
+                                {
+                                    // Show Brand Amplification tab if this product was amplified
+                                    matchingAmplifications.length > 0 &&
+                                    <Tab id='brand-amplification' name="Brand amplification">
+                                        <CardHeader
+                                            extraClassNames="mt-4"
+                                            title="Brand Amplifications"
+                                            glyphIcon="Tag"
+                                        ></CardHeader>
+                                        <p className='medium-text text-dark'>
+                                            This product is labeled as a <span style={{ color: "#43a047" }}>Store's favorite</span> because it is boosted by the following brand amplification:
+                                        </p>
+                                        <div className='mb-4'>
+                                            {(!matchingAmplifications || matchingAmplifications.length === 0) ? (
+                                                <p>No brand amplifications apply to this product.</p>
+                                            ) : (
+                                                matchingAmplifications.map((ba, index) => (
+                                                    <Card className='mt-3' key={index} onClick={() => console.log(ba)}>
+                                                        <p><strong>Brand: </strong>{ba.name}</p>
+                                                        <p><strong>Boost Level: </strong>{ba.boostLevel}</p>
+                                                        <p><strong>Categories: </strong>{ba.categories ? ba.categories.join(", ") : "All"}</p>
+                                                    </Card>
+                                                ))
+                                            )}
+                                        </div>
+                                    </Tab>
+                                }
                             </Tabs>
                         </div>
                         : null

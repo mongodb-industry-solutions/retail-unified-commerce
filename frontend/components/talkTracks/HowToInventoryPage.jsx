@@ -59,10 +59,13 @@ const HowToInventoryPage = (props) => {
                             </li>
                         </ul>
                         <p>
-                            <strong>3. </strong> Click “Search.”
+                            <strong>3. </strong> If you wish to know which products have been marked as more relevent by the store managers, enable the "Brand amplification" toggle, this will add a "Store's favorite" badge to those featured  and show them higher up in the results.
                         </p>
                         <p>
-                            <strong>4. </strong> The system will return a list of products available in the current store that match your query.
+                            <strong>4. </strong> Click “Search.”
+                        </p>
+                        <p>
+                            <strong>5. </strong> The system will return a list of products available in the current store that match your query.
                         </p>
                     </>
                     : <>

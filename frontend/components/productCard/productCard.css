@@ -62,7 +62,7 @@
     top: 15px;
     left: 10px;
 }
-.document-container {
+.right-side-container {
     position: absolute;
     top: 15px;
     right: 10px;
@@ -76,4 +76,3 @@
     margin-right: 5px;
 }
 
-.image-container {}

@@ -1,0 +1,32 @@
+.bucket-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* centers the row horizontally */
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.bucket.color-card {
+    width: 220px; /* or your preferred fixed width */
+    text-align: center;
+    font-size: 15px;
+    margin-bottom: 16px;
+    color: #4c4b4b;
+}
+
+.bucket-count{
+    font-size: 20px;
+    margin-top: 10px;
+    color: gray;
+}
+
+.bucket.color-card{
+    text-align: center;
+    font-size: 15px;
+}
+
+.color-card{
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+}

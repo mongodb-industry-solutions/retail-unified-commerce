@@ -1,0 +1,63 @@
+.promotion-form {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.form-section {
+    flex: 2;
+    min-width: 750px;
+}
+
+.code-section {
+    flex: 1;
+    background-color: #f9fbfa;
+    min-width: 300px;
+    box-sizing: border-box;
+    padding: 16px;
+}
+
+.formGroupRow {
+  margin-bottom: 1.5rem;
+}
+.formGroupRow{
+  display: flex;
+  flex-direction: row;
+  width: calc(100% - 25px);
+  justify-content: space-between;
+}
+.formGroupRow .textInput,
+.formGroupRow .dateInput,
+.formGroupRow .selectInput {
+  width: calc(50% - 20px);
+}
+.promotion-json {
+    border: #f9fbfa;
+}
+
+@media (max-width: 600px) {
+    .promotion-form {
+        flex-direction: column;
+    }
+    .form-section,
+    .code-section {
+        min-width: 0;
+        width: 100%;
+    }
+}
+.badge{
+    color: black;
+}
+
+.badgesContainer{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 10px 0;
+  width: 100%;
+}
+.brand-amplification-json{
+  border: none;
+}

@@ -3,37 +3,55 @@ import { pushLatestApiCallsDeployments, setDeployment, setStores } from "@/redux
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
 import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
+import { setBrandSelector, setMetaSearch } from "@/redux/slices/PromotionFormSlice";
 
-export async function getProductsWithSearchInput(query = '') {
+export async function getProductsWithSearchInput(query = '', useBrandAmplification = false) {
   const searchType = store.getState('ProductInventory').ProductInventory.searchType;
   const storeObjectId = store.getState('Global').Global.selectedStore;
   console.log('getProductsWithSearch', searchType)
   const body = {
-        query: query,
-        storeObjectId: storeObjectId,
-        option: searchType,
-        page: store.getState('ProductInventory').ProductInventory.pagination_page + 1,
-        page_size: PAGINATION_PER_PAGE
+    query: query,
+    storeObjectId: storeObjectId,
+    option: searchType,
+    page: store.getState('ProductInventory').ProductInventory.pagination_page + 1,
+    page_size: PAGINATION_PER_PAGE,
   }
-  if(searchType === SEARCH_OPTIONS.hybridSearch.id) {
+  if (searchType === SEARCH_OPTIONS.hybridSearch.id) {
     body.weightVector = Number(store.getState('ProductInventory').ProductInventory.vectorSearchWeight);
     body.weightText = Number(store.getState('ProductInventory').ProductInventory.searchWeight);
+    body.fusionMode = store.getState('ProductInventory').ProductInventory.fusionMode;
   }
+  if(useBrandAmplification == true && searchType !== SEARCH_OPTIONS.regex.id) {
+    body.brandAmplification = store.getState('BrandAmplificationForm').BrandAmplificationForm.brandAmplificationList?.data?.map(ba => {
+      let  orm = {
+        name: ba.name,
+        boostLevel: Number(ba.boostLevel) || 1
+      }
+      if(ba.categories)
+        orm.categories = [...ba.categories]
+      return orm
+    }) || [];
+    if(body.brandAmplification.length === 0) {
+      console.log('No brand amplifications found in the state.');
+      delete body.brandAmplification;
+    }
+  }
+  console.log('Request body for search:', body);
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-});
-if (!response.ok) {
-  console.log(response)
-  throw new Error(`Error fetching products: ${response.status}`);
-}
-const data = await response.json();
-console.log('data: ', Object.keys(data.products).length, data)
-setDeploymentToRedux(data.deployment, `${Object.values(SEARCH_OPTIONS).find(s => s.id === searchType)?.label} for product '${query}'`);
-return { products: data.products, totalItems: data.total_results };
+  });
+  if (!response.ok) {
+    console.log(response)
+    throw new Error(`Error fetching products: ${response.status}`);
+  }
+  const data = await response.json();
+  console.log('data: ', Object.keys(data.products).length, data)
+  setDeploymentToRedux(data.deployment, `${Object.values(SEARCH_OPTIONS).find(s => s.id === searchType)?.label} for product '${query}'`);
+  return { products: data.products, totalItems: data.total_results };
 }
 
 export async function getProductWithScanner(_id) {
@@ -217,10 +235,51 @@ export async function getProduct(_id) {
   return data.result[0]
 }
 
+export async function brandAmplificationGetSearchMeta() {
+  const response = await fetch(`/api/searchMeta`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
+      indexName: process.env.NEXT_PUBLIC_SEARCH_META_INDEX,
+      brand: store.getState().BrandAmplificationForm.brandAmplification.brand,
+      categories: store.getState().BrandAmplificationForm.brandAmplification.categories
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching search meta details: ${response.status}`);
+  }
+  let data = await response.json();
+  console.log('brandAmplificationGetSearchMeta searchMeta res', data)
+  store.dispatch(setMetaSearch({ metaSearch: data }))
+  return data.meta
+}
+
+export async function getAllBrands() {
+  const response = await fetch(`/api/getDistinctBrands`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Error fetching search meta details: ${response.status}`);
+  }
+  let data = await response.json();
+  console.log('getAllBrands res', data)
+  store.dispatch(setBrandSelector({ brands: data.data || [] }));
+  return data.meta
+}
+
 const setDeploymentToRedux = (deployment = null, latestApiCallsDeployments = null) => {
   if (deployment === 'atlas') {
     deployment = 'MongoDB Atlas'
-  } else   if (deployment === 'enterprise') {
+  } else if (deployment === 'enterprise') {
     deployment = 'Enterprise Server'
   } else {
     deployment = 'MongoDB'
