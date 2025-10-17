@@ -74,9 +74,9 @@ export default function ProductInventoryPage() {
                 tabs={brandAmplificationPage}
             />
             <Tabs aria-label="Brand amplification tabs" className='mt-4' setSelected={setSelected} selected={selected}>
-                <Tab id='test-promotions' name="Test brand amplifications"> <TestBrandAmplificationsTab onBrandAmplificationClick={moveToForm}/></Tab>
-                <Tab id='create-promotion' name="Create brand amplification"><BrandAmplificationForm onCreateSuccess={() => setSelected(2)}/></Tab>
-                <Tab id='active-promotions' name="Active brand amplifications"><BrandAmplificationList/></Tab>
+                <Tab id='test-promotions' name="Test brand amplifications"> <TestBrandAmplificationsTab onBrandAmplificationClick={moveToForm} /></Tab>
+                <Tab id='create-promotion' name="Create brand amplification"><BrandAmplificationForm onCreateSuccess={() => setSelected(2)} /></Tab>
+                <Tab id='active-promotions' name="Active brand amplifications"><BrandAmplificationList /></Tab>
             </Tabs>
         </Container>
     );

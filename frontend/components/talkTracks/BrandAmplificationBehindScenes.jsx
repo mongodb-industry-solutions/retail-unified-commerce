@@ -135,6 +135,31 @@ const BrandAmplificationBehindScenes = () => {
         </div>
       </div>
       <div style={{
+        background: "#e3f2fd",
+        borderRadius: "8px",
+        padding: "18px",
+        textAlign: "left",
+        fontSize: "1.08rem",
+        color: "#1565c0",
+        marginBottom: "18px",
+        marginTop: "18px"
+      }}>
+        <h4 style={{ marginBottom: 8 }}>Learn More: Score Modifying in Atlas Search</h4>
+        <div>
+          To learn more about the score modifying options available to all operators, see the official MongoDB documentation:&nbsp;
+          <a
+            href="https://www.mongodb.com/docs/atlas/atlas-search/score/modify-score/#std-label-scoring-function"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#0288d1", textDecoration: "underline" }}
+          >
+            Modify Score in Atlas Search
+          </a>
+          .<br />
+          This is how we are able to boost specific brands or categories inside the queries.
+        </div>
+      </div>
+      <div style={{
         background: "#fff",
         borderRadius: "8px",
         padding: "18px",

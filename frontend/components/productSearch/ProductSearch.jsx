@@ -138,7 +138,7 @@ const ProductSearch = (props) => {
                                         onMouseOver: () => { },
                                         'aria-label': 'aria-label',
                                     }}>
-                                    Amplified products will have a 'Brand's Favorite' label and light green background.
+                                    Amplified products will have a 'Store's Favorite' label and light green background.
                                 </InfoSprinkle>
                             </div>
                             <Toggle
