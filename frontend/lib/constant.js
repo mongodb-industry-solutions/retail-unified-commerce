@@ -65,7 +65,7 @@ export const SEARCH_OPTIONS = {
         label: 'Regex Search',
         description: 'Regular expression',
         enabled: process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH === 'true' || !process.env.NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH,
-        recommendedTerms: ['high protein snack']
+        recommendedTerms: ['high protein snack', 'Rusk - Milk', 'Rusk Milk']
     }
 }
 export const SEARCH_FUSION_OPTIONS = {
