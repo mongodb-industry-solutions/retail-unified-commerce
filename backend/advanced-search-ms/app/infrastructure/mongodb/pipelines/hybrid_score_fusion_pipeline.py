@@ -1,27 +1,36 @@
-# app/infrastructure/mongodb/pipelines/hybrid_rrf_pipeline.py
+# app/infrastructure/mongodb/pipelines/hybrid_score_fusion_pipeline.py
 """
-Hybrid Search with $rankFusion and Post-Fusion Brand Amplification
+Hybrid Search with $scoreFusion and Post-Fusion Brand Amplification
 ==================================================================
 
 Purpose
 -------
 Build a hybrid search pipeline that:
-1) Runs a full-text `$search` pipeline and a semantic `$vectorSearch` pipeline,
-   both scoped to the active store and using business-relevant field boosts.
-2) Fuses both ranked lists using `$rankFusion` (Reciprocal Rank Fusion),
-   yielding a single ranking and an RRF score per document.
-3) Applies Brand Amplification *after fusion* by multiplying the RRF score
-   with a factor derived from brand (and optionally category) rules.
+1) Runs a full-text `$search` and a semantic `$vectorSearch`, both scoped to the
+   active store and with business-relevant text boosts.
+2) Combines results with `$scoreFusion` using a **weighted score expression**:
+      fused = (w_text * text_score) + (w_vector * vector_score)
+   where each input pipeline’s score is **normalized first** (see below).
+3) Applies Brand Amplification *after fusion* by multiplying the fused score by
+   (1 + boostFactor) based on brand (and optionally category) rules.
 4) Sorts by the post-boost score and returns a clean projection:
    product fields, store-filtered inventory, final `score`, and `isBoosted`,
    plus a total count via `$facet`.
 
+Normalization (what it means here)
+----------------------------------
+We default to `input.normalization: "sigmoid"` **inside** `$scoreFusion`.
+This rescales each pipeline’s raw scores to the range [0, 1] *before* combining:
+• Makes text and vector scores **comparable** (they do not share a native scale).
+• Dampens outliers (common in vector similarity), improving stability.
+• Keeps the fusion monotonic: higher raw score → higher normalized score.
+
 Why this design
 ---------------
-• `$rankFusion` provides principled, engine-agnostic fusion for text and vector.
-• Post-fusion amplification keeps business controls auditable and orthogonal to
-  engine scoring.
-• The API surface remains simple and stable (`score`, `isBoosted`).
+• `$scoreFusion` fuses by **score magnitude** (not only rank), giving fine control
+  via per-pipeline weights.
+• Post-fusion Brand Amplification is auditable and orthogonal to engine scoring.
+• API surface stays simple and stable: `score`, `isBoosted`.
 """
 
 from __future__ import annotations
@@ -98,7 +107,7 @@ def _brand_amp_switch_branches(
     }
 
 
-def build_hybrid_rrf_pipeline(
+def build_hybrid_score_fusion_pipeline(
     *,
     query: str,
     embedding: List[float],
@@ -111,10 +120,20 @@ def build_hybrid_rrf_pipeline(
     skip: int,
     limit: int,
     projection_fields: Optional[Dict[str, int]] = None,
+    normalization: str = "sigmoid",  # default: make text/vector scores comparable inside $scoreFusion
 ) -> List[Dict[str, Any]]:
     """
-    Build a hybrid pipeline using `$rankFusion` (RRF) and *post-fusion*
-    Brand Amplification by multiplicative factor.
+    Build a hybrid pipeline using `$scoreFusion` and *post-fusion* Brand Amplification.
+
+    Fused score (after per-pipeline normalization) is computed as:
+        fused = (w_text * $$text) + (w_vector * $$vector)
+
+    Notes
+    -----
+    • We **don’t** apply any final normalization after Brand Amplification:
+      the returned `score` is the post-boost fused score.
+    • `$scoreFusion`’s `input.normalization` runs **per input pipeline** *before*
+      the combination expression, so weights operate on comparable scales.
     """
     # --- Parameters & weights ---
     try:
@@ -122,9 +141,14 @@ def build_hybrid_rrf_pipeline(
     except Exception as exc:
         raise ValueError("store_object_id must be a valid ObjectId") from exc
 
-    # Non-negative fusion weights used directly by `$rankFusion`.
+    # Non-negative weights for fusion.
     w_vec = max(0.0, float(weights.get("vectorPipeline") or 1.0))
     w_txt = max(0.0, float(weights.get("textPipeline") or 1.0))
+
+    # Validate normalization choice (fallback to "sigmoid" if invalid/empty)
+    norm = (normalization or "sigmoid").strip()
+    if norm not in ("none", "sigmoid", "minMaxScaler"):
+        norm = "sigmoid"
 
     amp = _brand_amp_switch_branches(brand_amplification)
     branches = amp["branches"]
@@ -134,11 +158,11 @@ def build_hybrid_rrf_pipeline(
     base_proj = dict(projection_fields or PRODUCT_FIELDS)
 
     logger.info(
-        "[HYBRID/RRF] store=%s | skip=%d | limit=%d | w_text=%.3f | w_vec=%.3f | brandAmpRules=%d (post-fusion multiply)",
-        store_oid, skip, limit, w_txt, w_vec, len(brand_amplification or []),
+        "[HYBRID/scoreFusion] store=%s | skip=%d | limit=%d | w_text=%.3f | w_vec=%.3f | normalization=%s | brandAmpRules=%d (post-fusion multiply)",
+        store_oid, skip, limit, w_txt, w_vec, norm, len(brand_amplification or []),
     )
 
-    # --- Input pipelines for fusion (selection + ranked) ---
+    # --- Input pipelines for fusion (selection + scoring only) ---
     # Text: field-level boosts reflect business relevance; scoped to store.
     text_pipeline: List[Dict[str, Any]] = [
         {
@@ -170,7 +194,9 @@ def build_hybrid_rrf_pipeline(
                     ],
                 },
             }
-        }
+        },
+        # Keep a per-pipeline limit to ensure responsive fusion.
+        {"$limit": 200},
     ]
 
     # Vector: semantic retrieval; scoped to store.
@@ -187,22 +213,35 @@ def build_hybrid_rrf_pipeline(
         }
     ]
 
-    # --- Rank Fusion (RRF) ---
-    # Fuse both ranked lists; RRF exposes a meta `score` per document.
+    # --- Score Fusion (weights over normalized pipeline scores) ---
+    # `$scoreFusion` first normalizes each pipeline’s score stream using `norm`,
+    # then evaluates our combination expression on those normalized values.
     pipeline: List[Dict[str, Any]] = [
         {
-            "$rankFusion": {
-                "input": {"pipelines": {"text": text_pipeline, "vector": vector_pipeline}},
-                "combination": {"weights": {"text": w_txt, "vector": w_vec}},
-                # No per-document scoreDetails here to keep the pipeline clean and fast.
+            "$scoreFusion": {
+                "input": {
+                    "pipelines": {
+                        "text": text_pipeline,
+                        "vector": vector_pipeline,
+                    },
+                    "normalization": norm,  # "sigmoid" (default) | "minMaxScaler" | "none"
+                },
+                "combination": {
+                    "method": "expression",
+                    "expression": {
+                        "$add": [
+                            {"$multiply": ["$$text", w_txt]},
+                            {"$multiply": ["$$vector", w_vec]},
+                        ]
+                    },
+                },
             }
         },
-        # Capture the fused score into a regular field for amplification and sorting.
-        {"$set": {"rrfScore": {"$meta": "score"}}},
+        # Capture the fused score for amplification and sorting.
+        {"$set": {"fusionScore": {"$meta": "score"}}},
     ]
 
     # --- Post-fusion Brand Amplification (multiplicative) ---
-    # Compute a per-document boost factor from brand/category rules.
     if branches:
         pipeline.append({"$set": {"boostFactor": {"$switch": {"branches": branches, "default": 0}}}})
     else:
@@ -213,11 +252,10 @@ def build_hybrid_rrf_pipeline(
             "$set": {
                 # Multiply by (1 + boostFactor) so that non-boosted docs remain unchanged
                 # (boostFactor=0 => multiplier=1); boosted docs get a proportional lift.
-                "boostedScore": {"$multiply": ["$rrfScore", {"$add": [1, "$boostFactor"]}]},
+                "boostedScore": {"$multiply": ["$fusionScore", {"$add": [1, "$boostFactor"]}]},
                 "isBoosted": {"$gt": ["$boostFactor", 0]},
             }
         },
-        # Rank by the post-amplification score.
         {"$sort": {"boostedScore": -1, "_id": 1}},
     ]
 
@@ -237,9 +275,7 @@ def build_hybrid_rrf_pipeline(
     }
 
     pipeline += [
-        # Do not expose helper fields in API responses.
-        {"$unset": ["rrfScore", "boostFactor"]},
-        # Pagination + total count
+        {"$unset": ["fusionScore", "boostFactor"]},
         {"$facet": {
             "docs": [
                 {"$project": docs_projection},
@@ -254,7 +290,7 @@ def build_hybrid_rrf_pipeline(
     ]
 
     logger.info(
-        "[HYBRID/RRF] built | stages=%d | boostedBrands=%d | brandCatPairs=%d | post-fusion multiply boosting enabled",
-        len(pipeline), len(boosted_brands), len(brand_cat_pairs),
+        "[HYBRID/scoreFusion] built | stages=%d | boostedBrands=%d | brandCatPairs=%d | normalization=%s | post-fusion multiply boosting enabled",
+        len(pipeline), len(boosted_brands), len(brand_cat_pairs), norm,
     )
     return pipeline

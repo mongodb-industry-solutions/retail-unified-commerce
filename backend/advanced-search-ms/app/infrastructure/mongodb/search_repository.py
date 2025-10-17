@@ -21,7 +21,15 @@ Brand Amplification
 -------------------
 - Accepts `brand_amplification: Sequence[BrandAmpSpec]` (app-local spec).
 - Pipeline builders are responsible for translating `boostLevel` (1|2|3) to numeric
-  boosts/weights and for optionally projecting `isBoosted` and `scoreDetails`.
+  boosts/weights and for optionally projecting `isBoosted`.
+
+Hybrid modes (RRF & scoreFusion)
+--------------------------------
+- When `fusion_mode is None or "rrf"`, this repository builds the RRF pipeline via
+  `build_hybrid_rrf_pipeline(...)`.
+- When `fusion_mode == "scoreFusion"`, it builds the score-fusion pipeline via
+  `build_hybrid_score_fusion_pipeline(...)`, which fuses text/vector rankings according
+  to provided weights.
 
 Why it matters in this demo
 ---------------------------
@@ -30,9 +38,6 @@ end-to-end (inputs, strategy, pagination, totals). The adapter guarantees a stab
 shape for the upstream layers:
 - If a pipeline does not project `isBoosted`, this adapter defaults it to **False**,
   so the API layer consistently exposes the field.
-- For hybrid RRF, if Mongo exposes a fused score under `scoreDetails.value`,
-  we mirror it into the flat `score` field to keep the domain/API response uniform.
-
 """
 
 from __future__ import annotations
@@ -55,7 +60,8 @@ from app.infrastructure.mongodb.pipelines import (
     build_keyword_pipeline,
     build_text_pipeline,
     build_vector_pipeline,
-    build_hybrid_rrf_pipeline,
+    build_hybrid_rrf_pipeline,           # RRF builder
+    build_hybrid_score_fusion_pipeline,  # scoreFusion builder
 )
 from app.shared.exceptions import InfrastructureError
 
@@ -147,7 +153,7 @@ class MongoSearchRepository(SearchRepository):
         brand_amplification : Optional[Sequence[BrandAmpSpec]]
             List of app-local specs `{name, boostLevel, categories?}`. The pipeline
             builder decides how to reflect this in the `$search` stage (boosting and/or
-            `isBoosted` / `scoreDetails` projection).
+            `isBoosted` projection).
         """
         logger.info(
             "[INFRA] 🔎 Atlas text | q=%r | store=%s | page=%d | size=%d | brandAmp=%d",
@@ -204,7 +210,7 @@ class MongoSearchRepository(SearchRepository):
         return await self._run_pipeline(pipeline, store_object_id)
 
     # ───────────────────────────── option 4 ─────────────────────────────
-    async def search_hybrid_rrf(
+    async def search_hybrid(
         self,
         query: str,
         embedding: List[float],
@@ -218,7 +224,7 @@ class MongoSearchRepository(SearchRepository):
         brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
     ) -> SearchResult:
         """
-        Hybrid search (text + vector) with Reciprocal Rank Fusion or score fusion.
+        Hybrid search (text + vector) with Reciprocal Rank Fusion **or** score fusion.
 
         Parameters
         ----------
@@ -229,33 +235,81 @@ class MongoSearchRepository(SearchRepository):
         brand_amplification : Optional[Sequence[BrandAmpSpec]]
             Optional list `{name, boostLevel, categories?}`.
         """
+        mode = (fusion_mode or "rrf").lower()
         logger.info(
             "[INFRA] 🔎 Hybrid | q=%r | store=%s | page=%d | size=%d | mode=%s | brandAmp=%d",
-            query, store_object_id, page, page_size, fusion_mode or "rrf(default)",
+            query, store_object_id, page, page_size, mode,
             len(brand_amplification or []),
         )
 
         skip = (page - 1) * page_size
         weights = {
             "vectorPipeline": weight_vector,
-            "textPipeline": weight_text,
+            "textPipeline":   weight_text,
         }
 
-        pipeline = build_hybrid_rrf_pipeline(
+        if mode == "scorefusion":
+            pipeline = build_hybrid_score_fusion_pipeline(
+                query=query,
+                embedding=embedding,
+                store_object_id=store_object_id,
+                text_index=self.text_index,
+                vector_index=self.vector_index,
+                vector_field=self.vector_field,
+                weights=weights,                          # passthrough
+                brand_amplification=brand_amplification,  # passthrough
+                skip=skip,
+                limit=page_size,
+                projection_fields=PRODUCT_FIELDS,
+            )
+        else:
+            # Default to RRF; do not pass a 'fusion_mode' param the builder does not accept.
+            pipeline = build_hybrid_rrf_pipeline(
+                query=query,
+                embedding=embedding,
+                store_object_id=store_object_id,
+                text_index=self.text_index,
+                vector_index=self.vector_index,
+                vector_field=self.vector_field,
+                weights=weights,                          # passthrough
+                brand_amplification=brand_amplification,  # passthrough
+                skip=skip,
+                limit=page_size,
+                projection_fields=PRODUCT_FIELDS,
+            )
+
+        return await self._run_pipeline(pipeline, store_object_id)
+
+    # Backwards-compatibility shim (if the application port still exposes the old name)
+    async def search_hybrid_rrf(
+        self,
+        query: str,
+        embedding: List[float],
+        store_object_id: str,
+        page: int,
+        page_size: int,
+        *,
+        weight_vector: Optional[float] = None,
+        weight_text: Optional[float] = None,
+        fusion_mode: Optional[str] = None,  # kept for compatibility; handled inside search_hybrid
+        brand_amplification: Optional[Sequence[BrandAmpSpec]] = None,
+    ) -> SearchResult:
+        """
+        Deprecated alias. Calls `search_hybrid(...)` so callers using the older
+        method name keep working while we migrate the application port.
+        """
+        logger.info("[INFRA] ♻️ search_hybrid_rrf() delegating to search_hybrid()")
+        return await self.search_hybrid(
             query=query,
             embedding=embedding,
             store_object_id=store_object_id,
-            text_index=self.text_index,
-            vector_index=self.vector_index,
-            vector_field=self.vector_field,
-            weights=weights,
-            fusion_mode=fusion_mode,                  # passthrough
-            brand_amplification=brand_amplification,  # passthrough
-            skip=skip,
-            limit=page_size,
-            projection_fields=PRODUCT_FIELDS,
+            page=page,
+            page_size=page_size,
+            weight_vector=weight_vector,
+            weight_text=weight_text,
+            fusion_mode=fusion_mode,
+            brand_amplification=brand_amplification,
         )
-        return await self._run_pipeline(pipeline, store_object_id)
 
     # ───────────────────────────── execution ─────────────────────────────
     async def _run_pipeline(
@@ -267,15 +321,8 @@ class MongoSearchRepository(SearchRepository):
         Execute the aggregation, filter inventory by store, and perform minimal shaping.
 
         Shaping performed here (kept intentionally small and documented):
-        - **`score` fallback**: for hybrid, if the pipeline exposes a fused score under
-          `scoreDetails.value`, mirror it into the flat `score` field when the latter is
-          missing/zero. This keeps API responses consistent across strategies.
         - **`isBoosted` default**: if a pipeline does not project `isBoosted`, we set it to
           `False` explicitly to honor the public API schema contract.
-
-        If MongoDB improves metadata projection for `$rankFusion` (e.g., stable access to the
-        final score via `$project`), we can push the score shaping entirely into the pipeline
-        and drop the fallback below.
         """
         try:
             logger.debug("[INFRA] ▶️ Aggregation…")
@@ -291,15 +338,8 @@ class MongoSearchRepository(SearchRepository):
 
             logger.info("[INFRA] ✅ %d doc(s) returned | total=%d", len(docs), total)
 
-            # Mirror fused score (if present) into flat `score`
+            # Guarantee isBoosted in the outgoing shape
             for doc in docs:
-                sd: Dict[str, Any] | None = doc.get("scoreDetails")
-                if sd and isinstance(sd, dict):
-                    fused = sd.get("value")
-                    if fused is not None and (doc.get("score") in (None, 0, 0.0)):
-                        doc["score"] = round(float(fused), 4)
-
-                # Guarantee isBoosted in the outgoing shape
                 if "isBoosted" not in doc:
                     doc["isBoosted"] = False
 

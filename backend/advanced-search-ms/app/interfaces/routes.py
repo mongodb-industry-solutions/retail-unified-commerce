@@ -32,7 +32,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.application.use_cases.keyword_search_use_case import KeywordSearchUseCase
 from app.application.use_cases.atlas_text_search_use_case import AtlasTextSearchUseCase
 from app.application.use_cases.vector_search_use_case import VectorSearchUseCase
-from app.application.use_cases.hybrid_rrf_use_case import HybridRRFSearchUseCase
+from app.application.use_cases.hybrid_use_case import HybridSearchUseCase
 
 # Ports / Dependencies
 from app.infrastructure.mongodb.search_repository import MongoSearchRepository
@@ -61,7 +61,7 @@ async def search(
     * **1** – keyword / regex  
     * **2** – Atlas text (`$search`)  
     * **3** – pure vector (`$vectorSearch`)  
-    * **4** – hybrid RRF (text + vector)  
+    * **4** – hybrid (text + vector)  
 
     Supports optional `brandAmplification` in options 2-4;  
     Optional `fusionMode`, `weightText`, `weightVector` for option 4.  
@@ -134,8 +134,8 @@ async def search(
             use_case = VectorSearchUseCase(repo, voyage)
             logger.info("✅ [INTERFACES/routes] VectorSearchUseCase initialized")
         case 4:
-            use_case = HybridRRFSearchUseCase(repo, voyage)
-            logger.info("✅ [INTERFACES/routes] HybridRRFSearchUseCase initialized")
+            use_case = HybridSearchUseCase(repo, voyage)
+            logger.info("✅ [INTERFACES/routes] HybridSearchUseCase initialized")
         case _:
             logger.error("❌ [INTERFACES/routes] Invalid option received, raising HTTPException")
             raise HTTPException(status_code=400, detail={"error": {"code": "INVALID_OPTION", "message": "option must be one of [1,2,3,4]"}})

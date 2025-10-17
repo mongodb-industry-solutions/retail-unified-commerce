@@ -100,7 +100,7 @@ class SearchRequest(BaseModel):
         ge=0.0,
         le=1.0,
         title="Vector Weight",
-        description="(Only used if option=4) Weight for vector ranking in hybrid fusion / scoreFusion",
+        description="(Only used if option=4) Weight for vector ranking in hybrid rrf / scoreFusion",
         example=0.5,
     )
     weightText: Optional[float] = Field(
@@ -108,7 +108,7 @@ class SearchRequest(BaseModel):
         ge=0.0,
         le=1.0,
         title="Text Weight",
-        description="(Only used if option=4) Weight for text ranking in hybrid fusion / scoreFusion",
+        description="(Only used if option=4) Weight for text ranking in hybrid rrf / scoreFusion",
         example=0.5,
     )
     fusionMode: Optional[str] = Field(

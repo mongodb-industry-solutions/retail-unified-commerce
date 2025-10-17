@@ -11,8 +11,9 @@ Flow
 Brand Amplification (legacy + categories)
 ----------------------------------------
 • Supported in Option 3.
-• Accepts a list of {name, boostLevel, categories?} and passes it to Infra.
-• Infra can translate this into a score multiplier and/or set `isBoosted`.
+• Accepts a list of {name, boostLevel, categories?} (dicts) ya normalizados
+  por el `SearchUseCase` base y los pasa a Infra.
+• Infra traduce esto a deltas/multipliers y puede proyectar `isBoosted`.
 """
 
 from __future__ import annotations
@@ -20,9 +21,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Tuple, Optional
 
-from app.application.ports import EmbeddingProvider, SearchRepository
 from app.application.use_cases.base import SearchUseCase
-from app.domain.brand_amplification import BrandAmplification
 
 logger = logging.getLogger("advanced-search-ms.usecase.vector")
 
@@ -41,7 +40,7 @@ class VectorSearchUseCase(SearchUseCase):
         store_object_id: str,  # ← match parameter name expected downstream
         page: int,
         page_size: int,
-        brand_amplification: Optional[List[BrandAmplification]] = None,
+        brand_amplification: Optional[List[Dict]] = None,  # ✅ dicts (no domain objs)
         **kwargs,
     ) -> Tuple[List[Dict], int]:
         """
@@ -55,8 +54,9 @@ class VectorSearchUseCase(SearchUseCase):
             1-based page number.
         page_size : int
             Documents per page.
-        brand_amplification : Optional[List[BrandAmplification]]
-            Optional boost rules to prioritize certain brands.
+        brand_amplification : Optional[List[Dict]]
+            Optional boost rules to prioritize certain brands. Shape:
+              [{ "name": str, "boostLevel": 1|2|3, "categories": [str]? }, ...]
 
         Returns
         -------
@@ -70,17 +70,7 @@ class VectorSearchUseCase(SearchUseCase):
 
         # -------------------- 2️⃣ Repository call ------------------------- #
         if brand_amplification:
-            logger.info(
-                "🏷️ [USECASE vector] Brand amplification: %s",
-                [
-                    {
-                        "name": b.name,
-                        "boostLevel": b.boostLevel,
-                        "categories": (b.categories or []),
-                    }
-                    for b in brand_amplification
-                ],
-            )
+            logger.info("🏷️ [USECASE vector] Brand amplification: %s", brand_amplification)
         else:
             logger.info("🏷️ [USECASE vector] No brand amplification provided")
 
@@ -95,7 +85,7 @@ class VectorSearchUseCase(SearchUseCase):
             store_object_id=store_object_id,
             page=page,
             page_size=page_size,
-            brand_amplification=brand_amplification,  # ← pass-through to Infra
+            brand_amplification=brand_amplification,  # ← pass-through to Infra (dicts)
         )
 
         # -------------------- 3️⃣ Return results ------------------------- #
