@@ -15,7 +15,7 @@ const features = [
   },
   {
     title: "Dynamic Data Management",
-    desc: "Real-time adjustments and operational visibility are easy with Atlas’s change streams, enabling dynamic tracking of brand relevance, product states, and inventory updates."
+    desc: "Brand amplifications can be created dynamically based on customer behavior, inventory levels, and channel engagement—enabling personalized, real-time amplification instead of relying on static campaigns."
   },
   {
     title: "High Performance at Scale",

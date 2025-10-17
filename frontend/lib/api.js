@@ -22,7 +22,7 @@ export async function getProductsWithSearchInput(query = '', useBrandAmplificati
     body.fusionMode = store.getState('ProductInventory').ProductInventory.fusionMode;
   }
   if(useBrandAmplification == true && searchType !== SEARCH_OPTIONS.regex.id) {
-    body.brandAmplification = store.getState('BrandAmplificationForm').BrandAmplificationForm.brandAmplificationList.data.map(ba => {
+    body.brandAmplification = store.getState('BrandAmplificationForm').BrandAmplificationForm.brandAmplificationList?.data?.map(ba => {
       let  orm = {
         name: ba.name,
         boostLevel: Number(ba.boostLevel) || 1
@@ -30,7 +30,11 @@ export async function getProductsWithSearchInput(query = '', useBrandAmplificati
       if(ba.categories)
         orm.categories = [...ba.categories]
       return orm
-    })
+    }) || [];
+    if(body.brandAmplification.length === 0) {
+      console.log('No brand amplifications found in the state.');
+      delete body.brandAmplification;
+    }
   }
   console.log('Request body for search:', body);
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {

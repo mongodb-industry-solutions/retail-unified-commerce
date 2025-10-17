@@ -128,7 +128,7 @@ const ProductSearch = (props) => {
                         }
                     </Select>
                     {
-                        isToggleVisible &&
+                        (isToggleVisible && searchType !== SEARCH_OPTIONS.regex.id) &&
                         <div className='d-flex flex-column me-3'>
                             <div className='d-flex align-items-center mb-1'>
                                 <Label className={'mb-1 me-1'}>Use Brand Amplifications</Label>

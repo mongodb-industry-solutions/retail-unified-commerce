@@ -28,13 +28,18 @@ const BrandAmplificationList = () => {
     return (
         <div className='mt-4 mb-4'>
             {
+                brandAmplifications?.length === 0 && (
+                    <p>No brand amplifications added yet.</p>
+                )   
+            }
+            {
                 brandAmplifications?.map((ba, index) => (
                     <Card className='mt-3' key={index} onClick={() => console.log(ba)}>
                         <p><strong>Brand: </strong>{ba.name}</p>
                         <p><strong>Boost Level: </strong>{ba.boostLevel}</p>
                         <p><strong>Categories: </strong>{ba.categories ? ba.categories.join(", ") : "All"}</p>
                         {
-                            ba.isLocal && <Button onClick={() => deleteBrandAmplification(ba)}>
+                            <Button onClick={() => deleteBrandAmplification(ba)}>
                                 Delete
                             </Button>
                         }
