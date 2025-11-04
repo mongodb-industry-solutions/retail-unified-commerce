@@ -156,7 +156,7 @@ const BrandAmplificationForm = (props) => {
                     <div className={'formGroupRow mt-4'}>
                         <TextInput
                             label="Brand name"
-                            description="User friendly name to identify the promotion"
+                            description="User friendly name to identify the brand amplification"
                             className={'textInput'}
                             value={brandAmplification.name}
                             onChange={(e) => dispatch(setBrandAmplificationField({ field: "name", value: e.target.value }))}
