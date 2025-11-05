@@ -1,0 +1,20 @@
+env:
+  NODE_ENV: staging
+  # Use internal k8s service - bypasses authentication
+  INTERNAL_API_URL: http://fnv-backend-web-app:80
+
+envSecrets:
+  # backend env vars
+  MONGODB_URI: retail-unified-commerce-staging
+  MONGODB_DATABASE: retail-unified-commerce-staging
+  PRODUCTS_COLLECTION: retail-unified-commerce-staging
+  SEARCH_TEXT_INDEX: retail-unified-commerce-staging
+  SEARCH_VECTOR_INDEX: retail-unified-commerce-staging
+  EMBEDDING_FIELD_NAME: retail-unified-commerce-staging
+  VOYAGE_API_KEY: retail-unified-commerce-staging
+  VOYAGE_API_URL: retail-unified-commerce-staging
+  VOYAGE_MODEL: retail-unified-commerce-staging
+
+# No service account needed for frontend
+serviceAccount:
+  enabled: false

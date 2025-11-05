@@ -1,0 +1,19 @@
+env:
+  NODE_ENV: production
+  
+envSecrets:
+  # backend env vars
+  MONGODB_URI: retail-unified-commerce-prod
+  MONGODB_DATABASE: retail-unified-commerce-prod
+  PRODUCTS_COLLECTION: retail-unified-commerce-prod
+  SEARCH_TEXT_INDEX: retail-unified-commerce-prod
+  SEARCH_VECTOR_INDEX: retail-unified-commerce-prod
+  EMBEDDING_FIELD_NAME: retail-unified-commerce-prod
+  VOYAGE_API_KEY: retail-unified-commerce-prod
+  VOYAGE_API_URL: retail-unified-commerce-prod
+  VOYAGE_MODEL: retail-unified-commerce-prod
+
+
+# No service account needed for frontend
+serviceAccount:
+  enabled: false

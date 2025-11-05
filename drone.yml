@@ -1,0 +1,217 @@
+---
+# Drone object kind. Other types of objects are `secret` and `signature`.
+kind: pipeline
+# Execute this pipeline inside a Kubernetes pod.
+# see https://docs.drone.io/pipeline/kubernetes/overview/
+type: kubernetes
+# Name for this pipeline. Multiple pipelines can be defined for your project
+name: staging
+
+# Target specific host architecture types.  arm64 is recommended.  
+platform:
+  arch: amd64 # 'arm64' is also an option
+
+# trigger this pipeline only when the Github webhook is for an event on the
+# main branch
+trigger:
+  branch:
+    - staging
+
+# List of pipeline steps.
+steps:
+  # `name` is any string, in this case we are building and publishing a Docker image.
+  - name: publish-backend
+    # Drone plugin to use for this step. The kaniko-ecr plugin is a docker image that builds
+    # and publishes container images to the AWS Elastic Container Registry (ECR).
+    # see https://github.com/drone/drone-kaniko
+    image: plugins/kaniko-ecr
+    # Configuration for the drone-ecr plugin.
+    settings:
+      # ECR repositories need to be created before they can be used.
+      # This setting ensures they are created.
+      create_repository: true
+      # Hostname for the registry where this repository is hosted.
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com ## keep same for all demos
+      # Repository path. This will be used to tag the resulting images.
+      # The last section is a Drone variable and refers to the name of this Git repository.
+      # AWS ECR does not accept uppercase letters in the repository name, to convert
+      # to lowercase use ${DRONE_REPO_NAME,,}
+      repo: industrysolutions/retail-unified-commerce-backend
+      # Docker image tags that will be applied to the resulting image.
+      # They will be prefixed with the repository name.
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      dockerfile: Dockerfile.backend
+      # Plug-in variables for AWS IAM credentials to push to ECR. These are stored as
+      # Drone secrets for each Git repo.
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+    # This step will only run when the event is a push to the staging branch.
+    when:
+      event:
+        - push
+
+  - name: publish-frontend
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: industrysolutions/retail-unified-commerce-frontend
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      dockerfile: Dockerfile.frontend
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+      build_args:
+        - NEXT_PUBLIC_ENABLE_VECTOR_SEARCH=true
+        - NEXT_PUBLIC_ENABLE_HYBRID_SEARCH=true
+        - NEXT_PUBLIC_ENABLE_ATLAS_SEARCH=true
+        - NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH=true
+        - NEXT_PUBLIC_COLLECTION_PRODUCTS=products
+        - NEXT_PUBLIC_COLLECTION_INVENTORY=inventory
+        - NEXT_PUBLIC_COLLECTION_STORES=stores
+        - NEXT_PUBLIC_SEARCH_INDEX=product_atlas_search
+        - NEXT_PUBLIC_SEARCH_META_INDEX=product_atlas_search_meta
+    when:
+      event:
+        - push
+
+  - name: deploy-combined-staging
+    # Docker image for a Drone plugin that deploys to Kubernetes using Helm.
+    # This is a custom image built for Kanopy based on https://github.com/kanopy-platform/drone-helm3
+    image: public.ecr.aws/kanopy/drone-helm:v3
+    # Configuration for the drone-helm plugin.
+    settings:
+      # Helm chart to use to deploy this workload. web-app is a Kanopy chart that
+      # allows for creating Kubernetes Deployments.
+      # see the Glossary to understand Helm Charts
+      chart: mongodb/web-app
+      # Version of the chart. We should always try to use the latest, as shown in
+      # the Changelog: https://github.com/10gen/helm-charts/blob/master/charts/web-app/CHANGELOG.md
+      chart_version: 4.25.0
+      # List of repositories to add, that should contain the above Helm chart. This link refers to
+      # https://github.com/10gen/helm-charts/tree/master/docs
+      add_repos: [mongodb=https://10gen.github.io/helm-charts]
+      # Target namespace to deploy this workload to.
+      namespace: industrysolutions
+      # Name of the Helm release. All associated objects created by this release will
+      # use this string as a prefix. e.g. Deployment, Service, Ingress objects
+      release: retail-unified-commerce-staging
+      # These values will be passed from the drone-helm plugin to the chart as command-line
+      # arguments. They will be merged (and overwrite) with the values in the environments
+      # image.repository must match the same repository name used when publishing the Docker image of the FRONTEND.
+      values:
+        - "image.tag=git-${DRONE_COMMIT_SHA:0:7}"
+        - "image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-frontend"
+        - "ingress.enabled=true"
+        - "ingress.hosts[0]=retail-unified-commerce.industrysolutions.staging.corp.mongodb.com"
+        - "mesh.enabled=true"
+        - "env.NEXT_PUBLIC_BACKEND_ENDPOINT=https://retail-unified-commerce.industrysolutions.staging.corp.mongodb.com"
+        - "resources.limits.cpu=1000m"
+        - "resources.limits.memory=1024Mi"
+        - "resources.requests.cpu=250m"
+        - "resources.requests.memory=256Mi"
+      # API server URL. Each Kanopy cluster has its own.
+      api_server: https://api.staging.corp.mongodb.com
+      # Kubernetes token to use for authentication. This is a Drone secret that contains
+      kubernetes_token:
+        from_secret: staging_kubernetes_token
+      # Helm values/environment file that configures chart parameters.
+      # Refer to the helm-charts repository for all available options:
+      # - web-app: https://github.com/10gen/helm-charts/tree/master/charts/web-app
+      # - cronjobs: https://github.com/10gen/helm-charts/tree/master/charts/cronjobs
+      values_files: [ "environment/staging.yaml" ]
+    when:
+      event:
+        - push
+
+---
+kind: pipeline
+type: kubernetes
+name: production
+
+trigger:
+  branch:
+    - main  # or master, depending on your main branch name
+
+steps:
+  - name: publish-backend
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: industrysolutions/retail-unified-commerce-backend
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}-prod
+        - prod-latest
+      dockerfile: Dockerfile.backend
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+    when:
+      event:
+        - push
+
+  - name: publish-frontend
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: industrysolutions/retail-unified-commerce-frontend
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}-prod
+        - prod-latest
+      dockerfile: Dockerfile.frontend
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+      build_args:
+        - NEXT_PUBLIC_ENABLE_VECTOR_SEARCH=true
+        - NEXT_PUBLIC_ENABLE_HYBRID_SEARCH=true
+        - NEXT_PUBLIC_ENABLE_ATLAS_SEARCH=true
+        - NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH=true
+        - NEXT_PUBLIC_COLLECTION_PRODUCTS=products
+        - NEXT_PUBLIC_COLLECTION_INVENTORY=inventory
+        - NEXT_PUBLIC_COLLECTION_STORES=stores
+        - NEXT_PUBLIC_SEARCH_INDEX=product_atlas_search
+        - NEXT_PUBLIC_SEARCH_META_INDEX=product_atlas_search_meta
+    when:
+      event:
+        - push
+
+  - name: deploy-combined-prod
+    image: public.ecr.aws/kanopy/drone-helm:v3
+    settings:
+      chart: mongodb/web-app
+      chart_version: 4.25.0
+      add_repos: [mongodb=https://10gen.github.io/helm-charts]
+      namespace: industrysolutions
+      release: retail-unified-commerce-prod
+      values:
+        - "image.tag=git-${DRONE_COMMIT_SHA:0:7}-prod"
+        - "image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-frontend"
+        - "ingress.enabled=true"
+        - "ingress.hosts[0]=retail-unified-commerce.industrysolutions.prod.corp.mongodb.com"
+        - "mesh.enabled=true"
+        - "env.NEXT_PUBLIC_BACKEND_ENDPOINT=https://retail-unified-commerce.industrysolutions.prod.corp.mongodb.com"
+        - "resources.limits.cpu=2000m"
+        - "resources.limits.memory=2048Mi"
+        - "resources.requests.cpu=500m"
+        - "resources.requests.memory=512Mi"
+      api_server: https://api.prod.corp.mongodb.com
+      kubernetes_token:
+        from_secret: production_kubernetes_token
+      values_files: [ "environment/production.yaml" ]
+    when:
+      event:
+        - push
+
+  
