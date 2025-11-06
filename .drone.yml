@@ -43,6 +43,8 @@ steps:
         - git-${DRONE_COMMIT_SHA:0:7}
         - latest
       dockerfile: backend/advanced-search-ms/Dockerfile
+      # Set build context to the backend service directory
+      context: backend/advanced-search-ms
       # Plug-in variables for AWS IAM credentials to push to ECR. These are stored as
       # Drone secrets for each Git repo.
       access_key:
@@ -64,6 +66,8 @@ steps:
         - git-${DRONE_COMMIT_SHA:0:7}
         - latest
       dockerfile: frontend/Dockerfile
+      # Set build context to the frontend directory
+      context: frontend
       access_key:
         from_secret: ecr_access_key
       secret_key:
@@ -150,7 +154,9 @@ steps:
       tags:
         - git-${DRONE_COMMIT_SHA:0:7}-prod
         - prod-latest
-      dockerfile: Dockerfile.backend
+      dockerfile: backend/advanced-search-ms/Dockerfile
+      # Set build context to the backend service directory
+      context: backend/advanced-search-ms
       access_key:
         from_secret: ecr_access_key
       secret_key:
@@ -168,7 +174,9 @@ steps:
       tags:
         - git-${DRONE_COMMIT_SHA:0:7}-prod
         - prod-latest
-      dockerfile: Dockerfile.frontend
+      dockerfile: frontend/Dockerfile
+      # Set build context to the frontend directory
+      context: frontend
       access_key:
         from_secret: ecr_access_key
       secret_key:

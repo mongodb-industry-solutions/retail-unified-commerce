@@ -116,3 +116,5 @@ Thumbs.db
 
 # ☁️ Vercel deployment
 .vercel/
+
+cicd-kanopy/
