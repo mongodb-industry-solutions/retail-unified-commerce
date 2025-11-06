@@ -3,14 +3,20 @@ import { clientPromise, dbName} from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
 export async function POST(request) {
-    const { 
-        filter={}, 
+    const {
+        filter={},
         projection ={},
-        options={}, 
-        databaseName = dbName, 
-        collectionName,
+        options={},
+        databaseName = dbName,
+        collectionName = process.env.COLLECTION_PRODUCTS || 'products',
         objectIdFields = []
     } = await request.json();
+
+    // Validate collection name
+    if (!collectionName) {
+        return NextResponse.json({ error: 'Collection name is required' }, { status: 400 });
+    }
+
     const client = await clientPromise
     const db = client.db(databaseName);
     const collection = db.collection(collectionName);
