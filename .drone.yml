@@ -42,7 +42,7 @@ steps:
       tags:
         - git-${DRONE_COMMIT_SHA:0:7}
         - latest
-      dockerfile: Dockerfile.backend
+      dockerfile: backend/advanced-search-ms/Dockerfile
       # Plug-in variables for AWS IAM credentials to push to ECR. These are stored as
       # Drone secrets for each Git repo.
       access_key:
@@ -63,7 +63,7 @@ steps:
       tags:
         - git-${DRONE_COMMIT_SHA:0:7}
         - latest
-      dockerfile: Dockerfile.frontend
+      dockerfile: frontend/Dockerfile
       access_key:
         from_secret: ecr_access_key
       secret_key:
