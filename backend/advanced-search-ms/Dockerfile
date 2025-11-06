@@ -36,8 +36,9 @@ COPY --from=builder /app .
 # ── Note: Environment variables will be injected by Kanopy at runtime
 #    via envSecrets configuration (no .env file needed)
 
-# ── Expose API port (Kanopy standard)
-EXPOSE 8080
+# ── Expose API port (Backend sidecar uses 8000)
+EXPOSE 8000
 
-# ── Start FastAPI with Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# ── CRITICAL: Must bind to 0.0.0.0 for sidecar pattern
+# Frontend will connect via http://127.0.0.1:8000 (loopback)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -87,50 +87,42 @@ steps:
         - push
 
   - name: deploy-combined-staging
-    # Docker image for a Drone plugin that deploys to Kubernetes using Helm.
-    # This is a custom image built for Kanopy based on https://github.com/kanopy-platform/drone-helm3
     image: public.ecr.aws/kanopy/drone-helm:v3
-    # Configuration for the drone-helm plugin.
     settings:
-      # Helm chart to use to deploy this workload. web-app is a Kanopy chart that
-      # allows for creating Kubernetes Deployments.
-      # see the Glossary to understand Helm Charts
       chart: mongodb/web-app
-      # Version of the chart. We should always try to use the latest, as shown in
-      # the Changelog: https://github.com/10gen/helm-charts/blob/master/charts/web-app/CHANGELOG.md
       chart_version: 4.25.0
-      # List of repositories to add, that should contain the above Helm chart. This link refers to
-      # https://github.com/10gen/helm-charts/tree/master/docs
       add_repos: [mongodb=https://10gen.github.io/helm-charts]
-      # Target namespace to deploy this workload to.
       namespace: industrysolutions
-      # Name of the Helm release. All associated objects created by this release will
-      # use this string as a prefix. e.g. Deployment, Service, Ingress objects
       release: retail-unified-commerce-staging
-      # These values will be passed from the drone-helm plugin to the chart as command-line
-      # arguments. They will be merged (and overwrite) with the values in the environments
-      # image.repository must match the same repository name used when publishing the Docker image of the FRONTEND.
+      
+      # Use combined deployment configuration
+      values_files: ["environment/staging-combined.yaml"]
+      
+      # Override values dynamically from pipeline
       values:
+        # CRITICAL: Override sidecar backend image with newly built version
+        - "sidecarContainers[0].image=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-backend:git-${DRONE_COMMIT_SHA:0:7}"
+        
+        # Set frontend image (main container)
         - "image.tag=git-${DRONE_COMMIT_SHA:0:7}"
         - "image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-frontend"
+        
+        # Ingress configuration (external access to frontend only)
         - "ingress.enabled=true"
         - "ingress.hosts[0]=retail-unified-commerce.industrysolutions.staging.corp.mongodb.com"
+        
+        # Enable service mesh
         - "mesh.enabled=true"
-        - "env.NEXT_PUBLIC_BACKEND_ENDPOINT=https://retail-unified-commerce.industrysolutions.staging.corp.mongodb.com"
+        
+        # Resource limits (for entire pod - both containers share these)
         - "resources.limits.cpu=1000m"
         - "resources.limits.memory=1024Mi"
         - "resources.requests.cpu=250m"
         - "resources.requests.memory=256Mi"
-      # API server URL. Each Kanopy cluster has its own.
+      
       api_server: https://api.staging.corp.mongodb.com
-      # Kubernetes token to use for authentication. This is a Drone secret that contains
       kubernetes_token:
         from_secret: staging_kubernetes_token
-      # Helm values/environment file that configures chart parameters.
-      # Refer to the helm-charts repository for all available options:
-      # - web-app: https://github.com/10gen/helm-charts/tree/master/charts/web-app
-      # - cronjobs: https://github.com/10gen/helm-charts/tree/master/charts/cronjobs
-      values_files: [ "environment/staging.yaml" ]
     when:
       event:
         - push

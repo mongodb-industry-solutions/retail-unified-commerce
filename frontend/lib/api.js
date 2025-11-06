@@ -37,7 +37,10 @@ export async function getProductsWithSearchInput(query = '', useBrandAmplificati
     }
   }
   console.log('Request body for search:', body);
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {
+  
+  // Use Next.js API route proxy instead of direct backend call
+  // Browser → Next.js proxy (/api/v1/search) → Backend sidecar (127.0.0.1:8000)
+  const response = await fetch(`/api/v1/search`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
