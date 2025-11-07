@@ -8,14 +8,17 @@ export async function POST(request) {
         projection ={},
         options={},
         databaseName = dbName,
-        collectionName = process.env.COLLECTION_PRODUCTS || 'products',
+        collectionName,
         objectIdFields = []
     } = await request.json();
 
     // Validate collection name
     if (!collectionName) {
+        console.error('Collection name is missing in request');
         return NextResponse.json({ error: 'Collection name is required' }, { status: 400 });
     }
+
+    console.log(`API Request - Collection: ${collectionName}, Database: ${databaseName}`);
 
     const client = await clientPromise
     const db = client.db(databaseName);
