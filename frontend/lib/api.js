@@ -185,7 +185,7 @@ export async function getDistancesForOtherStores(mainPoint = null) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      collectionName: COLLECTIONS.STORES,
+      collectionName: COLLECTIONS.STORES || process.env.STORES,
       mainPoint: mainPoint
     }),
   });
@@ -205,7 +205,7 @@ export async function getStores() {
     },
     body: JSON.stringify({
       filter: {},
-      collectionName: COLLECTIONS.STORES,
+      collectionName: COLLECTIONS.STORES || process.env.STORES,
       projection: {
         _id: 1,
         storeName: 1,

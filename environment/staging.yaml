@@ -1,5 +1,6 @@
 env:
   NODE_ENV: staging
+  STORES: stores
 
 envSecrets:
   # MongoDB Connection (used by both frontend and backend)

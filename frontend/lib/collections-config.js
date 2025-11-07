@@ -8,7 +8,7 @@ export const COLLECTIONS = {
   BRAND_AMPLIFICATION: 'brand-amplification',
   PRODUCTS: 'products',
   INVENTORY: 'inventory',
-  STORES: 'stores',
+  //STORES: 'stores',
   ORDERS: 'orders',
   CUSTOMERS: 'customers',
   CATEGORIES: 'categories',
