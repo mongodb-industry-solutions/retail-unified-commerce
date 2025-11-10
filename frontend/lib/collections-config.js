@@ -1,32 +1,17 @@
 /**
  * Collection names configuration
- * This file centralizes all collection names used in the application.
+ * This file centralizes all collection and index names used in the application.
+ * It helps maintain consistency and makes it easier to update collection names in the future.
  */
 
 // Collection names used throughout the application
 export const COLLECTIONS = {
-  BRAND_AMPLIFICATION: 'brand-amplification',
-  PRODUCTS: 'products',
-  INVENTORY: 'inventory',
-  //STORES: 'stores',
-  ORDERS: 'orders',
-  CUSTOMERS: 'customers',
-  CATEGORIES: 'categories',
+  PRODUCTS: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS || 'products',
+  INVENTORY: process.env.NEXT_PUBLIC_COLLECTION_INVENTORY || 'inventory',
+  STORES: process.env.NEXT_PUBLIC_COLLECTION_STORES || 'stores',
 };
 
 // Index names
 export const INDEXES = {
-  SEARCH_META: 'searchMeta'
+  SEARCH_META:  process.env.NEXT_PUBLIC_INDEX_SEARCH_META || 'product_atlas_search_meta',
 };
-
-// Helper function to validate if a collection name exists
-export const isValidCollection = (collectionName) => {
-  return Object.values(COLLECTIONS).includes(collectionName);
-};
-
-// Get collection name by key
-export const getCollectionName = (key) => {
-  return COLLECTIONS[key] || null;
-};
-
-export default COLLECTIONS;

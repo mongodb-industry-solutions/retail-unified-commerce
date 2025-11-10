@@ -1,11 +1,9 @@
-'use client';
-
 import { pushLatestApiCallsDeployments, setDeployment, setStores } from "@/redux/slices/GlobalSlice";
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
 import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
 import { setBrandSelector, setMetaSearch } from "@/redux/slices/PromotionFormSlice";
-import COLLECTIONS, { INDEXES } from "./collections-config";
+import { COLLECTIONS, INDEXES } from "./collections-config";
 
 export async function getProductsWithSearchInput(query = '', useBrandAmplification = false) {
   const searchType = store.getState('ProductInventory').ProductInventory.searchType;
@@ -186,7 +184,7 @@ export async function getDistancesForOtherStores(mainPoint = null) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,//COLLECTIONS.STORES || process.env.STORES,
+      collectionName: COLLECTIONS.STORES,
       mainPoint: mainPoint
     }),
   });
@@ -207,7 +205,7 @@ export async function getStores() {
     },
     body: JSON.stringify({
       filter: {},
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,//COLLECTIONS.STORES || process.env.STORES,
+      collectionName: COLLECTIONS.STORES,
       projection: {
         _id: 1,
         storeName: 1,
