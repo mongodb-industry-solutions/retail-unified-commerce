@@ -58,6 +58,8 @@ steps:
 
   - name: publish-frontend
     image: plugins/kaniko-ecr
+    environment:
+      NEXT_PUBLIC_COLLECTION_STORES: stores
     settings:
       create_repository: true
       registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
@@ -79,7 +81,6 @@ steps:
         - NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH=true
         - NEXT_PUBLIC_COLLECTION_PRODUCTS=products
         - NEXT_PUBLIC_COLLECTION_INVENTORY=inventory
-        - NEXT_PUBLIC_COLLECTION_STORES=stores
         - NEXT_PUBLIC_SEARCH_INDEX=product_atlas_search
         - NEXT_PUBLIC_SEARCH_META_INDEX=product_atlas_search_meta
     when:
