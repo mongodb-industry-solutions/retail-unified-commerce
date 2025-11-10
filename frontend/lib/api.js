@@ -185,7 +185,7 @@ export async function getDistancesForOtherStores(mainPoint = null) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      collectionName: COLLECTIONS.STORES || process.env.STORES,
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,//COLLECTIONS.STORES || process.env.STORES,
       mainPoint: mainPoint
     }),
   });
@@ -198,6 +198,7 @@ export async function getDistancesForOtherStores(mainPoint = null) {
 }
 
 export async function getStores() {
+  console.log('getStores', process.env.NEXT_PUBLIC_COLLECTION_STORES)
   const response = await fetch(`/api/findDocuments`, {
     method: "POST",
     headers: {
@@ -205,7 +206,7 @@ export async function getStores() {
     },
     body: JSON.stringify({
       filter: {},
-      collectionName: COLLECTIONS.STORES || process.env.STORES,
+      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,//COLLECTIONS.STORES || process.env.STORES,
       projection: {
         _id: 1,
         storeName: 1,
