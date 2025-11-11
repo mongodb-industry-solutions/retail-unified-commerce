@@ -117,3 +117,6 @@ Thumbs.db
 
 # ☁️ Vercel deployment
 .vercel/
+
+# Local security check script (not needed in deployment)
+security_check.sh
