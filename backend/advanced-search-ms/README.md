@@ -63,7 +63,7 @@ Explore this microservice taking in consideration:
 
 ```dotenv
 # MongoDB Atlas
-MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/
+MONGODB_URI=""
 MONGODB_DATABASE=retail-unified-commerce
 PRODUCTS_COLLECTION=products
 VECTOR_INDEX_NAME=product_text_vector_index
@@ -72,7 +72,7 @@ EMBEDDING_FIELD_NAME=textEmbeddingVector
 
 # Voyage AI
 VOYAGE_API_URL=https://api.voyageai.com/v1
-VOYAGE_API_KEY=<your-token>
+VOYAGE_API_KEY=""
 VOYAGE_MODEL=voyage-3-large
 ```
 ---
