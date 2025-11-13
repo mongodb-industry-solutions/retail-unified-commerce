@@ -120,3 +120,5 @@ Thumbs.db
 .vercel/
 
 cicd-kanopy/
+SECURITY_CHECK_README.md
+security_check.sh
