@@ -32,6 +32,7 @@ envSecrets:
   # MongoDB Connection (frontend needs this for direct DB access)
   MONGODB_URI: retail-unified-commerce-staging
   DB_NAME: retail-unified-commerce-staging
+  GOOGLE_MAPS_API_KEY: retail-unified-commerce-staging
 
 sidecarContainers:
   - name: backend
@@ -105,5 +106,25 @@ sidecarContainers:
             key: VOYAGE_MODEL
 
 serviceAccount:
-  enabled: false
+  enabled: true
 
+# Mount GCP credential config AND projected service account token
+extraVolumes:
+  - name: gcp-creds
+    configMap:
+      name: gcp-wif-config-retail
+  - name: gcp-token
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: token
+          expirationSeconds: 3600  # Token expires after 1 hour and auto-renews
+          audience: "//iam.googleapis.com/projects/531154772515/locations/global/workloadIdentityPools/kanopy-retail-wif-pool/providers/kanopy-retail-provider"
+
+extraVolumeMounts:
+  - name: gcp-creds
+    mountPath: /etc/gcp
+    readOnly: true
+  - name: gcp-token
+    mountPath: /var/run/service-account
+    readOnly: true
