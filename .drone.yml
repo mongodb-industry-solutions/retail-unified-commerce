@@ -130,24 +130,41 @@ name: production
 trigger:
   branch:
     - main  # or master, depending on your main branch name
-
+ 
 steps:
+  # `name` is any string, in this case we are building and publishing a Docker image.
   - name: publish-backend
+    # Drone plugin to use for this step. The kaniko-ecr plugin is a docker image that builds
+    # and publishes container images to the AWS Elastic Container Registry (ECR).
+    # see https://github.com/drone/drone-kaniko
     image: plugins/kaniko-ecr
+    # Configuration for the drone-ecr plugin.
     settings:
+      # ECR repositories need to be created before they can be used.
+      # This setting ensures they are created.
       create_repository: true
-      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      # Hostname for the registry where this repository is hosted.
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com ## keep same for all demos
+      # Repository path. This will be used to tag the resulting images.
+      # The last section is a Drone variable and refers to the name of this Git repository.
+      # AWS ECR does not accept uppercase letters in the repository name, to convert
+      # to lowercase use ${DRONE_REPO_NAME,,}
       repo: industrysolutions/retail-unified-commerce-backend
+      # Docker image tags that will be applied to the resulting image.
+      # They will be prefixed with the repository name.
       tags:
-        - git-${DRONE_COMMIT_SHA:0:7}-prod
-        - prod-latest
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
       dockerfile: backend/advanced-search-ms/Dockerfile
       # Set build context to the backend service directory
       context: backend/advanced-search-ms
+      # Plug-in variables for AWS IAM credentials to push to ECR. These are stored as
+      # Drone secrets for each Git repo.
       access_key:
         from_secret: ecr_access_key
       secret_key:
         from_secret: ecr_secret_key
+    # This step will only run when the event is a push to the prod branch.
     when:
       event:
         - push
@@ -159,8 +176,8 @@ steps:
       registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
       repo: industrysolutions/retail-unified-commerce-frontend
       tags:
-        - git-${DRONE_COMMIT_SHA:0:7}-prod
-        - prod-latest
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
       dockerfile: frontend/Dockerfile
       # Set build context to the frontend directory
       context: frontend
@@ -185,23 +202,35 @@ steps:
       add_repos: [mongodb=https://10gen.github.io/helm-charts]
       namespace: industrysolutions
       release: retail-unified-commerce-prod
+      
+      # Use combined deployment configuration
+      values_files: ["environment/production.yaml"]
+      
+      # Override values dynamically from pipeline
       values:
-        - "image.tag=git-${DRONE_COMMIT_SHA:0:7}-prod"
+        # CRITICAL: Override sidecar backend image with newly built version
+        - "sidecarContainers[0].image=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-backend:git-${DRONE_COMMIT_SHA:0:7}"
+        
+        # Set frontend image (main container)
+        - "image.tag=git-${DRONE_COMMIT_SHA:0:7}"
         - "image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-frontend"
+        
+        # Ingress configuration (external access to frontend only)
         - "ingress.enabled=true"
         - "ingress.hosts[0]=retail-unified-commerce.industrysolutions.prod.corp.mongodb.com"
+        
+        # Enable service mesh
         - "mesh.enabled=true"
-        - "env.NEXT_PUBLIC_BACKEND_ENDPOINT=https://retail-unified-commerce.industrysolutions.prod.corp.mongodb.com"
-        - "resources.limits.cpu=2000m"
-        - "resources.limits.memory=2048Mi"
-        - "resources.requests.cpu=500m"
-        - "resources.requests.memory=512Mi"
+        
+        # Resource limits (for entire pod - both containers share these)
+        - "resources.limits.cpu=1000m"
+        - "resources.limits.memory=1024Mi"
+        - "resources.requests.cpu=250m"
+        - "resources.requests.memory=256Mi"
+      
       api_server: https://api.prod.corp.mongodb.com
       kubernetes_token:
-        from_secret: production_kubernetes_token
-      values_files: [ "environment/production.yaml" ]
+        from_secret: prod_kubernetes_token
     when:
       event:
         - push
-
-  
