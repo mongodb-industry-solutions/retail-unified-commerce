@@ -1,5 +1,6 @@
 # 🔐 Environment files
 .env
+.venv
 .env.*
 !.env.example
 
@@ -120,5 +121,6 @@ Thumbs.db
 .vercel/
 
 cicd-kanopy/
-SECURITY_CHECK_README.md
+# Local security check script (not needed in deployment)
 security_check.sh
+SECURITY_CHECK_README.md
