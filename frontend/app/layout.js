@@ -1,11 +1,12 @@
 import { GeistSans } from "geist/font/sans";
-import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
-import './global.css';
+import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
+import "./global.css";
 import ClientProvider from "./ClientProvider";
 import { Toaster } from "react-hot-toast";
 import FloatingCard from "@/components/floatingCard/FloatingCard";
 import { APP_NAME } from "@/lib/constant";
 import BrandAmplificationLoader from "@/components/loaders/BrandAmplificationLoader";
+import GoogleMapsLoader from "@/components/locationsContainer/GoogleMapsLoader";
 
 export const metadata = {
   title: APP_NAME,
@@ -22,9 +23,7 @@ export const metadata = {
   ],
 };
 
-
 export default function RootLayout({ children }) {
-
   return (
     <html lang="en" className={GeistSans.className}>
       <body>
@@ -36,11 +35,13 @@ export default function RootLayout({ children }) {
             },
           }}
         />
-        <ClientProvider>
-          {children}
-          <BrandAmplificationLoader />
-          <FloatingCard/>
-        </ClientProvider>
+        <GoogleMapsLoader>
+          <ClientProvider>
+            {children}
+            <BrandAmplificationLoader />
+            <FloatingCard />
+          </ClientProvider>
+        </GoogleMapsLoader>
       </body>
     </html>
   );
