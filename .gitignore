@@ -58,7 +58,9 @@ develop-eggs/
 downloads/
 eggs/
 .eggs/
-lib/
+# Python lib directories (not frontend/lib)
+backend/lib/
+backend/lib64/
 lib64/
 parts/
 sdist/
@@ -118,5 +120,7 @@ Thumbs.db
 # ☁️ Vercel deployment
 .vercel/
 
+cicd-kanopy/
 # Local security check script (not needed in deployment)
 security_check.sh
+SECURITY_CHECK_README.md

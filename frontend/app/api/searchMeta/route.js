@@ -5,11 +5,16 @@ export async function POST(request) {
   try {
     let {
       databaseName = dbName,
-      collectionName,
-      indexName,
+      collectionName = process.env.COLLECTION_PRODUCTS || 'products',
+      indexName = process.env.SEARCH_META_INDEX || 'product_atlas_search_meta',
       brand,
       categories = []
     } = await request.json();
+
+    // Validate collection name
+    if (!collectionName) {
+      return NextResponse.json({ error: 'Collection name is required' }, { status: 400 });
+    }
 
     const client = await clientPromise
     const db = client.db(databaseName);

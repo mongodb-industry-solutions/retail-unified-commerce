@@ -13,11 +13,14 @@ RUN npm ci --legacy-peer-deps
 # ── Copy the full application source
 COPY ./ ./
 
-# ── Compile / bundle the Next.js app (env vars are “baked in” here)
+# ── Compile / bundle the Next.js app (env vars are "baked in" here)
 RUN npm run build
 
-# ── Expose the Next.js default port
-EXPOSE 3000
+# ── Set port for Kanopy (8080 standard)
+ENV PORT=8080
+
+# ── Expose the port
+EXPOSE 8080
 
 # ── Start the production server
 CMD ["npm", "start"]
