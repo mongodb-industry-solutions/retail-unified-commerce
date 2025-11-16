@@ -4,11 +4,17 @@ const { ObjectId } = require('mongodb');
 
 export async function POST(request) {
     try {
-        let { 
-            document={}, 
-            databaseName = dbName, 
-            collectionName 
-        } = await request.json();        
+        let {
+            document={},
+            databaseName = dbName,
+            collectionName = process.env.COLLECTION_PRODUCTS || 'products'
+        } = await request.json();
+
+        // Validate collection name
+        if (!collectionName) {
+            return NextResponse.json({ error: 'Collection name is required' }, { status: 400 });
+        }
+
         console.log(document)
         const client = await clientPromise
         const db = client.db(databaseName);

@@ -1,0 +1,130 @@
+env:
+  NODE_ENV: staging
+
+  # Backend URL for server-side Next.js code (loopback in single-pod)
+  NEXT_PUBLIC_BACKEND_ENDPOINT: http://127.0.0.1:8000
+
+  # Collection names - NEXT_PUBLIC for client-side (build-time)
+  NEXT_PUBLIC_COLLECTION_PRODUCTS: products
+  NEXT_PUBLIC_COLLECTION_INVENTORY: inventory
+  NEXT_PUBLIC_COLLECTION_STORES: stores
+
+  # Collection names - Regular env vars for server-side API routes (runtime)
+  COLLECTION_PRODUCTS: products
+  COLLECTION_INVENTORY: inventory
+  COLLECTION_STORES: stores
+
+  # Search index names - NEXT_PUBLIC for client-side
+  NEXT_PUBLIC_SEARCH_INDEX: product_atlas_search
+  NEXT_PUBLIC_SEARCH_META_INDEX: product_atlas_search_meta
+
+  # Search index names - Regular env vars for server-side
+  SEARCH_INDEX: product_atlas_search
+  SEARCH_META_INDEX: product_atlas_search_meta
+
+  # Feature flags
+  NEXT_PUBLIC_ENABLE_VECTOR_SEARCH: "true"
+  NEXT_PUBLIC_ENABLE_HYBRID_SEARCH: "true"
+  NEXT_PUBLIC_ENABLE_ATLAS_SEARCH: "true"
+  NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH: "true"
+
+envSecrets:
+  # MongoDB Connection (frontend needs this for direct DB access)
+  MONGODB_URI: retail-unified-commerce-staging
+  DB_NAME: retail-unified-commerce-staging
+  GOOGLE_MAPS_API_KEY: retail-unified-commerce-staging
+
+sidecarContainers:
+  - name: backend
+    # Image will be overridden by Drone pipeline with specific git-SHA tag
+    image: 795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-backend:latest
+    
+    # Expose backend port (accessible via localhost from frontend)
+    ports:
+      - containerPort: 8000
+        name: backend
+    
+    # Environment variables for backend container
+    env:
+      - name: NODE_ENV
+        value: staging
+      
+      # MongoDB Configuration (from secrets)
+      - name: MONGODB_URI
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: MONGODB_URI
+      
+      - name: MONGODB_DATABASE
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: MONGODB_DATABASE
+      
+      - name: PRODUCTS_COLLECTION
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: PRODUCTS_COLLECTION
+      
+      - name: SEARCH_TEXT_INDEX
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: SEARCH_TEXT_INDEX
+      
+      - name: SEARCH_VECTOR_INDEX
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: SEARCH_VECTOR_INDEX
+      
+      - name: EMBEDDING_FIELD_NAME
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: EMBEDDING_FIELD_NAME
+      
+      # Voyage AI Configuration (from secrets)
+      - name: VOYAGE_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: VOYAGE_API_KEY
+      
+      - name: VOYAGE_API_URL
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: VOYAGE_API_URL
+      
+      - name: VOYAGE_MODEL
+        valueFrom:
+          secretKeyRef:
+            name: retail-unified-commerce-staging
+            key: VOYAGE_MODEL
+
+serviceAccount:
+  enabled: true
+
+# Mount GCP credential config AND projected service account token
+extraVolumes:
+  - name: gcp-creds
+    configMap:
+      name: gcp-wif-config-retail
+  - name: gcp-token
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: token
+          expirationSeconds: 3600  # Token expires after 1 hour and auto-renews
+          audience: "//iam.googleapis.com/projects/531154772515/locations/global/workloadIdentityPools/kanopy-retail-wif-pool/providers/kanopy-retail-provider"
+
+extraVolumeMounts:
+  - name: gcp-creds
+    mountPath: /etc/gcp
+    readOnly: true
+  - name: gcp-token
+    mountPath: /var/run/service-account
+    readOnly: true

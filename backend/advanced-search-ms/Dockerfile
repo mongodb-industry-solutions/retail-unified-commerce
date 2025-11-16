@@ -33,12 +33,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # ── Copy the application code
 COPY --from=builder /app .
 
-# ── Copy environment variables file directly into the image
-#    (⚠ Secrets will be embedded in the final image)
-COPY .env .env
+# ── Note: Environment variables will be injected by Kanopy at runtime
+#    via envSecrets configuration (no .env file needed)
 
-# ── Expose API port
+# ── Expose API port (Backend sidecar uses 8000)
 EXPOSE 8000
 
-# ── Start FastAPI with Uvicorn
+# ── CRITICAL: Must bind to 0.0.0.0 for sidecar pattern
+# Frontend will connect via http://127.0.0.1:8000 (loopback)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

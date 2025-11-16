@@ -1,9 +1,9 @@
-
 import { pushLatestApiCallsDeployments, setDeployment, setStores } from "@/redux/slices/GlobalSlice";
 import { setSearchResults } from "@/redux/slices/ProductInventorySlice";
 import store from "@/redux/store";
 import { PAGINATION_PER_PAGE, SEARCH_OPTIONS } from "./constant";
 import { setBrandSelector, setMetaSearch } from "@/redux/slices/PromotionFormSlice";
+import { COLLECTIONS, INDEXES } from "./collections-config";
 
 export async function getProductsWithSearchInput(query = '', useBrandAmplification = false) {
   const searchType = store.getState('ProductInventory').ProductInventory.searchType;
@@ -37,7 +37,10 @@ export async function getProductsWithSearchInput(query = '', useBrandAmplificati
     }
   }
   console.log('Request body for search:', body);
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}/api/v1/search`, {
+  
+  // Use Next.js API route proxy instead of direct backend call
+  // Browser → Next.js proxy (/api/v1/search) → Backend sidecar (127.0.0.1:8000)
+  const response = await fetch(`/api/v1/search`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -76,7 +79,7 @@ export async function getProductWithScanner(_id) {
         'inventorySummary.nearToReplenishmentInShelf': 1
       },
       options: { limit: 1 },
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
+      collectionName: COLLECTIONS.PRODUCTS
     }),
   });
   if (!response.ok) {
@@ -110,7 +113,7 @@ export async function getProductDetails(_id) {
         category: 1,
         subCategory: 1
       },
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
+      collectionName: COLLECTIONS.PRODUCTS
     }),
   });
   if (!response.ok) {
@@ -128,7 +131,7 @@ export async function getProductInventory(_id, storeObjectId) {
     },
     body: JSON.stringify({
       filter: { productId: _id },
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_INVENTORY,
+      collectionName: COLLECTIONS.INVENTORY,
       projection: {
         productId: 1,
         updatedAt: 1,
@@ -181,7 +184,7 @@ export async function getDistancesForOtherStores(mainPoint = null) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,
+      collectionName: COLLECTIONS.STORES,
       mainPoint: mainPoint
     }),
   });
@@ -194,6 +197,7 @@ export async function getDistancesForOtherStores(mainPoint = null) {
 }
 
 export async function getStores() {
+  console.log('getStores', process.env.NEXT_PUBLIC_COLLECTION_STORES)
   const response = await fetch(`/api/findDocuments`, {
     method: "POST",
     headers: {
@@ -201,7 +205,7 @@ export async function getStores() {
     },
     body: JSON.stringify({
       filter: {},
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_STORES,
+      collectionName: COLLECTIONS.STORES,
       projection: {
         _id: 1,
         storeName: 1,
@@ -210,7 +214,7 @@ export async function getStores() {
     }),
   });
   if (!response.ok) {
-    throw new Error(`Error fetching product details: ${response.status}`);
+    throw new Error(`Error fetching stores list: ${response.status}`);
   }
   const data = await response.json();
   return data.result || null;
@@ -225,7 +229,7 @@ export async function getProduct(_id) {
     body: JSON.stringify({
       filter: { _id: _id },
       options: { limit: 1 },
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS
+      collectionName: COLLECTIONS.PRODUCTS
     }),
   });
   if (!response.ok) {
@@ -242,8 +246,8 @@ export async function brandAmplificationGetSearchMeta() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
-      indexName: process.env.NEXT_PUBLIC_SEARCH_META_INDEX,
+      collectionName: COLLECTIONS.PRODUCTS,
+      indexName: INDEXES.SEARCH_META,
       brand: store.getState().BrandAmplificationForm.brandAmplification.brand,
       categories: store.getState().BrandAmplificationForm.brandAmplification.categories
     }),
@@ -264,7 +268,7 @@ export async function getAllBrands() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      collectionName: process.env.NEXT_PUBLIC_COLLECTION_PRODUCTS,
+      collectionName: COLLECTIONS.PRODUCTS,
     }),
   });
   if (!response.ok) {

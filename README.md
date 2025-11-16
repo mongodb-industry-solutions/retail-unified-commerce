@@ -1,4 +1,4 @@
-# Leafy Store Associate Demo App – Unified Data and Search for Smarter Product Discovery
+# Leafy Store Portal App – Unified Data and Search for Smarter Product Discovery
 
 This README helps developers understand the purpose, structure, and deployment process of this Demo App.
 
@@ -137,6 +137,7 @@ make build
 | Start backend  | `make back-up`     |
 | Stop backend   | `make back-stop`   |
 | View logs      | `make back-logs`   |
+
 
 ---
 ## 👨‍💻 Explore the Demo
