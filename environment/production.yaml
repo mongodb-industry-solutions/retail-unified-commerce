@@ -112,7 +112,7 @@ serviceAccount:
 extraVolumes:
   - name: gcp-creds
     configMap:
-      name: gcp-wif-config-retail
+      name: gcp-wif-config-retail-prod
   - name: gcp-token
     projected:
       sources:
