@@ -5,7 +5,7 @@ import Card from "@leafygreen-ui/card";
 import { Body, Subtitle } from "@leafygreen-ui/typography";
 import Badge from "@leafygreen-ui/badge";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InfoWizard from "../InfoWizard/InfoWizard";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
@@ -30,6 +30,26 @@ const ProductCardSimplify = (props) => {
     } = props;
     const scanProductSearch = useSelector(state => state.ProductInventory.scanProductSearch);
     const [openHelpModal, setOpenHelpModal] = useState(false);
+    const [imageUrl, setImageUrl] = useState(null);
+
+      useEffect(() => {
+        let isMounted = true;
+    
+        async function fetchSignedUrl() {
+          try {
+            const url = await getProductImageSignedUrl(product.imageUrlS3);
+            if (isMounted) setImageUrl(url || "/placeholder-image.png");
+          } catch (err) {
+            console.error("Failed to get signed URL:", err);
+            if (isMounted) setImageUrl("/placeholder-image.png");
+          }
+        }
+    
+        fetchSignedUrl();
+        return () => {
+          isMounted = false;
+        };
+      }, [product.imageUrlS3]);
 
     return (
         <>
@@ -74,13 +94,14 @@ const ProductCardSimplify = (props) => {
                 </div>
                 <div className="d-flex flex-row">
                     <div className="image-container m-0 me-1 w-auto" style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                        {imageUrlS3 ? (
+                        {imageUrl ? (
                             <Image
-                                src={imageUrlS3}
+                                src={imageUrl}
                                 alt={title}
                                 width={80}
                                 height={80}
                                 style={{ objectFit: "contain", borderRadius: 8 }}
+                                unoptimized
                             />
                         ) : (
                             <div
