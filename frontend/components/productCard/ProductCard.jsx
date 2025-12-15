@@ -19,6 +19,7 @@ import { useSelector } from "react-redux";
 import BrandAmplificationForm from "../brandAmplificationForm/BrandAmplificationForm";
 import { setBrandInForm, setCategoryInForm } from "@/lib/helpers";
 import BrandAmplificationList from "../brandAmplificationList/BrandAmplificationList";
+import { getProductImageSignedUrl } from "@/lib/api";
 
 const ProductCard = (props) => {
   const router = useRouter();
@@ -61,7 +62,7 @@ const ProductCard = (props) => {
   
       async function fetchSignedUrl() {
         try {
-          const url = await getProductImageSignedUrl(product.imageUrlS3);
+          const url = await getProductImageSignedUrl(imageUrlS3);
           if (isMounted) setImageUrl(url || "/placeholder-image.png");
         } catch (err) {
           console.error("Failed to get signed URL:", err);
@@ -73,7 +74,7 @@ const ProductCard = (props) => {
       return () => {
         isMounted = false;
       };
-    }, [product.imageUrlS3]);
+    }, [imageUrlS3]);
 
   return (
     <>

@@ -14,6 +14,7 @@ import { useSelector } from "react-redux";
 import "./productCard.css";
 import Tooltip from "@leafygreen-ui/tooltip";
 import IconButton from "@leafygreen-ui/icon-button";
+import { getProductImageSignedUrl } from "@/lib/api";
 
 const ProductCardSimplify = (props) => {
     const {
@@ -37,7 +38,7 @@ const ProductCardSimplify = (props) => {
     
         async function fetchSignedUrl() {
           try {
-            const url = await getProductImageSignedUrl(product.imageUrlS3);
+            const url = await getProductImageSignedUrl(imageUrlS3);
             if (isMounted) setImageUrl(url || "/placeholder-image.png");
           } catch (err) {
             console.error("Failed to get signed URL:", err);
@@ -49,7 +50,7 @@ const ProductCardSimplify = (props) => {
         return () => {
           isMounted = false;
         };
-      }, [product.imageUrlS3]);
+      }, [imageUrlS3]);
 
     return (
         <>
