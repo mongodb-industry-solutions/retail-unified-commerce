@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { Label, Description } from "@leafygreen-ui/typography";
 import Image from "next/image";
 import InfoWizard from "../InfoWizard/InfoWizard";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
 import Button from "@leafygreen-ui/button";
@@ -175,11 +175,12 @@ const ProductGeneralDetails = (props) => {
         <div className="d-flex align-items-center justify-content-center">
           <div className="image-container-details">
             {
-              <img
-                src={product.imageUrlS3 ? product.imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "d1n5xguust3bkl.cloudfront.net") : "/placeholder-image.png"}
+              <Image
+                src={product.imageUrlS3}
                 alt={product.productName || "Product"}
                 style={{ objectFit: "contain", borderRadius: 8 }}
-              ></img>
+                fill
+              ></Image>
             }
           </div>
         </div>

@@ -272,20 +272,6 @@ export async function getProduct(_id) {
   return data.result[0];
 }
 
-export async function getProductImageSignedUrl(imageUrlS3) {
-  if (!imageUrlS3) return null;
-
-  const s3Key = imageUrlS3.split('.com/')[1]; 
-  const response = await fetch(`/api/images?key=${s3Key}`);
-  if (!response.ok) {
-    throw new Error(
-      `Error fetching product image signed URL: ${response.status}`
-    );
-  }
-  let data = await response.json();
-  return data.url;
-}
-
 export async function brandAmplificationGetSearchMeta() {
   const response = await fetch(`/api/searchMeta`, {
     method: "POST",
