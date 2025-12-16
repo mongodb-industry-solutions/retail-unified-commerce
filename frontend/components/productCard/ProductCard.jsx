@@ -11,7 +11,7 @@ import Button from "@leafygreen-ui/button";
 import Badge from "@leafygreen-ui/badge";
 import Image from "next/image";
 import { productInventoryURL } from "@/lib/constant";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InfoWizard from "../InfoWizard/InfoWizard";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
@@ -116,11 +116,12 @@ const ProductCard = (props) => {
         <div className="image-container" style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 12 }}>
           {imageUrlS3 ? (
             <Image
-              src={imageUrlS3}
+              src={imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "d1n5xguust3bkl.cloudfront.net")}
               alt={title}
               width={80}
               height={80}
               style={{ objectFit: "contain", borderRadius: 8 }}
+              unoptimized
             />
           ) : (
             <div

@@ -76,11 +76,12 @@ const ProductCardSimplify = (props) => {
                     <div className="image-container m-0 me-1 w-auto" style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 12 }}>
                         {imageUrlS3 ? (
                             <Image
-                                src={imageUrlS3}
+                                src={imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "d1n5xguust3bkl.cloudfront.net")}
                                 alt={title}
                                 width={80}
                                 height={80}
                                 style={{ objectFit: "contain", borderRadius: 8 }}
+                                unoptimized
                             />
                         ) : (
                             <div
