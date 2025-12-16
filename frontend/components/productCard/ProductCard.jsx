@@ -45,7 +45,6 @@ const ProductCard = (props) => {
       : props.product.inventorySummary.find(store => store.storeObjectId === selectedStore) || {};
   const [openHelpModal, setOpenHelpModal] = useState(false);
   const [brandAmplificationModalOpen, setBrandAmplificationModalOpen] = useState(false)
-  const [imageUrl, setImageUrl] = useState(null);
 
 
   const onCreateBrandAmplificationSuccess = () => {
@@ -57,24 +56,6 @@ const ProductCard = (props) => {
     setBrandInForm(brand)
     setCategoryInForm(category)
   }
-    useEffect(() => {
-      let isMounted = true;
-  
-      async function fetchSignedUrl() {
-        try {
-          const url = await getProductImageSignedUrl(imageUrlS3);
-          if (isMounted) setImageUrl(url || "/placeholder-image.png");
-        } catch (err) {
-          console.error("Failed to get signed URL:", err);
-          if (isMounted) setImageUrl("/placeholder-image.png");
-        }
-      }
-  
-      fetchSignedUrl();
-      return () => {
-        isMounted = false;
-      };
-    }, [imageUrlS3]);
 
   return (
     <>
@@ -134,9 +115,9 @@ const ProductCard = (props) => {
           />
         </div>
         <div className="image-container" style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 12 }}>
-          {imageUrl ? (
+          {imageUrlS3 ? (
             <Image
-              src={imageUrl}
+              src={imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "dd5duy5mzgkyc.cloudfront.net")}
               alt={title}
               width={80}
               height={80}

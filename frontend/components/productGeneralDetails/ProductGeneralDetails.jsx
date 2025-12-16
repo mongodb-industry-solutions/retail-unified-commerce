@@ -9,15 +9,13 @@ import { useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import Code from "@leafygreen-ui/code";
 import Button from "@leafygreen-ui/button";
-import { getProduct, getProductImageSignedUrl } from "@/lib/api";
+import { getProduct } from "@/lib/api";
 
 const ProductGeneralDetails = (props) => {
   const { productId } = props;
   const { productDetails: product, productInventory: inventory } = useSelector(
     (state) => state.ProductInventory
   );
-  const [imageUrl, setImageUrl] = useState(null);
-
   const [openHelpModal, setOpenHelpModal] = useState(false);
   const [fullDoc, setFullDoc] = useState(null);
   const [loadingFullDoc, setLoadingFullDoc] = useState(false);
@@ -33,25 +31,6 @@ const ProductGeneralDetails = (props) => {
         setLoadingFullDoc(false);
       });
   };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchSignedUrl() {
-      try {
-        const url = await getProductImageSignedUrl(product.imageUrlS3);
-        if (isMounted) setImageUrl(url || "/placeholder-image.png");
-      } catch (err) {
-        console.error("Failed to get signed URL:", err);
-        if (isMounted) setImageUrl("/placeholder-image.png");
-      }
-    }
-
-    fetchSignedUrl();
-    return () => {
-      isMounted = false;
-    };
-  }, [product.imageUrlS3]);
 
   return (
     <div className="">
