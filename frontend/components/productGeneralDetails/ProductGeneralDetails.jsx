@@ -176,27 +176,10 @@ const ProductGeneralDetails = (props) => {
           <div className="image-container-details">
             {
               <img
-                src='https://dd5duy5mzgkyc.cloudfront.net/products/685bfe2e3d832cf7e1615c78.png'
+                src={product.imageUrlS3 ? product.imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "d1n5xguust3bkl.cloudfront.net") : "/placeholder-image.png"}
                 alt={product.productName || "Product"}
                 style={{ objectFit: "contain", borderRadius: 8 }}
               ></img>
-// imageUrl ? (
-            //   <Image
-            //     src={imageUrl}
-            //     alt={product.productName || "Product"}
-            //     fill
-            //     style={{ objectFit: "contain", borderRadius: 8 }}
-            //     unoptimized
-            //   />
-            // ) : (
-            //   <Image
-            //     src="/placeholder-image.png"
-            //     alt="Placeholder"
-            //     fill
-            //     style={{ objectFit: "contain", borderRadius: 8 }}
-            //     unoptimized
-            //   />
-            // )
             }
           </div>
         </div>

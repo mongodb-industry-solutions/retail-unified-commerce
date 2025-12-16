@@ -117,7 +117,7 @@ const ProductCard = (props) => {
         <div className="image-container" style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 12 }}>
           {imageUrlS3 ? (
             <Image
-              src={imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "dd5duy5mzgkyc.cloudfront.net")}
+              src={imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "d1n5xguust3bkl.cloudfront.net")}
               alt={title}
               width={80}
               height={80}
