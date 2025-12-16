@@ -195,23 +195,30 @@ const ProductGeneralDetails = (props) => {
         </div>
         <div className="d-flex align-items-center justify-content-center">
           <div className="image-container-details">
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
+            {
+              <img
+                src='https://retail-unified-commerce.s3.amazonaws.com/products/685bfe2e3d832cf7e1615c78.png'
                 alt={product.productName || "Product"}
-                fill
                 style={{ objectFit: "contain", borderRadius: 8 }}
-                unoptimized
-              />
-            ) : (
-              <Image
-                src="/placeholder-image.png"
-                alt="Placeholder"
-                fill
-                style={{ objectFit: "contain", borderRadius: 8 }}
-                unoptimized
-              />
-            )}
+              ></img>
+// imageUrl ? (
+            //   <Image
+            //     src={imageUrl}
+            //     alt={product.productName || "Product"}
+            //     fill
+            //     style={{ objectFit: "contain", borderRadius: 8 }}
+            //     unoptimized
+            //   />
+            // ) : (
+            //   <Image
+            //     src="/placeholder-image.png"
+            //     alt="Placeholder"
+            //     fill
+            //     style={{ objectFit: "contain", borderRadius: 8 }}
+            //     unoptimized
+            //   />
+            // )
+            }
           </div>
         </div>
       </div>
