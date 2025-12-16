@@ -19,7 +19,6 @@ import { useSelector } from "react-redux";
 import BrandAmplificationForm from "../brandAmplificationForm/BrandAmplificationForm";
 import { setBrandInForm, setCategoryInForm } from "@/lib/helpers";
 import BrandAmplificationList from "../brandAmplificationList/BrandAmplificationList";
-import { getProductImageSignedUrl } from "@/lib/api";
 
 const ProductCard = (props) => {
   const router = useRouter();
