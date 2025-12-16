@@ -197,7 +197,7 @@ const ProductGeneralDetails = (props) => {
           <div className="image-container-details">
             {
               <img
-                src='https://retail-unified-commerce.s3.amazonaws.com/products/685bfe2e3d832cf7e1615c78.png'
+                src='https://dd5duy5mzgkyc.cloudfront.net/products/685bfe2e3d832cf7e1615c78.png'
                 alt={product.productName || "Product"}
                 style={{ objectFit: "contain", borderRadius: 8 }}
               ></img>
