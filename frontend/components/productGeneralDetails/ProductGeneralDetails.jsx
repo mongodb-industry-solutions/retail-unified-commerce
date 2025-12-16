@@ -176,7 +176,7 @@ const ProductGeneralDetails = (props) => {
           <div className="image-container-details">
             {
               <Image
-                src={product.imageUrlS3}
+                src={product.imageUrlS3.replace("retail-unified-commerce.s3.amazonaws.com", "d1n5xguust3bkl.cloudfront.net")}
                 alt={product.productName || "Product"}
                 style={{ objectFit: "contain", borderRadius: 8 }}
                 fill
