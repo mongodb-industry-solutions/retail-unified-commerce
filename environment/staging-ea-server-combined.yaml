@@ -15,7 +15,7 @@ env:
   COLLECTION_STORES: stores
 
   # Search index names - NEXT_PUBLIC for client-side
-  NEXT_PUBLIC_SEARCH_INDEX: product_atlas_search
+  NEXT_PUBLIC_SEARCH_INDEX: search_index_products
   NEXT_PUBLIC_SEARCH_META_INDEX: product_atlas_search_meta
 
   # Search index names - Regular env vars for server-side
@@ -24,7 +24,7 @@ env:
 
   # Feature flags
   NEXT_PUBLIC_ENABLE_VECTOR_SEARCH: "true"
-  NEXT_PUBLIC_ENABLE_HYBRID_SEARCH: "true"
+  NEXT_PUBLIC_ENABLE_HYBRID_SEARCH: "false"
   NEXT_PUBLIC_ENABLE_ATLAS_SEARCH: "true"
   NEXT_PUBLIC_ENABLE_FULLTEXT_SEARCH: "true"
 
