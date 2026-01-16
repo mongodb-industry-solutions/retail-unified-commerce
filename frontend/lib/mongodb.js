@@ -16,8 +16,15 @@ if (!isBuild) {
 
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const dbName = process.env.DB_NAME || "default";
-const options = { };
-
+const options = {  maxPoolSize: 10,
+  minPoolSize: 1,
+  maxIdleTimeMS: 30000,
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 10000,
+  socketTimeoutMS: 60000,
+  retryWrites: true,
+  retryReads: true,
+};
 let client;
 let clientPromise;
 const changeStreams = new Map();
