@@ -1,4 +1,4 @@
-import { clientPromise, dbName } from "@/lib/mongodb";
+import { dbName, getMongoClient } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 const { ObjectId } = require('mongodb');
 
@@ -16,7 +16,7 @@ export async function POST(request) {
         }
 
         console.log(document)
-        const client = await clientPromise
+        const client = await getMongoClient()
         const db = client.db(databaseName);
         const collection = db.collection(collectionName);
         document = {_id: new ObjectId(), ...document}
