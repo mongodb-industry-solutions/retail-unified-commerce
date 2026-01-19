@@ -16,42 +16,55 @@ if (!isBuild) {
 
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const dbName = process.env.DB_NAME || "default";
-const options = {  maxPoolSize: 10,
-  minPoolSize: 1,
-  maxIdleTimeMS: 30000,
-  serverSelectionTimeoutMS: 5000,
+const options = {  
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  maxPoolSize: 50,          // handle more concurrent server requests
+  minPoolSize: 5,
+  maxIdleTimeMS: 60000,     // tolerate idle connections longer
+  serverSelectionTimeoutMS: 10000, // wait for node discovery
   connectTimeoutMS: 10000,
-  socketTimeoutMS: 60000,
+  socketTimeoutMS: 120000,  // large enough for queries
   retryWrites: true,
-  retryReads: true,
+  retryReads: true
 };
 let client;
 let clientPromise;
 const changeStreams = new Map();
 
-if (!isBuild) {
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    clientPromise = client.connect();
-    global._mongoClientPromise = clientPromise;
-  } else {
-    clientPromise = global._mongoClientPromise;
-  }
-} else {
-  // Dummy promise during build
-  clientPromise = Promise.resolve({
-    db: () => ({
-      collection: () => ({
-        find: () => ({ toArray: () => [] }),
-        aggregate: () => ({ toArray: () => [] })
+async function getMongoClient() {
+  if (isBuild) {
+    // Dummy client for Next.js build
+    return {
+      db: () => ({
+        collection: () => ({
+          find: () => ({ toArray: async () => [] }),
+          aggregate: () => ({ toArray: async () => [] })
+        })
       })
-    })
-  });
+    };
+  }
+
+  if (!global._mongoClientPromise) {
+    const client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect();
+  }
+
+  try {
+    const client = await global._mongoClientPromise;
+    await client.db().command({ ping: 1 }); // 🔑 health check
+    return client;
+  } catch (err) {
+    console.warn("Mongo connection stale, reconnecting...", err);
+    const client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect();
+    return global._mongoClientPromise;
+  }
 }
 
 async function getChangeStream(filter, key) {
   if (!changeStreams.has(key)) {
-    const client = await clientPromise;
+    const client = await getMongoClient();;
     const db = client.db(dbName);
 
     const filterEJSON = EJSON.parse(JSON.stringify(filter));
@@ -73,4 +86,4 @@ async function getChangeStream(filter, key) {
   return changeStreams.get(key);
 }
 
-export { clientPromise, dbName, getChangeStream };
+export { clientPromise, dbName, getMongoClient, getChangeStream };
