@@ -64,6 +64,7 @@ class MongoClient:
             minPoolSize=10,
             serverSelectionTimeoutMS=5000,
             tls=True if ".mongodb.net" in uri else False,
+            directConnection=True,
         )
 
         # Store references
