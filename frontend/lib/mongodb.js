@@ -19,7 +19,7 @@ const dbName = process.env.DB_NAME || "default";
 const options = {  
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  directConnection: true,
+  directConnection: uri.includes(".mongodb.net") ? false : true,
   maxPoolSize: 50,          // handle more concurrent server requests
   minPoolSize: 5,
   maxIdleTimeMS: 60000,     // tolerate idle connections longer
