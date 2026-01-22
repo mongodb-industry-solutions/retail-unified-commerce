@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clientPromise, dbName} from "@/lib/mongodb";
+import { dbName, getMongoClient} from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
 export async function POST(request) {
@@ -20,7 +20,7 @@ export async function POST(request) {
 
     console.log(`API Request - Collection: ${collectionName}, Database: ${databaseName}`);
 
-    const client = await clientPromise
+    const client = await getMongoClient();
     const db = client.db(databaseName);
     const collection = db.collection(collectionName);
     convertFieldsToObjectId(projection, objectIdFields);

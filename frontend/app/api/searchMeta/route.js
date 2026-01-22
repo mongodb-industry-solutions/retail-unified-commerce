@@ -1,4 +1,4 @@
-import { clientPromise, dbName } from "@/lib/mongodb";
+import { clientPromise, dbName, getMongoClient } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
@@ -16,7 +16,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Collection name is required' }, { status: 400 });
     }
 
-    const client = await clientPromise
+    const client = await getMongoClient()
     const db = client.db(databaseName);
     const collection = db.collection(collectionName);
 
