@@ -201,7 +201,7 @@ This project was made possible through a close collaboration between domain expe
 - 📝 [Blog](https://www.mongodb.com/company/blog/innovation/empower-retail-associates-unified-commerce-mongodb-atlas?utm_source=ADVOCACY&utm_medium=ORGANIC_SOCIAL)
 
 ### Search on ENterprise Server
-- 🎥 [YouTube Video 1 - Demo Video]([https://www.youtube.com/watch?v=UqytWvvB0pQ](https://www.youtube.com/watch?v=bxGa4egjhHs)
+- 🎥 [YouTube Video 1 - Demo Video](https://www.youtube.com/watch?v=bxGa4egjhHs)
 - 📚 [Solution Library](https://www.mongodb.com/docs/atlas/architecture/current/solutions-library/search-enterprise-server/)
 - 📝 [Documentation](https://www.mongodb.com/docs/kubernetes/current/fts-vs-deployment/)
 
