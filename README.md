@@ -78,7 +78,7 @@ retail-unified-commerce/
 
 ### 🔧 Prerequisites
 
-- [MongoDB Atlas account](https://www.mongodb.com/cloud/atlas/register) (Free Tier)
+- [MongoDB Atlas account](https://www.mongodb.com/cloud/atlas/register) (Free Tier) or [Enterprise Server with Search Nodes](https://www.mongodb.com/docs/kubernetes/current/tutorial/install-fts-vs-with-enterprise/)
 - [Demo dataset](./docs/setup/collections/README.md/) - we provide JSON files for the 3 required collections:
   - [products collection with embeddings](./docs/setup/collections/retail-unified-commerce.products.json/)
   - [inventory collection](./docs/setup/collections/retail-unified-commerce.inventory.json/)
@@ -87,6 +87,7 @@ retail-unified-commerce/
   - [search index](./docs/setup/indexes/search-index.json/)
   - [vector index](./docs/setup/indexes/vector-index.json/)
   - [geospatial index](./docs/setup/indexes/geospatial-index.json/)
+  - [search meta index](.docs/setup/indexes/search-meta-index.json)
 - Atlas Triggers – Not required to run the app, but we include two triggers to keep inventory data fresh and simulate real-world updates:
   - [daily inventory simulation](./docs/setup/atlas-triggers/daily_inventory_simulation.js/)
   - [inventory sync](./docs/setup/atlas-triggers/inventory_sync.js/)
@@ -138,6 +139,7 @@ make build
 | Stop backend   | `make back-stop`   |
 | View logs      | `make back-logs`   |
 
+Note: If you are running the demo with the Enterprise Server setup you will need port forwarding in docker to be 3000:8080
 
 ---
 ## 👨‍💻 Explore the Demo
@@ -186,15 +188,22 @@ This project was made possible through a close collaboration between domain expe
 ### Developers & Maintainers *(Technical Design & Implementation)*
 - [**Angie Guemes**](https://www.linkedin.com/in/angelica-guemes-estrada/) – Developer & Maintainer  
 - [**Florencia Arin**](https://www.linkedin.com/in/floarin/) – Developer & Maintainer
+- [**Kiran Tulsulkar**](https://www.linkedin.com/in/kiran-tulsulkar/) – Migration & Deployment Architecture
 
 ---
 
 ## Related Demo Content Package
 
+### Unified Commerce
 - 🎥 [YouTube Video 1 - Business oriented](https://www.youtube.com/watch?v=UqytWvvB0pQ)
-- 🎥 YouTube Video 2– _coming soon_
+- 🎥 [YouTube Video 2 – Tech Oriented](https://www.youtube.com/watch?v=_fvIURcJl44)
 - 📚 [Solution Library](https://www.mongodb.com/docs/atlas/architecture/current/solutions-library/unified-commerce/)
 - 📝 [Blog](https://www.mongodb.com/company/blog/innovation/empower-retail-associates-unified-commerce-mongodb-atlas?utm_source=ADVOCACY&utm_medium=ORGANIC_SOCIAL)
+
+### Search on ENterprise Server
+- 🎥 [YouTube Video 1 - Demo Video](https://www.youtube.com/watch?v=bxGa4egjhHs)
+- 📚 [Solution Library](https://www.mongodb.com/docs/atlas/architecture/current/solutions-library/search-enterprise-server/)
+- 📝 [Documentation](https://www.mongodb.com/docs/kubernetes/current/fts-vs-deployment/)
 
 ---
 
