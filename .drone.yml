@@ -276,3 +276,45 @@ steps:
     when:
       event:
         - push
+
+# EA SERVER DEPLOYMENT - Same code, different database (Enterprise Server)
+  - name: deploy-ea-server-prod
+    image: public.ecr.aws/kanopy/drone-helm:v3
+    settings:
+      chart: mongodb/web-app
+      chart_version: 4.25.0
+      add_repos: [mongodb=https://10gen.github.io/helm-charts]
+      namespace: industrysolutions
+      release: retail-ea-server-prod
+
+      # Use EA Server environment configuration
+      values_files: ["environment/prod-ea-server-combined.yaml"]
+
+      # Override values dynamically from pipeline
+      values:
+        # CRITICAL: Override sidecar backend image with newly built version
+        - "sidecarContainers[0].image=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-backend:git-${DRONE_COMMIT_SHA:0:7}"
+
+        # Set frontend image (main container) - SAME images as Atlas deployment
+        - "image.tag=git-${DRONE_COMMIT_SHA:0:7}"
+        - "image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/retail-unified-commerce-frontend"
+
+        # Ingress configuration - EA Server URL
+        - "ingress.enabled=true"
+        - "ingress.hosts[0]=retail-ea-server.industrysolutions.prod.corp.mongodb.com"
+
+        # Enable service mesh
+        - "mesh.enabled=true"
+
+        # Resource limits (for entire pod - both containers share these)
+        - "resources.limits.cpu=1000m"
+        - "resources.limits.memory=1024Mi"
+        - "resources.requests.cpu=250m"
+        - "resources.requests.memory=256Mi"
+
+      api_server: https://api.prod.corp.mongodb.com
+      kubernetes_token:
+        from_secret: prod_kubernetes_token
+    when:
+      event:
+        - push
