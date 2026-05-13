@@ -121,6 +121,7 @@ Thumbs.db
 .vercel/
 
 cicd-kanopy/
+db-migration/
 # Local security check script (not needed in deployment)
 security_check.sh
 SECURITY_CHECK_README.md
