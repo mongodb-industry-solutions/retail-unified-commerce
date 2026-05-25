@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.952.0",
-    "@aws-sdk/s3-request-presigner": "^3.952.0",
+    "@aws-sdk/client-s3": "^3.993.0",
+    "@aws-sdk/s3-request-presigner": "^3.993.0",
     "@leafygreen-ui/badge": "^10.0.0",
     "@leafygreen-ui/banner": "^10.1.1",
     "@leafygreen-ui/button": "^24.0.2",
