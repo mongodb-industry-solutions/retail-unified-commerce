@@ -123,8 +123,14 @@ def build_hybrid_rrf_pipeline(
         raise ValueError("store_object_id must be a valid ObjectId") from exc
 
     # Non-negative fusion weights used directly by `$rankFusion`.
-    w_vec = max(0.0, float(weights.get("vectorPipeline") or 1.0))
-    w_txt = max(0.0, float(weights.get("textPipeline") or 1.0))
+    # An explicit 0.0 means "zero weight" and must survive; only a missing/None
+    # weight falls back to 1.0 (`or` would coerce 0.0 to the default).
+    def _weight(key: str) -> float:
+        raw = weights.get(key)
+        return 1.0 if raw is None else max(0.0, float(raw))
+
+    w_vec = _weight("vectorPipeline")
+    w_txt = _weight("textPipeline")
 
     amp = _brand_amp_switch_branches(brand_amplification)
     branches = amp["branches"]

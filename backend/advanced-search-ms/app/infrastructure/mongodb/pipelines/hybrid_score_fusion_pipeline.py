@@ -142,8 +142,14 @@ def build_hybrid_score_fusion_pipeline(
         raise ValueError("store_object_id must be a valid ObjectId") from exc
 
     # Non-negative weights for fusion.
-    w_vec = max(0.0, float(weights.get("vectorPipeline") or 1.0))
-    w_txt = max(0.0, float(weights.get("textPipeline") or 1.0))
+    # An explicit 0.0 means "zero weight" and must survive; only a missing/None
+    # weight falls back to 1.0 (`or` would coerce 0.0 to the default).
+    def _weight(key: str) -> float:
+        raw = weights.get(key)
+        return 1.0 if raw is None else max(0.0, float(raw))
+
+    w_vec = _weight("vectorPipeline")
+    w_txt = _weight("textPipeline")
 
     # Validate normalization choice (fallback to "sigmoid" if invalid/empty)
     norm = (normalization or "sigmoid").strip()
