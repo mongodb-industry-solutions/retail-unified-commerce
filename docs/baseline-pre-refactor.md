@@ -2484,3 +2484,596 @@ no amplification · BEFORE `numCandidates=200, limit=200` → AFTER `numCandidat
   failures, which is rec **L2.1**. This fix therefore does not move the needle on them.
 * The `_norm_field` helper added by Fix 2 is present in the same file; the two fixes are
   independent and the diff for this entry covers only the candidate-ratio hunks.
+
+---
+
+## Post-fix verification — Fix 4 (aboutTheProduct indexed) + boost sweep
+
+Appended **2026-09-15**, after Florencia rebuilt `product_atlas_search` in the Atlas console with
+`aboutTheProduct: {"type": "string"}` added. Confirmed read-only before measuring: index
+`status: READY`, `queryable: true`, six mapped fields, `dynamic: false`.
+
+**Two separate things are recorded here.** The index mapping is now **live and permanent**. The
+boost values 1.0 and 0.6 were **temporary local code edits**, reverted immediately after
+measurement — the committed code still carries **1.8**, and the final value is an open decision
+(tracked as Fix #5).
+
+### Method
+
+Same fixed parameters as every previous pass: store `684aa28064ff7c785a568ae7` (`store-030`),
+`page = 1`, `page_size = 5`, no Brand Amplification, hybrid weights 0.5/0.5, one discarded warm-up
+then 2 measured reps. Read-only: `POST /api/v1/search` only.
+
+For each boost value the `aboutTheProduct` clause was patched in all three text-scoring builders
+(`text_pipeline.py:158`, `hybrid_rrf_pipeline.py:176-177`,
+`hybrid_score_fusion_pipeline.py:200-201`), the service restarted, and the queries run. Q1–Q5 at
+1.8; Q1/Q3/Q5 at 1.0 and 0.6. Q2 and Q4 were run only at 1.8 as a lighter no-regression check,
+since earlier fixes already cover them.
+
+The **BEFORE** column throughout is the *original* baseline (Part C, amplification OFF) — captured
+before Fixes 1–3 — because this is the first change to touch text scoring.
+
+### Headline: recall jumped, and Q1's exact match never moved
+
+| Query | Mode | total_results BEFORE | AFTER (index live) | rank-1 BEFORE | rank-1 AFTER @1.8 |
+|---|---|---|---|---|---|
+| Q1 | mode 2 | 160 | **165** | Onion | Onion |
+| Q1 | mode 4 | 328 | **329** | Onion | Onion |
+| Q1 | mode 5 | 328 | **329** | Onion | Onion |
+| Q3 | mode 2 | 71 | **103** | Non-Alcoholic Beverage - Low Calor | Non-Alcoholic Beverage - Low Calor |
+| Q3 | mode 4 | 225 | **235** | Non-Alcoholic Beverage - Low Calor | Non-Alcoholic Beverage - Low Calor |
+| Q3 | mode 5 | 225 | **235** | Non-Alcoholic Beverage - Low Calor | Non-Alcoholic Beverage - Low Calor |
+| Q5 | mode 2 | 1220 | **2706** | Natural Sleep Aid Supplement Table | Natural Sleep Aid Supplement Table |
+| Q5 | mode 4 | 1307 | **2729** | Natural Sleep Aid Supplement Table | Natural Sleep Aid Supplement Table |
+| Q5 | mode 5 | 361 | **345** | Natural Sleep Aid Supplement Table | Natural Sleep Aid Supplement Table |
+
+Mode 2 recall: Q1 160 → 165, Q3 **71 → 103 (+45%)**, Q5 **1 220 → 2 706 (+122%)**. The field is
+live and contributing. **Q1's rank 1 (`Onion`, Fresho) is unchanged in all three modes at all
+three boost values** — no weak description match ever displaced the exact name match.
+
+### Q1 `Onion` — did the exact match hold?
+
+The guard query. A 595-character description competing with a 40-character exact name match.
+
+**mode 2 — $search**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Onion | 1.0 | Onion | 1.0 | Onion | 1.0 | Onion | 1.0 |
+| 2 | Onion (Loose) | 0.939582 | Onion (Loose) | 0.954003 | Onion (Loose) | 0.948619 | Onion (Loose) | 0.945425 |
+| 3 | Onion Sabudana Papad | 0.655762 | Onion Sabudana Papad | 0.898097 | Onion Sabudana Papad | 0.804752 | Onion Sabudana Papad | 0.749375 |
+| 4 | Potato Crisps - Sour Cream and | 0.538016 | Onion Oil Concentrate - Anti H | 0.844584 | Onion Oil Concentrate - Anti H | 0.705349 | Potato Crisps - Sour Cream and | 0.639508 |
+| 5 | Onion Oil Concentrate - Anti H | 0.480498 | Potato Crisps - Sour Cream and | 0.799476 | Potato Crisps - Sour Cream and | 0.699073 | Onion Oil Concentrate - Anti H | 0.622747 |
+
+App latency — BEFORE 294.1 ms · 1.8: 181.4 ms · 1.0: 216.1 ms · 0.6: 287.0 ms
+
+**mode 4 — $rankFusion**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Onion | 0.016393 | Onion | 0.016393 | Onion | 0.016393 | Onion | 0.016393 |
+| 2 | Onion (Loose) | 0.016129 | Onion (Loose) | 0.016129 | Onion (Loose) | 0.016129 | Onion (Loose) | 0.016129 |
+| 3 | Red Onion Oil With Jojoba, Arg | 0.015512 | Red Onion Oil With Jojoba, Arg | 0.015399 | Red Onion Oil With Jojoba, Arg | 0.015399 | Red Onion Oil With Jojoba, Arg | 0.015399 |
+| 4 | Onion Hair Oil With Bhringraj  | 0.015268 | Onion Oil Concentrate - Anti H | 0.015388 | Onion Oil Concentrate - Anti H | 0.015388 | Onion Hair Oil With Bhringraj  | 0.015268 |
+| 5 | Onion Oil Concentrate - Anti H | 0.015268 | Onion Hair Oil With Bhringraj  | 0.015268 | Onion Hair Oil With Bhringraj  | 0.015268 | Onion Oil Concentrate - Anti H | 0.015268 |
+
+App latency — BEFORE 768.9 ms · 1.8: 762.7 ms · 1.0: 667.6 ms · 0.6: 741.2 ms
+
+**mode 5 — $scoreFusion**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Onion | 0.852248 | Onion | 0.852259 | Onion | 0.852258 | Onion | 0.852256 |
+| 2 | Onion (Loose) | 0.852136 | Onion (Loose) | 0.852158 | Onion (Loose) | 0.852155 | Onion (Loose) | 0.852152 |
+| 3 | Onion Sabudana Papad | 0.842931 | Red Onion Oil With Jojoba, Arg | 0.845702 | Red Onion Oil With Jojoba, Arg | 0.845588 | Red Onion Oil With Jojoba, Arg | 0.845226 |
+| 4 | Red Onion Oil With Jojoba, Arg | 0.841862 | Onion Hair Oil For Hair Growth | 0.845068 | Onion Hair Oil For Hair Growth | 0.844923 | Onion Hair Oil For Hair Growth | 0.844414 |
+| 5 | Onion Oil Concentrate - Anti H | 0.841495 | Onion Hair Oil With Bhringraj  | 0.844487 | Onion Oil Concentrate - Anti H | 0.844399 | Onion Oil Concentrate - Anti H | 0.844158 |
+
+App latency — BEFORE 747.3 ms · 1.8: 716.1 ms · 1.0: 729.9 ms · 0.6: 700.9 ms
+
+### Q3 `beverages` — generic category term
+
+The query most exposed to description noise: hundreds of products *mention* beverages without being one.
+
+**mode 2 — $search**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Non-Alcoholic Beverage - Low C | 1.0 | Non-Alcoholic Beverage - Low C | 1.0 | Non-Alcoholic Beverage - Low C | 1.0 | Non-Alcoholic Beverage - Low C | 1.0 |
+| 2 | Tea | 0.228609 | Whisky Glass - Elegan | 0.502358 | Tea | 0.364644 | Tea | 0.311336 |
+| 3 | Tea | 0.228609 | Tea | 0.471261 | Tea | 0.364644 | Tea | 0.311336 |
+| 4 | Tea | 0.228609 | Tea | 0.471261 | Tea | 0.358676 | Tea | 0.307755 |
+| 5 | Tea - Natural Care | 0.228609 | Tea | 0.460517 | Whisky Glass - Elegan | 0.279088 | Tea - Natural Care | 0.231374 |
+
+App latency — BEFORE 239.8 ms · 1.8: 261.2 ms · 1.0: 161.3 ms · 0.6: 167.6 ms
+
+**mode 4 — $rankFusion**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Non-Alcoholic Beverage - Low C | 0.016261 | Non-Alcoholic Beverage - Low C | 0.016261 | Non-Alcoholic Beverage - Low C | 0.016261 | Non-Alcoholic Beverage - Low C | 0.016261 |
+| 2 | Black Soft Drink - Max Taste,  | 0.016001 | Candy Coffee Mugs - Multi Colo | 0.014096 | Black Soft Drink - Max Taste,  | 0.015079 | Black Soft Drink - Max Taste,  | 0.015629 |
+| 3 | Aamras Mango Fruit Juice | 0.01564 | Penguen Tea/Coffee Mug - Everg | 0.014069 | Aamras Mango Fruit Juice | 0.014719 | Aamras Mango Fruit Juice | 0.015268 |
+| 4 | Cold Extracted Juice - Mixed F | 0.015417 | Double Walled Glass Water Bott | 0.01381 | Cold Extracted Juice - Mixed F | 0.014496 | Cold Extracted Juice - Mixed F | 0.015045 |
+| 5 | Cold Extracted Juice - Basics, | 0.015207 | Beer Mug - Printed Clear Glass | 0.013374 | Cold Extracted Juice - Basics, | 0.014286 | Cold Extracted Juice - Basics, | 0.014835 |
+
+App latency — BEFORE 669.2 ms · 1.8: 721.8 ms · 1.0: 714.4 ms · 0.6: 770.0 ms
+
+**mode 5 — $scoreFusion**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Non-Alcoholic Beverage - Low C | 0.847805 | Non-Alcoholic Beverage - Low C | 0.847803 | Non-Alcoholic Beverage - Low C | 0.847803 | Non-Alcoholic Beverage - Low C | 0.847803 |
+| 2 | Black Soft Drink - Max Taste,  | 0.813571 | Whisky Glass - Elegan | 0.843139 | Tea | 0.835908 | Tea | 0.829479 |
+| 3 | Aamras Mango Fruit Juice | 0.813025 | Penguen Tea/Coffee Mug - Everg | 0.841724 | Tea | 0.834518 | Tea | 0.828089 |
+| 4 | Cold Extracted Juice - Mixed F | 0.812824 | Candy Coffee Mugs - Multi Colo | 0.84169 | Tea | 0.833717 | Tea | 0.827259 |
+| 5 | Cold Extracted Juice - Basics, | 0.812667 | Tea | 0.841494 | Whisky Glass - Elegan | 0.824321 | Black Soft Drink - Max Taste,  | 0.812649 |
+
+App latency — BEFORE 711.0 ms · 1.8: 720.1 ms · 1.0: 822.0 ms · 0.6: 694.7 ms
+
+### Q5 `drink that helps me relax before bed` — the query this fix was for
+
+Sleep/relax vocabulary lives in descriptions, not product names.
+
+**mode 2 — $search**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Natural Sleep Aid Supplement T | 1.0 | Natural Sleep Aid Supplement T | 1.0 | Natural Sleep Aid Supplement T | 1.0 | Natural Sleep Aid Supplement T | 1.0 |
+| 2 | Nilgiris Green Tea - Anicca Ch | 0.946161 | Nilgiris Green Tea - Anicca Ch | 0.974276 | Nilgiris Green Tea - Anicca Ch | 0.874106 | Nilgiris Green Tea - Anicca Ch | 0.890999 |
+| 3 | Nilgiris Green Tea - Anicca Ch | 0.946161 | Heart Design PVC Food Mat/Bed  | 0.838793 | Nilgiris Green Tea - Anicca Ch | 0.858104 | Nilgiris Green Tea - Anicca Ch | 0.890999 |
+| 4 | Red Grape Drink | 0.77814 | Nilgiris Green Tea - Anicca Ch | 0.800777 | Nilgiris Green Tea - Anicca Ch | 0.858104 | Nilgiris Green Tea - Anicca Ch | 0.816627 |
+| 5 | Nilgiris Green Tea - Yoshin Le | 0.757865 | Nilgiris Green Tea - Anicca Ch | 0.800777 | Heart Design PVC Food Mat/Bed  | 0.709562 | Nilgiris Green Tea - Yoshin Le | 0.7115 |
+
+App latency — BEFORE 405.0 ms · 1.8: 449.0 ms · 1.0: 486.3 ms · 0.6: 419.3 ms
+
+**mode 4 — $rankFusion**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Natural Sleep Aid Supplement T | 0.016133 | Natural Sleep Aid Supplement T | 0.016133 | Natural Sleep Aid Supplement T | 0.016133 | Natural Sleep Aid Supplement T | 0.016133 |
+| 2 | Nilgiris Green Tea - Anicca Ch | 0.015388 | Nilgiris Green Tea - Anicca Ch | 0.015877 | Nilgiris Green Tea - Anicca Ch | 0.015877 | Nilgiris Green Tea - Anicca Ch | 0.015625 |
+| 3 | Nilgiris Green Tea - Anicca Ch | 0.014315 | Non-Alcoholic Beverage - Low C | 0.015155 | Non-Alcoholic Beverage - Low C | 0.014449 | Nilgiris Green Tea - Anicca Ch | 0.014315 |
+| 4 | Nilgiris Green Tea - Anicca Ch | 0.014089 | Chamomile Tea Bags | 0.015152 | Nilgiris Green Tea - Anicca Ch | 0.014187 | Nilgiris Green Tea - Anicca Ch | 0.014089 |
+| 5 | Red Grape Drink | 0.01391 | Nilgiris Green Tea - Anicca Ch | 0.014063 | Nilgiris Green Tea - Anicca Ch | 0.013961 | Non-Alcoholic Beverage - Low C | 0.013716 |
+
+App latency — BEFORE 1092.1 ms · 1.8: 2808.1 ms · 1.0: 2719.8 ms · 0.6: 2638.1 ms
+
+**mode 5 — $scoreFusion**
+
+| # | BEFORE (pre-index) | score | @ boost 1.8 | score | @ boost 1.0 | score | @ boost 0.6 | score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Natural Sleep Aid Supplement T | 0.848466 | Natural Sleep Aid Supplement T | 0.848466 | Natural Sleep Aid Supplement T | 0.848493 | Natural Sleep Aid Supplement T | 0.848466 |
+| 2 | Nilgiris Green Tea - Anicca Ch | 0.848376 | Nilgiris Green Tea - Anicca Ch | 0.848382 | Nilgiris Green Tea - Anicca Ch | 0.84839 | Nilgiris Green Tea - Anicca Ch | 0.848382 |
+| 3 | Non-Alcoholic Beverage - Low C | 0.84511 | Non-Alcoholic Beverage - Low C | 0.847841 | Non-Alcoholic Beverage - Low C | 0.847813 | Non-Alcoholic Beverage - Low C | 0.847743 |
+| 4 | Melatonin 10Mg Capsule - Helps | 0.845026 | Chamomile Tea Bags | 0.847759 | Chamomile Tea Bags | 0.847741 | Chamomile Tea Bags | 0.84705 |
+| 5 | Nilgiris Green Tea - Anicca Ch | 0.84419 | Melatonin 10Mg Capsule - Helps | 0.845613 | Melatonin 10Mg Capsule - Helps | 0.845531 | Melatonin 10Mg Capsule - Helps | 0.845385 |
+
+App latency — BEFORE 720.0 ms · 1.8: 799.3 ms · 1.0: 745.1 ms · 0.6: 718.7 ms
+
+### Q2 and Q4 — no-regression check at 1.8 only
+
+| Query | Mode | total_results BEFORE → AFTER | rank 1 AFTER | top-5 all relevant? |
+|---|---|---|---|---|
+| Q2 | mode 2 | 10 → 10 | Tomato - Hybrid (Loose) | yes — four tomatoes + a tomato snack |
+| Q2 | mode 4 | 200 → 200 | Tomato - Local (Loose) | yes — unchanged from baseline |
+| Q2 | mode 5 | 200 → 200 | Tomato - Local (Loose) | yes — unchanged from baseline |
+| Q4 | mode 2 | 639 → 786 | Green Tea - Zoho, Lemongrass | yes — all green teas |
+| Q4 | mode 4 | 693 → 825 | Strawberry Green Tea | **no** — `Green Tea Mugs` at rank 4 |
+| Q4 | mode 5 | 271 → 263 | Nilgiri Green Tea - Yakuso Tulsi | **no** — `Green Tea Mugs` at rank 2 |
+
+Q2 is unaffected — `tomatoe` has no meaningful description surface, and its top 5 is identical to
+the pre-index baseline in all three modes. Q4 gains recall (639 → 786 in mode 2) but **`Green Tea
+Mugs` now intrudes into the hybrid top 5** — glassware whose description discusses green tea. Same
+failure mode as Q3 below.
+
+### Tie analysis
+
+| Query / mode | BEFORE | @1.8 | @1.0 | @0.6 |
+|---|---|---|---|---|
+| Q1 / mode 4 | 0.015268 ×2 | none | none | 0.015268 ×2 |
+| Q2 / mode 2 | 1.0 ×5 | 1.0 ×5 | _not run_ | _not run_ |
+| Q2 / mode 4 | none | none | _not run_ | _not run_ |
+| Q2 / mode 5 | none | none | _not run_ | _not run_ |
+| Q3 / mode 2 | 0.228609 ×4 | 0.471261 ×2 | 0.364644 ×2 | 0.311336 ×2 |
+| Q4 / mode 2 | 1.0 ×2 | none | _not run_ | _not run_ |
+| Q4 / mode 4 | none | 0.014786 ×2 | _not run_ | _not run_ |
+| Q4 / mode 5 | none | none | _not run_ | _not run_ |
+| Q5 / mode 2 | 0.946161 ×2 | 0.800777 ×2 | 0.858104 ×2 | 0.890999 ×2 |
+
+* **Previously-tied scores now broken:** Q3 / mode 2 had a **three-way** tie at `0.228609` in the
+  pre-index baseline; at every boost value it is now a **two-way** tie. Adding a second scoring
+  signal genuinely separated one of the three identical `Tea` entries.
+* **Q2 / mode 2's five-way tie at exactly `1.0` survives untouched** at 1.8. It is a
+  window-max normalization artefact (rec **L2.5**), not a field-coverage problem — `tomatoe`
+  matches nothing in the descriptions, so the new field cannot break the tie.
+* **New ties introduced:** Q4 / mode 4 at 1.8 (`0.014786` ×2) and Q1 / mode 4 at 0.6
+  (`0.015268` ×2 — though the pre-index baseline had a tie at the identical value, so this is the
+  same pre-existing collision resurfacing, not a new one).
+* Ties are *fewer* at lower boost in mode 2 for Q3/Q5 only in the sense that the tied values drift;
+  the count stays at one two-way group throughout. The boost does not fix or worsen tie behaviour.
+
+### Precision damage at 1.8 — the decisive finding
+
+Indexing the field added recall everywhere. At **boost 1.8** it also pulled in a specific class of
+false positive: **products whose description discusses a beverage without being one.**
+
+| Query / mode | Intruder at boost 1.8 | Its rank at 1.8 | at 1.0 | at 0.6 |
+|---|---|---|---|---|
+| Q3 / mode 2 | `Whisky Glass - Elegan` (Lyra) | **2** | 5 | gone from top 5 |
+| Q3 / mode 4 | `Candy Coffee Mugs`, `Penguen Tea/Coffee Mug`, `Double Walled Glass Water Bottle`, `Beer Mug` | **2, 3, 4, 5** | all gone | all gone |
+| Q3 / mode 5 | `Whisky Glass - Elegan`, `Penguen Tea/Coffee Mug`, `Candy Coffee Mugs` | **2, 3, 4** | 5 (glass only) | gone from top 5 |
+| Q4 / mode 4 | `Green Tea Mugs - Multicolour` (Hot Muggs) | **4** | _not run_ | _not run_ |
+| Q4 / mode 5 | `Green Tea Mugs - Multicolour` | **2** | _not run_ | _not run_ |
+| Q5 / mode 2 | `Heart Design PVC Food Mat/Bed Server` (Kuber) | **3** | 5 | gone from top 5 |
+
+**Q3 / mode 4 at boost 1.8 is the worst single result of this sweep**: four of the top five results
+for `beverages` are drinking vessels. The pre-index baseline for that same query returned actual
+beverages (Booch, Pepsi, Paper Boat, two Raw Pressery juices). **At 1.0 and 0.6 the correct
+beverages return and the glassware disappears entirely.**
+
+This is the effect L1.1 warned about, now measured rather than predicted: a 595-character average
+description matches many queries weakly, and at 1.8 — the second-highest weight in the clause
+ladder, above `brand` (1.2), `category` (1.1) and `subCategory` (1.0) — those weak matches
+accumulate enough score to outrank genuine matches.
+
+### Genuine gains that survive at every boost value
+
+Set against the damage, the field earns its place:
+
+* **Q5 surfaces products it previously could not.** `Chamomile Tea Bags` (TGL Co.) and
+  `Melatonin 10Mg Capsule - Helps To Sleep Well` are **new** to the top 5 versus the pre-index
+  baseline — neither product name contains any query term, so they were reachable only through the
+  description. They hold at 1.8, 1.0 **and** 0.6.
+* **Q5 recall more than doubled** in mode 2 (1 220 → 2 706) and mode 4 (1 307 → 2 729).
+* **Q3 recall +45%** (71 → 103 in mode 2).
+* At 0.6, Q5 / mode 2's entire top 5 is relevant (sleep aid + four chamomile/relaxation teas),
+  where the pre-index baseline had `Red Grape Drink` at rank 4.
+
+### A latency regression worth flagging separately
+
+| Query / mode | app latency BEFORE | AFTER @1.8 | @1.0 | @0.6 |
+|---|---|---|---|---|
+| Q5 / mode 4 (`$rankFusion`) | 1 092 ms | **2 808 ms** | 2 720 ms | 2 638 ms |
+| Q5 / mode 2 | 405 ms | 449 ms | 486 ms | 419 ms |
+| Q5 / mode 5 (`$scoreFusion`) | 720 ms | 799 ms | 745 ms | 719 ms |
+
+**Mode 4 on Q5 went from ~1.1 s to ~2.7 s — a 2.5× regression, and it is boost-independent.** The
+cause is structural, not the boost: `hybrid_rrf_pipeline.py`'s text arm has **no `$limit`**, so it
+now feeds 2 729 ranked candidates into `$rankFusion` instead of 1 307. `$scoreFusion` caps its text
+arm at `$limit: 200` and barely moved (720 → 799 ms).
+
+This is exactly the asymmetry documented as rec **L2.6** (symmetrize hybrid candidate limits). It
+was a P1 tidiness item on the strength of a timing difference; it is now a measured 1.7-second
+regression on a real query. **L2.6 should be promoted to P0 and fixed before the boost value is
+finalized**, since capping the text arm will change the fused ranking and therefore the right boost.
+
+### Mode 5 is almost boost-insensitive
+
+Q5 / mode 5 returns the **identical top 5 in the identical order at 1.8, 1.0 and 0.6**, with scores
+differing in the fourth decimal (0.848466 / 0.848493 / 0.848466 at rank 1). Q3 / mode 5 shifts only
+at rank 5. `$scoreFusion`'s sigmoid normalization compresses the text arm's contribution so hard
+that a 3× change in field boost is nearly invisible — the same saturation recorded in the Fix #1
+verification. **The boost decision effectively only governs modes 2 and 4**, which is itself an
+argument for resolving rec **L2.5** (score normalization contract).
+
+### Recommendation: 0.6
+
+| Criterion | 1.8 | 1.0 | 0.6 |
+|---|---|---|---|
+| Q1 exact match holds at rank 1 | ✅ | ✅ | ✅ |
+| Q3 free of glassware in top 5 | ❌ (4 of 5 in mode 4) | ⚠️ (1 at rank 5) | ✅ |
+| Q5 free of irrelevant items in top 5 | ❌ (PVC mat at rank 3) | ⚠️ (rank 5) | ✅ |
+| Q5 keeps newly-surfaced relevant items | ✅ | ✅ | ✅ |
+| Recall gain retained | ✅ | ✅ | ✅ (identical — recall is set by the mapping, not the boost) |
+
+**0.6 is the only value tested where every checked query's top 5 is free of description-driven
+false positives while keeping the full recall gain.** Recall is a property of the index mapping,
+not the boost, so lowering the boost costs nothing in coverage — it only changes how much a weak
+description match can outrank a strong name match.
+
+0.6 also restores a sensible clause ladder: `productName` 3.0 ≫ `brand` 1.2 > `category` 1.1 >
+`subCategory` 1.0 > **`aboutTheProduct` 0.6**. The description becomes a corroborating signal and a
+tiebreaker — which, per the
+[embedding-source investigation](recommendations-pre-refactor.md#follow-up-investigation--embedding-source-quality),
+is the only place description content influences ranking at all, since the stored vectors
+substantially under-represent it.
+
+**Caveats I would not paper over:**
+
+* **1.0 vs 0.6 is a narrow call.** The difference is largely whether one false positive sits at
+  rank 5 or falls off the page. If you would rather change the committed value as little as
+  possible, 1.0 captures most of the benefit. I prefer 0.6 because it is the only value with a
+  *clean* top 5 on every query checked.
+* **This sweep tested three points on one dimension, with five queries, one store, amplification
+  off.** It is not a tuning exercise on a held-out query set. 0.6 is the best-supported of three
+  candidates, not a proven optimum.
+* **The L2.6 fix will invalidate part of this.** Capping mode 4's text arm changes which documents
+  reach fusion, so mode 4's boost sensitivity should be re-checked afterwards. Modes 2 and 5 are
+  unaffected by that change.
+* **Boost values 1.0 and 0.6 were never committed.** The code carries 1.8; the three pipeline files
+  were restored via `git checkout` and verified byte-identical to their pre-sweep blob hashes.
+
+---
+
+## Post-fix verification — Fix 5 (hybrid candidate-limit symmetry)
+
+Appended **2026-09-15**, after applying rec **L2.6**, promoted P1 → P0 by the Fix #4 boost sweep
+which measured a 2.5× latency regression traceable to this asymmetry. Nothing above this heading
+has been modified.
+
+### What changed
+
+`hybrid_rrf_pipeline.py` fused an **uncapped** `$search` arm against a 200-document
+`$vectorSearch` arm, while `hybrid_score_fusion_pipeline.py` already capped its text arm at 200.
+Three hunks, one file:
+
+* two module-level constants next to `BOOST_MAP` — `FUSION_ARM_LIMIT = 200` and
+  `VECTOR_NUM_CANDIDATES = 500` — replacing the inline magic numbers;
+* `{"$limit": FUSION_ARM_LIMIT}` appended to the text arm;
+* the vector arm now reads both constants instead of literals.
+
+No behavioural change to the vector arm (same 500/200 values), and
+`hybrid_score_fusion_pipeline.py` was deliberately left alone — sharing one constant across both
+files would mean either importing between pipeline modules or editing `utils.py`, i.e. a second
+file. Noted as a follow-up rather than done here.
+
+### Method
+
+Same fixed parameters as every previous pass (`store-030`, `page = 1`, `page_size = 5`, no
+amplification, weights 0.5/0.5), but **3 measured reps** this time rather than 2, since latency is
+the headline metric. A genuine BEFORE pass was captured with the uncapped code, then the service
+was restarted with the fix. Read-only throughout.
+
+### 1. Is the latency regression resolved? Yes — and then some
+
+| Query / mode | original pre-index baseline | BEFORE (uncapped, index live) | AFTER (capped) | vs regression | vs original |
+|---|---|---|---|---|---|
+| **Q5 / mode 4** | 1 092 ms | **2911.2 ms** | **725.6 ms** | **−75%** | **−34%** |
+| Q3 / mode 4 | — | 731.3 ms | 730.3 ms | -0% | — |
+| Q4 / mode 4 | — | 849.1 ms | 724.1 ms | -15% | — |
+| Q3 / mode 5 (control, untouched) | — | 709.5 ms | 712.3 ms | +0% | — |
+| Q4 / mode 5 (control, untouched) | — | 701.0 ms | 726.7 ms | +4% | — |
+| Q5 / mode 5 (control, untouched) | — | 810.8 ms | 747.5 ms | -8% | — |
+
+Q5 / mode 4 raw reps — BEFORE [2680.2, 2911.2, 3118.5] ms · AFTER [724.5, 725.6, 733.0] ms.
+
+**The regression is gone: 2 911 ms → 726 ms, a 4.0× improvement.** It lands *below* the original
+pre-index baseline of 1 092 ms, because the text arm is now capped at 200 where it previously fed
+1 307 documents even before `aboutTheProduct` was indexed. Mode 5 — untouched by this fix — is flat
+within noise, confirming the change is the cause and not ambient variance.
+
+Q3 and Q4 barely move (−0% and −15%): their text arms matched 103 and 786 documents, so only Q4
+was being capped at all, and 786 was not enough to hurt. **The fix matters precisely for broad
+queries**, which is where it was hurting.
+
+### 2. How much did the ranking change? Not at all
+
+| Query / mode | top-5 identical before/after? | total_results BEFORE → AFTER |
+|---|---|---|
+| Q3 / mode 4 | ✅ **byte-identical** | 235 → **235** |
+| Q4 / mode 4 | ✅ **byte-identical** | 825 → **263** |
+| Q5 / mode 4 | ✅ **byte-identical** | 2729 → **345** |
+
+**Capping the text arm at 200 changed no mode-4 ranking whatsoever** — same products, same order,
+same scores, for all three queries. Every document that mattered was already inside the top 200 of
+the text arm; the extra 2 500 candidates on Q5 contributed nothing but latency.
+
+`total_results` fell for the broad queries (Q4 825 → 263, Q5 2 729 → 345) because the `$facet`
+count reflects the fused candidate window, which is now bounded. Q3 is unchanged at 235 — its
+text arm only matched 103 documents, below the cap. This is the same `total_results` semantics
+issue tracked as rec **L2.4**; the number is still a candidate count, not a match count. It has,
+however, become *consistent between the two hybrid modes* — see below.
+
+### 3. Mode 4 vs mode 5 comparability — partly achieved
+
+The point of symmetrizing was to make the two fusion strategies legitimately comparable. Measured
+on Q4 (`green tea`):
+
+| | BEFORE | AFTER |
+|---|---|---|
+| mode 4 `total_results` | 825 | **263** |
+| mode 5 `total_results` | 263 | 264 |
+| top-5 set overlap (m4 vs m5) | 3/5 | 2/5 |
+| top-5 position agreement | 1/5 | 1/5 |
+| app latency m4 vs m5 | 849.1 vs 701.0 ms | 724.1 vs 726.7 ms |
+
+**Structurally: yes.** Both modes now draw from the same arm depths, and their `total_results`
+converged from *825 vs 263* to **263 vs 264** on Q4, and *2 729 vs 345* to **345 vs 345** on Q5.
+Latency converged too (849/701 ms → 724/727 ms). A side-by-side demo of `$rankFusion` versus
+`$scoreFusion` is now an honest comparison of *fusion strategy* rather than of two different
+candidate pools.
+
+**On ranking: no, and I should not oversell it.** Top-5 set overlap between the two modes on Q4 went
+from 3/5 to 2/5 — it did not improve, and position agreement stayed at 1/5. Mode 4's
+ranking did not change at all, and mode 5's rank 5 shifted only through its own run-to-run
+variance. The two modes still disagree because `$scoreFusion`'s sigmoid normalization compresses
+its top-5 into a ~6e-4 score band while `$rankFusion` works on raw reciprocal ranks — a scoring
+difference (rec **L2.5**), not a candidate-pool difference. **This fix removed the illegitimate
+source of disagreement; the legitimate one remains.**
+
+### 4. Does this change the Fix #4 boost conclusions? No — and it adds evidence for 0.6
+
+Because capping alters what reaches `$rankFusion`, the mode-4 half of the boost sweep was re-run
+with the cap in place (Q3 and Q5 at 1.8 / 1.0 / 0.6, temporary local edits, reverted).
+
+| Query / mode 4 | @1.8 capped | @1.0 capped | @0.6 capped | same as uncapped sweep? |
+|---|---|---|---|---|
+| **Q3** top-5 character | 4 of 5 are drinking vessels (mugs, beer mug, water bottle) | clean — all actual beverages | clean — all actual beverages | ✅ identical at every value |
+| **Q5** top-5 character | all relevant (sleep aid, chamomile ×2, Booch, chamomile) | all relevant | all relevant | ✅ identical at every value |
+
+**The false-positive pattern is entirely boost-driven, not candidate-pool-driven.** Q3 / mode 4 at
+boost 1.8 returns the same four drinking vessels whether the text arm is capped at 200 or
+uncapped; at 1.0 and 0.6 they vanish in both cases. Capping changes *how many* candidates are
+ranked, not *how* a weak description match scores against a strong name match.
+
+**One new data point that strengthens the case for 0.6.** Q4 / mode 4, which the original sweep
+only ran at 1.8, was covered here at all three values:
+
+| Q4 / mode 4 | top 5 |
+|---|---|
+| @1.8 | Strawberry Green Tea, Svastha Green Tea - Promot, Nilgiri Green Tea - Taizen, Green Tea Mugs - Multicolo, Green Tea - With Peppermin |
+| @1.0 | Strawberry Green Tea, Green Tea - Ikusei, Cardam, Svastha Green Tea - Promot, Green Tea - With Peppermin, Nilgiri Green Tea - Taizen |
+| @0.6 | Green Tea - Ikusei, Cardam, Strawberry Green Tea, Green Tea - With Peppermin, Svastha Green Tea - Promot, Nilgiri Green Tea - Taizen |
+
+`Green Tea Mugs - Multicolour` sits at **rank 4 at boost 1.8** and is **gone from the top 5 at both
+1.0 and 0.6**, replaced by actual teas. That is a third query (after Q3 and Q5) where 0.6 removes a
+description-driven false positive at no cost.
+
+**Verdict: 0.6 remains the recommendation, now with Q4 mode-4 evidence behind it as well.** The
+caveat from Fix #4 that 'the L2.6 fix will invalidate part of this' turned out to be unfounded —
+worth recording, since I raised it.
+
+### Detail — mode 4 top 5, before vs after (boost 1.8 throughout)
+
+**Q3 — `beverages`**
+
+| # | BEFORE (uncapped) | score | AFTER (capped at 200) | score |
+|---|---|---|---|---|
+| 1 | Non-Alcoholic Beverage - Low Calorie,  (Booch) | 0.016261 | Non-Alcoholic Beverage - Low Calorie,  (Booch) | 0.016261 |
+| 2 | Candy Coffee Mugs - Multi Colour (Claycraft) | 0.014096 | Candy Coffee Mugs - Multi Colour (Claycraft) | 0.014096 |
+| 3 | Penguen Tea/Coffee Mug - Evergreen (Pasabahce) | 0.014069 | Penguen Tea/Coffee Mug - Evergreen (Pasabahce) | 0.014069 |
+| 4 | Double Walled Glass Water Bottle - Pla (DP) | 0.01381 | Double Walled Glass Water Bottle - Pla (DP) | 0.01381 |
+| 5 | Beer Mug - Printed Clear Glass, Multip (Indigifts) | 0.013374 | Beer Mug - Printed Clear Glass, Multip (Indigifts) | 0.013374 |
+
+**Q4 — `green tea`**
+
+| # | BEFORE (uncapped) | score | AFTER (capped at 200) | score |
+|---|---|---|---|---|
+| 1 | Strawberry Green Tea (Teamonk) | 0.015385 | Strawberry Green Tea (Teamonk) | 0.015385 |
+| 2 | Svastha Green Tea - Promotes Overall W (Kapiva) | 0.014786 | Svastha Green Tea - Promotes Overall W (Kapiva) | 0.014786 |
+| 3 | Nilgiri Green Tea - Taizen Cinnamon, 1 (Teamonk) | 0.014786 | Nilgiri Green Tea - Taizen Cinnamon, 1 (Teamonk) | 0.014786 |
+| 4 | Green Tea Mugs - Multicolour (Hot Muggs) | 0.014315 | Green Tea Mugs - Multicolour (Hot Muggs) | 0.014315 |
+| 5 | Green Tea - With Peppermint Leaves, Gr (Wingreens Farm) | 0.014185 | Green Tea - With Peppermint Leaves, Gr (Wingreens Farm) | 0.014185 |
+
+**Q5 — `drink that helps me relax before bed`**
+
+| # | BEFORE (uncapped) | score | AFTER (capped at 200) | score |
+|---|---|---|---|---|
+| 1 | Natural Sleep Aid Supplement Tablets - (Himalayan Orga) | 0.016133 | Natural Sleep Aid Supplement Tablets - (Himalayan Orga) | 0.016133 |
+| 2 | Nilgiris Green Tea - Anicca Chamomile, (Teamonk) | 0.015877 | Nilgiris Green Tea - Anicca Chamomile, (Teamonk) | 0.015877 |
+| 3 | Non-Alcoholic Beverage - Low Calorie,  (Booch) | 0.015155 | Non-Alcoholic Beverage - Low Calorie,  (Booch) | 0.015155 |
+| 4 | Chamomile Tea Bags (TGL Co.) | 0.015152 | Chamomile Tea Bags (TGL Co.) | 0.015152 |
+| 5 | Nilgiris Green Tea - Anicca Chamomile, (Teamonk) | 0.014063 | Nilgiris Green Tea - Anicca Chamomile, (Teamonk) | 0.014063 |
+
+### Secondary observations
+
+* **The uncapped arm was pure waste.** Identical rankings with 2 500 fewer candidates on Q5 means
+  the extra depth bought nothing at any point — not after `aboutTheProduct` was indexed, and not
+  before it either.
+* **`FUSION_ARM_LIMIT = 200` is now a single named knob** for mode 4's fusion depth, where
+  previously the value appeared twice as a literal and the text arm had no value at all. Mode 5
+  still carries its own inline `$limit: 200`; unifying the two across files would need `utils.py`
+  or a cross-module import, which is outside this fix's one-file scope.
+* **Mode 4 and mode 5 `total_results` now agree** (263 vs 264, 345 vs 345). Both remain candidate
+  counts rather than match counts — rec **L2.4** is still open — but they are at least the *same
+  kind of wrong* in both modes now, which makes the demo's side-by-side numbers defensible.
+* **Boost values 1.0 and 0.6 were never committed.** `text_pipeline.py` and
+  `hybrid_score_fusion_pipeline.py` were verified byte-identical to their pre-sweep blob hashes,
+  and `hybrid_rrf_pipeline.py` carries only the three L2.6 hunks with the boost back at 1.8.
+
+---
+
+## Confirmation — Fix 6 (aboutTheProduct boost committed at 0.6)
+
+Appended **2026-09-15**. Short confirmation note only — the evidence for choosing 0.6 is already
+recorded in the Fix 4 boost sweep and the Fix 5 re-check above. This pass verifies that the
+**committed** code reproduces what those temporary sweep edits measured.
+
+Committed state at time of measurement: `aboutTheProduct` boost **0.6** in all three text-scoring
+builders, text arm capped at `FUSION_ARM_LIMIT = 200` (Fix 5), `product_atlas_search` live with
+`aboutTheProduct` mapped (Fix 4). Same fixed parameters as every prior pass.
+
+### Reproducibility check
+
+| Case | vs Fix 4 sweep @0.6 | vs Fix 5 capped @0.6 | |
+|---|---|---|---|
+| Q1 / mode 2 | ✅ identical | — |  |
+| Q1 / mode 4 | ✅ identical | — |  |
+| Q1 / mode 5 | ✅ identical | — |  |
+| Q3 / mode 2 | ✅ identical | — |  |
+| Q3 / mode 4 | ✅ identical | ✅ identical | sweep predates the Fix 5 cap |
+| Q3 / mode 5 | ✅ identical | ✅ identical |  |
+| Q4 / mode 2 | — | — | first measurement at 0.6 |
+| Q4 / mode 4 | — | ✅ identical |  |
+| Q4 / mode 5 | — | ✅ identical |  |
+| Q5 / mode 2 | ✅ identical | — |  |
+| Q5 / mode 4 | ✅ identical | ✅ identical | sweep predates the Fix 5 cap |
+| Q5 / mode 5 | ✅ identical | ✅ identical |  |
+
+**11 of 12 cells reproduce the earlier sweeps exactly** — same products, same order, same scores.
+The twelfth (Q4 / mode 2) was never measured at 0.6 before; its top 5 is five genuine green teas
+(`Green Tea - Zoho`, `Rakshan`, `Ikusei`, `Svastha`, `Strawberry`), consistent with the pattern.
+
+Note that the mode-4 cells match **both** the pre-cap Fix 4 sweep and the post-cap Fix 5 re-check,
+which independently re-confirms the Fix 5 finding that capping the text arm changes no ranking.
+
+### Final committed-state top 5
+
+<details><summary><b>Q1</b> — <code>Onion</code></summary>
+
+| # | mode 2 | score | mode 4 | score | mode 5 | score |
+|---|---|---|---|---|---|---|
+| 1 | Onion | 1.0 | Onion | 0.016393 | Onion | 0.852256 |
+| 2 | Onion (Loose) | 0.945425 | Onion (Loose) | 0.016129 | Onion (Loose) | 0.852152 |
+| 3 | Onion Sabudana Papad | 0.749375 | Red Onion Oil With Jojoba, Arg | 0.015399 | Red Onion Oil With Jojoba, Arg | 0.845226 |
+| 4 | Potato Crisps - Sour Cream and | 0.639508 | Onion Hair Oil With Bhringraj  | 0.015268 | Onion Hair Oil For Hair Growth | 0.844414 |
+| 5 | Onion Oil Concentrate - Anti H | 0.622747 | Onion Oil Concentrate - Anti H | 0.015268 | Onion Oil Concentrate - Anti H | 0.844158 |
+
+App latency and totals — mode 2 166.4 ms / 165 results · mode 4 729.8 ms / 329 results · mode 5 721.0 ms / 329 results
+
+</details>
+
+<details><summary><b>Q3</b> — <code>beverages</code></summary>
+
+| # | mode 2 | score | mode 4 | score | mode 5 | score |
+|---|---|---|---|---|---|---|
+| 1 | Non-Alcoholic Beverage - Low C | 1.0 | Non-Alcoholic Beverage - Low C | 0.016261 | Non-Alcoholic Beverage - Low C | 0.847803 |
+| 2 | Tea | 0.311336 | Black Soft Drink - Max Taste,  | 0.015629 | Tea | 0.829479 |
+| 3 | Tea | 0.311336 | Aamras Mango Fruit Juice | 0.015268 | Tea | 0.828089 |
+| 4 | Tea | 0.307755 | Cold Extracted Juice - Mixed F | 0.015045 | Tea | 0.827259 |
+| 5 | Tea - Natural Care | 0.231374 | Cold Extracted Juice - Basics, | 0.014835 | Black Soft Drink - Max Taste,  | 0.812649 |
+
+App latency and totals — mode 2 162.8 ms / 103 results · mode 4 656.5 ms / 235 results · mode 5 719.6 ms / 235 results
+
+</details>
+
+<details><summary><b>Q4</b> — <code>green tea</code></summary>
+
+| # | mode 2 | score | mode 4 | score | mode 5 | score |
+|---|---|---|---|---|---|---|
+| 1 | Green Tea - Zoho, Lemongrass | 1.0 | Green Tea - Ikusei, Cardamom | 0.015749 | Nilgiri Green Tea - Yakuso Tul | 0.848689 |
+| 2 | Rakshan Green Tea - Supports S | 0.937785 | Strawberry Green Tea | 0.015385 | Green Tea Mugs - Multicolour | 0.848548 |
+| 3 | Green Tea - Ikusei, Cardamom | 0.911358 | Green Tea - With Peppermint Le | 0.014719 | Nilgiri Green Tea - Taizen Cin | 0.8483 |
+| 4 | Svastha Green Tea - Promotes O | 0.909617 | Svastha Green Tea - Promotes O | 0.014662 | Green Tea - Ikusei, Cardamom | 0.848119 |
+| 5 | Strawberry Green Tea | 0.880974 | Nilgiri Green Tea - Taizen Cin | 0.014347 | Strawberry Green Tea | 0.848095 |
+
+App latency and totals — mode 2 228.7 ms / 786 results · mode 4 759.2 ms / 270 results · mode 5 711.3 ms / 270 results
+
+</details>
+
+<details><summary><b>Q5</b> — <code>drink that helps me relax before bed</code></summary>
+
+| # | mode 2 | score | mode 4 | score | mode 5 | score |
+|---|---|---|---|---|---|---|
+| 1 | Natural Sleep Aid Supplement T | 1.0 | Natural Sleep Aid Supplement T | 0.016133 | Natural Sleep Aid Supplement T | 0.848466 |
+| 2 | Nilgiris Green Tea - Anicca Ch | 0.890999 | Nilgiris Green Tea - Anicca Ch | 0.015625 | Nilgiris Green Tea - Anicca Ch | 0.848382 |
+| 3 | Nilgiris Green Tea - Anicca Ch | 0.890999 | Nilgiris Green Tea - Anicca Ch | 0.014315 | Non-Alcoholic Beverage - Low C | 0.847743 |
+| 4 | Nilgiris Green Tea - Anicca Ch | 0.816627 | Nilgiris Green Tea - Anicca Ch | 0.014089 | Chamomile Tea Bags | 0.84705 |
+| 5 | Nilgiris Green Tea - Yoshin Le | 0.7115 | Non-Alcoholic Beverage - Low C | 0.013716 | Melatonin 10Mg Capsule - Helps | 0.845385 |
+
+App latency and totals — mode 2 395.5 ms / 2706 results · mode 4 673.8 ms / 358 results · mode 5 825.9 ms / 358 results
+
+</details>
+
+### One residual issue this fix does not solve
+
+**Q4 / mode 5 still returns `Green Tea Mugs - Multicolour` at rank 2 at boost 0.6.** Mode 4 at the
+same boost has no mug in its top 5, and mode 2 has none either — only `$scoreFusion` retains it.
+This is the boost-insensitivity documented in Fix 4: sigmoid normalization compresses mode 5's top
+five into a ~6e-4 score band (0.848689 → 0.848095 here), so a 3× change in field boost cannot
+reorder it. Lowering the boost further would not fix it either.
+
+The fix for that case is rec **L2.5** (single score normalization contract), not a boost value.
+Recording it here so the Layer 1 / Layer 2 P0 work is not mistaken for having cleared every
+description-driven false positive.

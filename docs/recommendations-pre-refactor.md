@@ -805,3 +805,204 @@ Not a schedule — a dependency order, since several of these interact:
 
 Re-capture `docs/baseline-pre-refactor.md` after steps 2, 4 and 7 — those are the three points where
 rankings change materially.
+
+---
+
+## Follow-up investigation — embedding source quality
+
+Added **2026-09-15**, in response to the question of whether `aboutTheProduct` is diluting the
+semantic signal in `textEmbeddingVector`, and whether structured metadata extraction would help.
+Entirely read-only: no writes, no DDL, no re-embedding. **Verdict up front: the dilution
+hypothesis is not supported by the evidence — the opposite is closer to the truth.**
+
+### Part 1 — What exactly feeds the embedding today
+
+**There is no ingestion or embedding-generation script in this repository.** No `scripts/`,
+`notebooks/`, `ingest*`, `etl/` or `tools/` directory exists, there are no `.ipynb` files, and the
+only code that touches Voyage AI is the *query-side* client
+(`app/infrastructure/voyage_ai/client.py`). The vectors were produced by a process that lives
+somewhere else — ask whoever seeded the demo data. What the repo and the live data *do* prove:
+
+The collection carries a persisted `embeddingText` field (string, present on all 6 143 documents).
+I reverse-engineered its construction and verified it against every document in staging:
+
+```
+embeddingText = productName | brand | quantity | category | subCategory | aboutTheProduct
+```
+
+**This reproduces `embeddingText` exactly for 6 143 / 6 143 documents (100.00%)** — pipe-space
+separator (`" | "`), six fields, in that order. An example from
+`docs/setup/collections/retail-unified-commerce.products.json:6763`:
+
+```
+Plastic Dustbin/Garbage Bin - Green With Polka Dots, Bon Bon, 12081P-M-B | Ratan | 6.7 L |
+Cleaning & Household | Dustbins | These pedal bins are beautiful that goes well with the
+indoor aesthetics. These are very durable and sturdy and are easy to use and easy to clean. …
+```
+
+So to answer the question directly: **`aboutTheProduct` is concatenated raw and in full** — not
+trimmed, not truncated, not summarised, not weighted. It is simply appended after the five
+structured fields. The proportions:
+
+| Component | Mean length | Share of embedded text |
+|---|---|---|
+| `embeddingText` total | 707 chars (max 5 382) | 100% |
+| `aboutTheProduct` | 595 chars | **80.7%** (min 19.8%, max 98.2%) |
+| `productName` | 49 chars | 8.2% |
+| `brand` + `quantity` + `category` + `subCategory` | ~63 chars | ~11% |
+
+It is a reasonable inference — though not proof — that `embeddingText` is the exact string that was
+sent to Voyage, since it exists for no other purpose: **no code in this repository reads or writes
+it.** It is referenced nowhere outside the sample data export and the baseline document. Its
+presence is the artefact of the ingestion process, left behind as a record of the input.
+
+One thing I checked and can rule out: descriptions are **not** systematically self-duplicated.
+The sample export contains a conspicuous case (`Breakfast Delight Dry Fruits`, whose description
+repeats three times), but across the live collection only **12 of 6 143 documents (0.2%)** contain
+their own opening 120 characters more than once. That is noise, not a systemic defect.
+
+### Part 2 — Testing embedding quality without re-embedding
+
+Four probes. Three need **zero** API calls and work purely on the stored vectors; the fourth
+embedded **3 short query strings** (9 words, ~12 tokens total — a negligible fraction of a cent, and
+no document embeddings were created).
+
+#### E1 — Is the vector space crowded? (0 API calls)
+
+1 500 random vectors, all 1 124 250 pairwise cosines:
+
+| Space | mean | std | p5 | p95 |
+|---|---|---|---|---|
+| raw, as stored | +0.5171 | 0.0688 | +0.422 | +0.644 |
+| **mean-centred** | **−0.0002** | **0.1206** | −0.157 | +0.222 |
+
+The raw mean of 0.52 looks alarming in isolation and is the number that would support a dilution
+story. **It is an artefact.** Voyage embeddings carry a large shared offset; subtracting the corpus
+mean collapses the average pairwise cosine to essentially zero while *widening* the spread
+(std 0.069 → 0.121). That is the signature of a healthy, well-distributed space, not a collapsed
+one. Only 0.2% of random pairs exceed 0.80 cosine and none exceed 0.90.
+
+**This probe alone refutes the strong form of the dilution hypothesis.** Had long boilerplate
+descriptions been swamping the signal, the centred space would still be narrow. It is not.
+
+#### E2 — Does the description dominate the name? (0 API calls)
+
+The catalogue's 625 duplicate `productName`+`brand` groups are a natural experiment: the structured
+prefix is byte-identical within a group, so any cosine difference is attributable to the
+description alone.
+
+| Pair type | n | mean cosine |
+|---|---|---|
+| identical name+brand, identical description | 554 | 0.9916 |
+| identical name+brand, different description | 745 | 0.9540 |
+| … of those, near-identical text (word Jaccard > 0.8) | 157 | 0.9874 |
+| … of those, **genuinely different text (Jaccard < 0.3)** | 351 | **0.9263** |
+
+I checked the obvious confound — that 'different' descriptions might still be near-duplicates. They
+are not: median word-level Jaccard between differing descriptions is 0.281.
+
+**Result: swapping in a genuinely different description, with the prefix held identical, moves the
+vector by only ~0.06 cosine** (0.987 → 0.926). Set against a centred inter-product spread of
+±0.12–0.22, the field that occupies **80.7% of the input text contributes a minority of the
+vector's position.** The short structured prefix dominates.
+
+This is the reverse of the concern. `aboutTheProduct` is not over-weighted in the vectors — if
+anything it is **under**-represented relative to its share of the text.
+
+#### E3 — Mild length bias does exist (0 API calls)
+
+The one probe that supports a weak form of the concern. Correlation between description length and
+cosine-to-corpus-centroid is **+0.386**, and it is monotonic:
+
+| Description length | n | mean cosine to corpus centroid |
+|---|---|---|
+| < 300 chars | 1 028 | 0.7020 |
+| 300–600 | 2 901 | 0.7130 |
+| 600–1 200 | 1 826 | 0.7328 |
+| > 1 200 | 388 | 0.7522 |
+
+Longer descriptions do pull a product toward the generic middle of the space — i.e. make it
+slightly more similar to everything, and so marginally less distinctive. The effect is real but
+**second-order**: a 0.05 centroid shift across a 4× length range.
+
+#### E4 — Does any of it affect retrieval? (3 query embeddings)
+
+| Query | max cosine | median | corr(desc length, similarity) corpus / top-200 | mean desc length top-20 vs corpus |
+|---|---|---|---|---|
+| `drink that helps me relax before bed` | 0.6938 | 0.4255 | +0.213 / **−0.025** | 688 vs 595 |
+| `Onion` | 0.7378 | 0.3956 | +0.218 / +0.269 | **1 442** vs 595 |
+| `beverages` | 0.6699 | 0.4463 | +0.046 / **−0.118** | 357 vs 595 |
+
+The corpus-wide positive correlation is the E3 centroid effect reappearing. **Within the top 200 —
+the only region that affects what a user sees — it vanishes or inverts** for two of three queries.
+Long descriptions are not buying their way into the results.
+
+`Onion` is the one case with a top-heavy length skew (top-20 mean 1 442 chars vs 595 corpus-wide),
+but this is confounded rather than causal: the correct answers — Fresho's `Onion` and
+`Onion (Loose)` — simply happen to carry 1 040-character descriptions. The ranking is right.
+
+**Known-case margin test** for `drink that helps me relax before bed`:
+
+| Case | cosine | rank |
+|---|---|---|
+| clear match (description mentions chamomile + relax) | 0.6938 | **1** |
+| clear non-match — fresh produce (`Coccinia (Loose)`) | 0.4877 | 616 |
+| clear non-match — plastic dustbin | 0.3782 | 5 341 |
+
+A clean, correctly-ordered margin across three orders of relevance. The stored vectors discriminate
+properly on exactly the query type that motivated the concern.
+
+### Part 3 — Honest take: is structured extraction worth it here?
+
+**No. For this codebase, at this size, it would be overengineering — and worse, it would be
+optimising the component that the evidence says is not broken.**
+
+The reasoning:
+
+* The proposal 'extract structured metadata instead of using `aboutTheProduct` raw' presupposes the
+  raw description is drowning the signal. **E1b and E2 show it is not** — it contributes a minority
+  of the vector's position despite being 80.7% of the input text.
+* Every documented mode-3 failure has now been traced elsewhere. Fix #3 established that Q2 and Q5
+  return **byte-identical** results at 200, 500 and 2 000 ANN candidates, so they are not retrieval
+  failures. The Q2 level-3 boost inversion is an amplification-magnitude problem (**L2.1**). There
+  is no *unexplained* accuracy failure left for an embedding change to fix.
+* The cost is severe and asymmetric: extraction means re-embedding all 6 143 documents, a bulk
+  write to staging, a vector index rebuild, and an LLM pass over the catalogue — against a
+  measured benefit of, at best, removing a 0.05 centroid drift that does not survive into the
+  top 200.
+
+**If it were pursued anyway, the smallest useful version** — worth recording so the idea is not
+lost, not as a recommendation:
+
+| Version | What it involves | Effort | Honest expected value |
+|---|---|---|---|
+| **Smallest — truncate** | Cap `aboutTheProduct` at its first ~2 sentences in `embeddingText`; re-embed. No LLM at all | M + full re-embed | Directly tests E3's length bias. The *only* variant I would consider, and only as an experiment on a copied collection |
+| **Small — 2–3 tags** | One-time LLM pass extracting e.g. `useCase`, `attributes`, `audience`; append as short tokens instead of prose | L + re-embed | Plausible upside, unmeasurable in advance. Adds a generation step with no owner in this repo |
+| **Full — structured schema** | Per-product attribute extraction, validation, storage, refresh-on-change, re-embed pipeline | XL + new infra | Not justifiable for a 6 143-document demo |
+
+Even the smallest version cannot be evaluated read-only: the decisive test is embedding a truncated
+variant and comparing retrieval, which requires document embeddings. **If you want to test it, do it
+on a copied collection with a few hundred documents** — never in place. That would be a
+self-contained experiment with a real answer at the end, rather than a migration taken on faith.
+
+### What this investigation *does* change
+
+One conclusion bears directly on the pending Fix #4 boost decision, and it cuts against my earlier
+advice:
+
+**Because the vectors substantially under-represent `aboutTheProduct` (E2), the text index is the
+only place where description content can meaningfully influence ranking.** That strengthens the
+case for mapping the field (Fix #4 / L1.1) — it is not redundant with the vector path, as one might
+assume from it already being inside `embeddingText`. The semantic modes are *not* already covering
+this signal.
+
+It also tempers my suggested boost of 0.6. If the text index is the sole carrier of description
+signal, setting it too low wastes the field a second way. I would now suggest treating the first
+post-rebuild run as an explicit sweep — **1.8 (as-is), 1.0, and 0.6 across Q1–Q5** — rather than
+committing to 0.6 in advance. Q1 (`Onion`) is the guard against long descriptions displacing exact
+name matches; Q5 is the case that should improve most.
+
+**Reproducing these probes:** the scripts live in the session scratchpad
+(`embed_probe.py`, `embed_probe2.py`) and read only from staging. They need `numpy`, which is not
+in the service's poetry environment — I used a throwaway venv outside the repo. Nothing was
+installed into the project.
