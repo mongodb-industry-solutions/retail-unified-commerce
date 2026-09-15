@@ -180,7 +180,7 @@ Companion documents:
 
 **Secondary findings:** **Q2 remains an exact vector copy in mode 5 and no normalization can fix it** — every `tomatoe` text candidate carries the identical raw Lucene score `8.983116` (`fuzzy: {maxEdits: 2}` scores all `tomato*` matches the same), so min-max of a constant series is degenerate and the text arm contributes a constant again; this is the same root cause as Q2's five-way `1.0` tie, which likewise survives, needs a deterministic tiebreaker, and is **not** a normalization defect — **correcting an earlier claim, the original baseline wrongly attributed that tie to window-max normalization**; **Q3 moved toward the vector arm** (text 2/5→1/5), confirming the fix makes the arms actually blend rather than biasing toward text; `minMaxScaler` is window-dependent by construction so mode 5 scores shift if the candidate set changes, which Fix #5's `FUSION_ARM_LIMIT` now bounds; the helper removed net −50 lines of duplicated `$setWindowFields` logic; mode 3 deliberately still normalizes its post-boost `adjustedScore` rather than the raw score, to avoid entangling this fix with L2.1; `score` is rendered as a `toFixed(5)` badge in both product cards but `ProductInventorySlice.js` only contains it in mock fixture data, so no frontend change was needed — though both cards guard with `{score && …}`, which would hide the badge for a legitimate `0.0`, so a `score != null` guard would be more correct
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as 9f2828b
 
 ---
 ## Fix #8 — total_results semantics
@@ -204,7 +204,7 @@ Companion documents:
 
 **Secondary findings:** **one visible change, accepted deliberately** — at the production `page_size=20` mode 3 now advertises "of 200 items" / 10 pages instead of "of 50 items" / 3 pages; all 10 pages are fully populated so pagination *behaviour* is unchanged, but the offered depth is larger and the tail of those 200 is low-similarity filler; the **`min(200, store size)` branch could not be exercised** because no staging store is small enough — the smallest, `store-047`, holds 384 products and duly reports 200, so that behaviour is structural rather than verified; **`total_pages` is dead weight** — the frontend never reads it (`lib/api.js:81` forwards only `total_results` as `totalItems`) and LeafyGreen recomputes page count itself, but removing it would change the payload shape and was left alone as agreed; `total_results` **is** user-visible, rendered by LeafyGreen as the "1 – 20 of N items" label, which is why its stability matters; the page-size dropdown is currently inert (`ProductList.jsx:40` passes `itemsPerPageOptions` with no `onItemsPerPageOptionChange` handler and `lib/api.js:29` sends the constant 20), so the defect fixed here was latent rather than active; **correcting an earlier claim**, the original baseline said mode 3 advertises pages that turn out empty — it does not, `ceil(200/5)=40` pages for 200 retrievable results is exactly right; `VECTOR_RETRIEVAL_DEPTH` duplicates `FUSION_ARM_LIMIT`'s value in a second module and a shared constant in `utils.py` would be the natural consolidation, outside this fix's scope
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as 139f6ec
 
 ---
 ## Fix #9 — Rank-space Brand Amplification
@@ -233,7 +233,7 @@ Companion documents:
 2. **Native `$score` normalization (MongoDB 8.2+, available on 9.0.1).** Evaluated as a replacement for Fix #7's `max_normalize_stages`. Verified working after `$search`, `$vectorSearch` and `$rankFusion`, and its metadata survives both `$setWindowFields` and `$facet`. **Deferred as a future Fix #10** because `normalization: "minMaxScaler"` maps the minimum to exactly `0.0`, and both product cards guard with `{score && …}` — so the score badge would vanish for one row, landing on **page 1** whenever the match set fits within a page (measured: `tomatoe` mode 2, 10 matches, rank 20 → `0.000`). It also arguably reduces honesty: `green tea` mode 3's rank-20 document has cosine 0.830 against a 0.835 maximum but min-max displays 0.815 where the true ratio is 0.982
 3. **A native-rerank alternative to this whole approach.** MongoDB's native `$rerank` (Voyage `rerank-2.5`/`-lite`) could in principle replace bounded amplification with genuine relevance reranking over a top-N, making the relevance floor a model judgement rather than a rank heuristic. Flagged as **future exploration only** — not built, not costed beyond the rough estimate in rec L4.1
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as 9c65c38
 
 ---
 ## Fix #10 — Mode 2 isBoosted flag under category-scoped rules
@@ -257,4 +257,4 @@ Companion documents:
 
 **Secondary findings:** **why this went unnoticed** — it requires a brand whose products span more than one category *and* a rule scoped to one of them; Fix #2 used `Aroma Magic`, whose products in this store are all `Beauty & Hygiene`, so scoped and brand-only rules produced identical output, which is exactly the limitation Fix #2's entry recorded at the time; **user-visible impact before the fix** — `ProductCard.jsx:61,67` keys both the lime card highlight and the "Boosted" badge off `isBoosted === true`, so a merchandiser scoping a rule to `Beverages` saw Gourmet teas presented as boosted in the very panel built to demonstrate the feature; **modes 3/4/5 were already correct** after Fix #9, since their `$switch` branches require brand **and** category and `isBoosted` derives from the same factor, verified at 0 out-of-category flags; the `boostedBrands=%d` log line now counts only brands with unscoped rules, with scoped ones under `brandCatPairs` — more accurate, but the denominator changed for anyone comparing old and new logs
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as 79e6936
