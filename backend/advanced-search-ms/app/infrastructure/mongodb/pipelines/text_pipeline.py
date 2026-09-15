@@ -17,7 +17,7 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+from app.infrastructure.mongodb.utils import PRODUCT_FIELDS, max_normalize_stages
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -172,24 +172,8 @@ def build_text_pipeline(
     stages: List[Dict[str, Any]] = [
         search_stage,
         {"$set": {"originalScore": {"$meta": "searchScore"}}},
-        {
-            "$setWindowFields": {
-                "partitionBy": None,
-                "output": {"maxScore": {"$max": "$originalScore"}},
-            }
-        },
-        {
-            "$set": {
-                "score": {
-                    "$cond": [
-                        {"$gt": ["$maxScore", 0]},
-                        {"$divide": ["$originalScore", "$maxScore"]},
-                        0,
-                    ]
-                }
-            }
-        },
-        {"$unset": "maxScore"},
+        # Shared score contract (see utils.max_normalize_stages).
+        *max_normalize_stages("originalScore"),
         {"$sort": {"originalScore": -1, "_id": 1}},
     ]
 

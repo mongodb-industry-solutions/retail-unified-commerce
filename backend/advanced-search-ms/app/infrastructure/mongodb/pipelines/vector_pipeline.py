@@ -25,7 +25,7 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+from app.infrastructure.mongodb.utils import PRODUCT_FIELDS, max_normalize_stages
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -203,21 +203,11 @@ def build_vector_pipeline(
             "adjustedScore": {"$multiply": ["$originalScore", {"$add": [1, "$boostFactor"]}]},
             "isBoosted": {"$gt": ["$boostFactor", 0]},
         }},
-        {"$setWindowFields": {
-            "partitionBy": None,
-            "output": {"maxScore": {"$max": "$adjustedScore"}},
-        }},
-        {"$set": {
-            "score": {
-                "$cond": [
-                    {"$gt": ["$maxScore", 0]},
-                    {"$divide": ["$adjustedScore", "$maxScore"]},
-                    0,
-                ]
-            }
-        }},
+        # Shared score contract (see utils.max_normalize_stages). Normalizes the
+        # post-amplification score, exactly as before, so ordering is unchanged.
+        *max_normalize_stages("adjustedScore"),
         # Remove internals so they don't leak to the response
-        {"$unset": ["maxScore", "boostFactor", "originalScore", "adjustedScore"]},
+        {"$unset": ["boostFactor", "originalScore", "adjustedScore"]},
         {"$sort": {"score": -1, "_id": 1}},
     ])
 

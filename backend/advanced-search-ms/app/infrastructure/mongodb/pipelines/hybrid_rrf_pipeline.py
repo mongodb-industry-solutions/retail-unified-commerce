@@ -30,7 +30,7 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+from app.infrastructure.mongodb.utils import PRODUCT_FIELDS, max_normalize_stages
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -245,6 +245,9 @@ def build_hybrid_rrf_pipeline(
                 "isBoosted": {"$gt": ["$boostFactor", 0]},
             }
         },
+        # Shared score contract (see utils.max_normalize_stages): raw `$rankFusion`
+        # values sit around 0.014-0.018, which is not comparable with the other modes.
+        *max_normalize_stages("boostedScore"),
         # Rank by the post-amplification score.
         {"$sort": {"boostedScore": -1, "_id": 1}},
     ]
@@ -260,7 +263,7 @@ def build_hybrid_rrf_pipeline(
                 "cond": {"$eq": ["$$inv.storeObjectId", store_oid]},
             }
         },
-        "score": {"$round": ["$boostedScore", 6]},
+        "score": {"$round": ["$score", 6]},
         "isBoosted": 1,
     }
 

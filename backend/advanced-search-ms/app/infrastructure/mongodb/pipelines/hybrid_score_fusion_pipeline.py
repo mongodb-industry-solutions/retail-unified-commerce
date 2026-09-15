@@ -19,11 +19,23 @@ Build a hybrid search pipeline that:
 
 Normalization (what it means here)
 ----------------------------------
-We default to `input.normalization: "sigmoid"` **inside** `$scoreFusion`.
-This rescales each pipeline’s raw scores to the range [0, 1] *before* combining:
-• Makes text and vector scores **comparable** (they do not share a native scale).
-• Dampens outliers (common in vector similarity), improving stability.
-• Keeps the fusion monotonic: higher raw score → higher normalized score.
+We default to `input.normalization: "minMaxScaler"` **inside** `$scoreFusion`, which
+rescales each arm against its own observed min and max before the weighted sum.
+
+This replaced `"sigmoid"`, which was measured to break the fusion outright. Raw
+Lucene scores in this catalogue run ~9-12, and `sigmoid(10) ~ 0.99995`, so every
+text candidate normalized to approximately 1.0: the text arm contributed a near
+constant to every document and stopped discriminating at all. Mode 5 therefore
+degenerated into a copy of mode 3 — its top 5 matched the pure vector arm 5/5 in
+identical order, inheriting vector-only artefacts such as `Green Tea Mugs` ranking
+second for the query "green tea".
+
+`"none"` is the mirror failure: unnormalized Lucene scores (~9.76) dwarf cosine
+similarity (~1.0), so the vector arm stops contributing instead. `minMaxScaler`
+keeps both arms on a comparable scale while preserving their internal spread, so
+the weights actually blend two signals. It is window-dependent by nature — the
+min and max come from the candidate set — so scores shift slightly if that set
+changes.
 
 Why this design
 ---------------
@@ -39,7 +51,7 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+from app.infrastructure.mongodb.utils import PRODUCT_FIELDS, max_normalize_stages
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -132,7 +144,7 @@ def build_hybrid_score_fusion_pipeline(
     skip: int,
     limit: int,
     projection_fields: Optional[Dict[str, int]] = None,
-    normalization: str = "sigmoid",  # default: make text/vector scores comparable inside $scoreFusion
+    normalization: str = "minMaxScaler",  # see the Normalization note in the module docstring
 ) -> List[Dict[str, Any]]:
     """
     Build a hybrid pipeline using `$scoreFusion` and *post-fusion* Brand Amplification.
@@ -142,8 +154,8 @@ def build_hybrid_score_fusion_pipeline(
 
     Notes
     -----
-    • We **don’t** apply any final normalization after Brand Amplification:
-      the returned `score` is the post-boost fused score.
+    • The post-boost fused score is then max-normalized for the response via
+      `utils.max_normalize_stages`, so `score` means the same thing in every mode.
     • `$scoreFusion`’s `input.normalization` runs **per input pipeline** *before*
       the combination expression, so weights operate on comparable scales.
     """
@@ -163,10 +175,10 @@ def build_hybrid_score_fusion_pipeline(
     w_vec = _weight("vectorPipeline")
     w_txt = _weight("textPipeline")
 
-    # Validate normalization choice (fallback to "sigmoid" if invalid/empty)
-    norm = (normalization or "sigmoid").strip()
+    # Validate normalization choice (fallback to "minMaxScaler" if invalid/empty)
+    norm = (normalization or "minMaxScaler").strip()
     if norm not in ("none", "sigmoid", "minMaxScaler"):
-        norm = "sigmoid"
+        norm = "minMaxScaler"
 
     amp = _brand_amp_switch_branches(brand_amplification)
     branches = amp["branches"]
@@ -274,6 +286,8 @@ def build_hybrid_score_fusion_pipeline(
                 "isBoosted": {"$gt": ["$boostFactor", 0]},
             }
         },
+        # Shared score contract (see utils.max_normalize_stages).
+        *max_normalize_stages("boostedScore"),
         {"$sort": {"boostedScore": -1, "_id": 1}},
     ]
 
@@ -288,7 +302,7 @@ def build_hybrid_score_fusion_pipeline(
                 "cond": {"$eq": ["$$inv.storeObjectId", store_oid]},
             }
         },
-        "score": {"$round": ["$boostedScore", 6]},
+        "score": {"$round": ["$score", 6]},
         "isBoosted": 1,
     }
 
