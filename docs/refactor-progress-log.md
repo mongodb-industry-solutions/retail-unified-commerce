@@ -36,7 +36,7 @@ Companion documents:
 
 **Secondary findings:** mode 5 (scoreFusion) saturates near-identical scores (~0.999-1.0) at pure weight=1.0 (same issue as L2.5, already tracked); the previously-observed 271/272 total_results flapping did not reproduce in this run — appears intermittent, not weight-related
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as 2a77d52
 
 ---
 ## Fix #2 — Brand matching asymmetry
@@ -60,7 +60,7 @@ Companion documents:
 
 **Secondary findings:** mode 3 is sharply sensitive even at level 1 — a +0.05 factor moved Aroma Magic from one slot to all five in the top 5, displacing the prior rank-1 result, which is the same magnitude problem as L2.1 now applying to 288 more documents; mode 4 remains the least responsive (2 of 5 boosted vs 5 of 5 elsewhere); the brand+category rule form behaved identically to brand-only because all Aroma Magic products in this store share one category, so the category comparison is confirmed not-broken but not independently exercised; no-regression and control cases held with only ANN/fusion run-to-run score jitter (≤3.4e-4, product order identical); the 38 padded brand values remain in the data and still surface in API responses — this fix makes matching tolerant, it does not clean the catalogue
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as df7c270
 
 ---
 ## Fix #3 — Vector candidate ratio
@@ -84,4 +84,4 @@ Companion documents:
 
 **Secondary findings:** `total_results` fell 200 → 50 as expected and was deliberately not addressed (L2.4) — `total_pages` at `page_size=5` drops from 40 to 10, and deep pagination capacity is genuinely reduced at large page sizes, since `page_size=50` now derives `knn_limit=100` against a flat 200 before, which is a real trade-off of deriving depth from page size; `numCandidates=500` is currently pure overhead and deriving it from `knn_limit` (e.g. `max(200, knn_limit * 10)`) would keep the ratio healthy without over-paying at small scale, left unchanged as outside this fix's literal scope; most importantly, Q2 and Q5 coming back unchanged is the strongest evidence yet that mode 3's known failures — including the Q2 level-3 boost inversion in the original baseline — are scoring and amplification-magnitude problems (L2.1), not retrieval problems, so this fix does not move the needle on them
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as dc1240d
