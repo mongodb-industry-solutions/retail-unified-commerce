@@ -157,3 +157,104 @@ Companion documents:
 **Secondary findings:** **one residual false positive survives** — Q4 mode 5 still returns `Green Tea Mugs - Multicolour` at rank 2 at boost 0.6, where modes 2 and 4 have no mug at all. `$scoreFusion`'s sigmoid normalization compresses its top 5 into a ~6e-4 band (0.848689 → 0.848095), so no boost value can reorder it; the fix is rec **L2.5** (single score normalization contract), not a different boost. Recorded so the Layer 1 / Layer 2 P0 work is not mistaken for having cleared every description-driven false positive. The clause ladder is now `productName` 3.0 ≫ `brand` 1.2 > `category` 1.1 > `subCategory` 1.0 > **`aboutTheProduct` 0.6**, making the description a corroborating signal — which per the embedding-source investigation is the only place description content influences ranking at all, since the stored vectors substantially under-represent it
 
 **Status:** Committed as 5d9157d
+
+---
+## Fix #7 — Score normalization contract
+
+**Date:** 2026-09-15
+**Source recommendation:** L2.5 in docs/recommendations-pre-refactor.md
+**Files modified:** utils.py, text_pipeline.py, vector_pipeline.py, hybrid_rrf_pipeline.py, hybrid_score_fusion_pipeline.py
+**Hypothesis:** two separate defects were tracked under one recommendation. **(a)** `$scoreFusion`'s `input.normalization: "sigmoid"` saturates — raw Lucene scores here run ~9–12 and `sigmoid(10) ≈ 0.99995`, so every text candidate normalized to ≈1.0, the text arm contributed a near-constant and stopped discriminating, and mode 5 degenerated into a copy of mode 3, inheriting vector-only artefacts such as `Green Tea Mugs` at rank 2 for `green tea`. `minMaxScaler` rescales each arm against its own min/max so both genuinely contribute. **(b)** the response `score` meant four different things — window-max in modes 2 and 3, raw `$rankFusion` (~0.014–0.018) in mode 4, raw fused value in mode 5 — and one shared max-normalization helper should make it mean one thing everywhere without reordering anything. Scoped down per Florencia's decision: **no new API fields**
+
+**Queries used to measure:** Q1–Q5 across modes 1, 2, 3, 4 and 5, plus the Fix #1 weight cases (`weightText/weightVector` at 1.0/0.0 and 0.0/1.0) re-run in mode 5 on Q2 and Q4, since that saturation finding was originally measured under sigmoid. 29 cells per pass, genuine before and after passes. The mechanism was also confirmed read-only *before* writing code, by exercising the pre-existing `normalization` builder parameter across `sigmoid` / `minMaxScaler` / `none`
+
+**Result BEFORE the fix:** Q4 mode 5 had `Green Tea Mugs - Multicolour` at rank 2, a top-5 spread of 5.9e-4, and a top 5 identical to the pure vector arm position-for-position. Mode 4 scores sat at 0.0137–0.0164. Q4 `w=1.0/0.0` in mode 5 had a top-5 spread of **exactly 0.0** — even the pure-text case was fully saturated
+
+**Result AFTER the fix:** ✅ **`Green Tea Mugs` is gone from Q4 mode 5's top 5**, replaced by five genuine green teas, with the spread widening 5.9e-4 → 7.4e-2 (≈125×). Mode 5 stopped being a vector copy for Q1, Q3, Q4 and Q5; text agreement rose for Q1 (3/5→4/5), Q4 (2/5→4/5) and Q5 (2/5→3/5). Mode 4 scores moved to 0.8502–1.0000 with **ranking unchanged in all five queries**. **24 of 25 mode-1-to-4 cells are byte-identical in product order**; response keys identical at 13 before and after; no exact `0.0` in any of the 29 cells
+
+**Confirms hypothesis?** ✅ Yes, both halves. The one non-identical mode-1-to-4 cell (Q4 mode 3) was diagnosed as ANN jitter, not the fix: ranks 1–4 match, only rank 5 swaps between two documents 9e-5 apart, the rank-2/3 raw scores also differed between passes, four consecutive repeat runs on the post-fix code are perfectly stable, and the post-fix value matches the *original* pre-refactor baseline exactly — the before pass was the outlier
+
+**Measured impact:**
+- Performance: no meaningful change; the helper emits the same three stages modes 2 and 3 already ran, and adds them to modes 4 and 5
+- Accuracy: mode 5's ranking is materially better and genuinely blended rather than vector-only. Modes 1–4 unchanged by design
+
+**Secondary findings:** **Q2 remains an exact vector copy in mode 5 and no normalization can fix it** — every `tomatoe` text candidate carries the identical raw Lucene score `8.983116` (`fuzzy: {maxEdits: 2}` scores all `tomato*` matches the same), so min-max of a constant series is degenerate and the text arm contributes a constant again; this is the same root cause as Q2's five-way `1.0` tie, which likewise survives, needs a deterministic tiebreaker, and is **not** a normalization defect — **correcting an earlier claim, the original baseline wrongly attributed that tie to window-max normalization**; **Q3 moved toward the vector arm** (text 2/5→1/5), confirming the fix makes the arms actually blend rather than biasing toward text; `minMaxScaler` is window-dependent by construction so mode 5 scores shift if the candidate set changes, which Fix #5's `FUSION_ARM_LIMIT` now bounds; the helper removed net −50 lines of duplicated `$setWindowFields` logic; mode 3 deliberately still normalizes its post-boost `adjustedScore` rather than the raw score, to avoid entangling this fix with L2.1; `score` is rendered as a `toFixed(5)` badge in both product cards but `ProductInventorySlice.js` only contains it in mock fixture data, so no frontend change was needed — though both cards guard with `{score && …}`, which would hide the badge for a legitimate `0.0`, so a `score != null` guard would be more correct
+
+**Status:** Pending Florencia's review and commit
+
+---
+## Fix #8 — total_results semantics
+
+**Date:** 2026-09-15
+**Source recommendation:** L2.4 in docs/recommendations-pre-refactor.md — scoped down substantially after read-only investigation showed most of it was not a bug
+**Files modified:** vector_pipeline.py, schemas.py, plus `total_results` semantics notes in the module docstrings of hybrid_rrf_pipeline.py and hybrid_score_fusion_pipeline.py
+**Hypothesis:** the `$facet` count branch counts the candidate window rather than the match count, so `total_results` was claimed to be dishonest in modes 3, 4 and 5. Investigation revised this: **modes 1 and 2 already report a true match count** (their count branch has no `$limit` ahead of it — verified against `$searchMeta`, which agreed exactly on all five queries: 165/10/103/786/2706), and for modes 3–5 **no true count exists** — `$searchMeta` cannot run over a vectorSearch index ("Cannot execute $search over vectorSearch index") and kNN has no match set, since all 3 914 in-store documents have some similarity. The real defect was narrower: Fix #3 had derived mode 3's retrieval depth from `page_size` (`max(50, page_size * 2)`), so the user-visible result count moved with the page-size control
+
+**Queries used to measure:** Q1–Q5 in mode 3 at `page_size=5`; Q1–Q5 in modes 4 and 5 as untouched controls; and Q4 in modes 3 and 4 swept across `page_size` 5 / 10 / 20 / 50 / 100 to demonstrate the sensitivity. Plus an explicit pagination-contract check requesting every one of the 10 advertised pages individually at the production `page_size=20`, and a cost measurement of the rejected extra-round-trip option
+
+**Result BEFORE the fix:** mode 3 `total_results` was 50 for every query at `page_size=5`, and moved to 50 / 50 / 50 / 100 / 200 as `page_size` went 5 / 10 / 20 / 50 / 100 — three distinct values `{50, 100, 200}` for the same query. An extra count round-trip was measured at 136–145 ms, i.e. **+91% on Q2**, +60% on Q4, +31% on Q5
+
+**Result AFTER the fix:** mode 3 `total_results` is a stable **200** for every query and **every page size** — distinct values across page sizes went `{50, 100, 200}` → `{200}`. **Top-5 is identical for all five queries**; modes 4 and 5 are completely unaffected (totals and top-5 identical, as predicted, since they already bounded their arms with `FUSION_ARM_LIMIT`). Pagination contract verified intact: all 10 advertised pages return exactly 20 documents, none empty, and page 11 is empty by design and never offered by the UI
+
+**Confirms hypothesis?** ⚠️ Partially — the *revised* hypothesis yes, the original one no. The original L2.4 premise (that the reported numbers are wrong and need a true count) was disproven: modes 1–2 were already correct, and modes 3–5 have no correct alternative. What was genuinely broken — page-size coupling — is fixed, and the semantics are now documented rather than left implicit
+
+**Measured impact:**
+- Performance: small regression in mode 3, mean ~630 → ~679 ms (+8%, worst case Q3 541 → 684 ms), because 200 rather than 50 documents now pass through `$setWindowFields`/`$sort`/`$facet`. Zero extra round-trips — the rejected count-call option would have cost 136–145 ms per request
+- Accuracy: no ranking change anywhere. The reported number is now stable and correctly described
+
+**Secondary findings:** **one visible change, accepted deliberately** — at the production `page_size=20` mode 3 now advertises "of 200 items" / 10 pages instead of "of 50 items" / 3 pages; all 10 pages are fully populated so pagination *behaviour* is unchanged, but the offered depth is larger and the tail of those 200 is low-similarity filler; the **`min(200, store size)` branch could not be exercised** because no staging store is small enough — the smallest, `store-047`, holds 384 products and duly reports 200, so that behaviour is structural rather than verified; **`total_pages` is dead weight** — the frontend never reads it (`lib/api.js:81` forwards only `total_results` as `totalItems`) and LeafyGreen recomputes page count itself, but removing it would change the payload shape and was left alone as agreed; `total_results` **is** user-visible, rendered by LeafyGreen as the "1 – 20 of N items" label, which is why its stability matters; the page-size dropdown is currently inert (`ProductList.jsx:40` passes `itemsPerPageOptions` with no `onItemsPerPageOptionChange` handler and `lib/api.js:29` sends the constant 20), so the defect fixed here was latent rather than active; **correcting an earlier claim**, the original baseline said mode 3 advertises pages that turn out empty — it does not, `ceil(200/5)=40` pages for 200 retrievable results is exactly right; `VECTOR_RETRIEVAL_DEPTH` duplicates `FUSION_ARM_LIMIT`'s value in a second module and a shared constant in `utils.py` would be the natural consolidation, outside this fix's scope
+
+**Status:** Pending Florencia's review and commit
+
+---
+## Fix #9 — Rank-space Brand Amplification
+
+**Date:** 2026-09-15
+**Source recommendation:** L2.1 in docs/recommendations-pre-refactor.md
+**Files modified:** utils.py, vector_pipeline.py, hybrid_rrf_pipeline.py, hybrid_score_fusion_pipeline.py (text_pipeline.py deliberately untouched)
+**Hypothesis:** amplification multiplied the relevance score by `(1 + 0.05|0.10|0.15)` in modes 3/4/5, which is unbounded in effect because what a multiplier does to a ranking depends on how tightly that mode's scores are packed — and the packing differs wildly (Lucene ~0.4–18.7 on this catalogue, cosine ~0.75–0.84, raw RRF ~0.014–0.018). The same `high` setting was therefore a no-op on `beverages` and put an unrelated oolong tea at rank 1 for `tomatoe`. Expressing amplification in **rank space** — `targetRank = max(1, ceil(preRank / F))`, F = 4/10/25, ordered by `(targetRank, preRank)` — is comparable across modes without calibration and bounds how far a document can climb
+
+**Queries used to measure:** Q1–Q5 × modes 3/4/5 × levels off/low/medium/high at **page_size=20** (the production value, not the 5 used in earlier fixes), plus the `Aroma Magic` / `face wash` case from Fix #2 as a regression check. 66 configurations
+
+**Result BEFORE the fix:** documented across the original baseline and Fixes #2/#4/#6 — `tomatoe` mode 3 at level 3 returned `Global Darjeeling Oolong Tea` at **rank 1**; mode 3 over-reacted at level 1 (Aroma Magic went from one slot to all five of the top 5); modes 3/4/5 were a total no-op on `beverages` at every level; mode 4 was the least responsive at 2 of 5 where others gave 5 of 5; and the displayed `score` embedded our boost multiplier
+
+**Result AFTER the fix:** all six acceptance criteria pass. **(a)** no boosted document reaches rank 1 for `tomatoe` in any of the 12 configurations, and the accepted trade-off did **not** materialise — the best Teamonk document lands at rank 6 at `high`, just outside the top 5. **(b)** `green tea` boosted-count in the top 5 is strictly monotonic in all three modes (mode 5: 2→4→5→5). **(c)** `beverages` climbs monotonically and is never #1 at low/medium — mode 4 18→8→4, mode 5 —→16→7. **(d)** `Aroma Magic` still amplifies, 0→7–9→12–13 documents flagged per 20-row page. **(e)** `Onion` holds rank 1 with a Teamonk rule active in all three modes. **(f)** 7 of 7 non-boosted documents carry byte-identical scores with amplification on and off
+
+**Confirms hypothesis?** ✅ Yes
+
+**Measured impact:**
+- Performance: no meaningful change — one `$sort` plus one `$setWindowFields` on a ≤200-document window, and only when rules are active (the no-rules path emits just `$set isBoosted:false` + the original `$sort`)
+- Accuracy: materially better and, more importantly, *bounded*. The level now means one thing in every mode
+
+**Secondary findings:** **the `(targetRank, preRank)` tiebreak does the protective work, not the bound** — Teamonk's pre-boost rank for `tomatoe` is 106 so `ceil(106/25)=5`, but the genuinely-relevant document at preRank 5 shares targetRank 5 and sorts first, pushing the boosted document to position 6; in general a boosted document cannot displace those above its own targetRank, so entering the top 5 at `high` requires preRank ≤ 100 — **and the margin on this query is thin, 106 against 100**, so a slightly stronger spurious semantic match would have landed inside the top 5; `$documentNumber` accepts only a **single-element** `sortBy` (`{score:-1,_id:1}` fails with `Location5371602`), so the helper emits an explicit deterministic `$sort` first and then windows on `{score:-1}` alone — ordering among byte-identical scores is stable in practice but not guaranteed by spec; the three divergent `BOOST_MAP`s are replaced by one `AMPLIFICATION_FACTORS`, net **−92 lines**, while mode 2 keeps its own 1.5/2.0/2.5 map because that feeds Lucene's native boost, a genuinely different mechanism; mode 3 remains an unavoidable no-op on `beverages` because Teamonk is absent from the whole 200-document vector window, which no amplification model can fix without unioning the lexical match set into mode 3 and turning "pure vector" into a hybrid
+
+**Deliberately not built, and why:**
+1. **Eligibility-gated amplification.** A design gating promotion on lexical match — using `$rankFusion`/`$scoreFusion` `scoreDetails` for per-arm participation in modes 4/5 — was worked through and dry-run against real windows. It cleanly separated the three test cases (Teamonk absent from `tomatoe`'s match set, present for `green tea` and `beverages`) and would have given stronger protection plus better `beverages` visibility. **Rejected in favour of a single explainable rule**; simplicity was prioritised for this iteration. The measurements are in the conversation record if it is revisited.
+2. **Native `$score` normalization (MongoDB 8.2+, available on 9.0.1).** Evaluated as a replacement for Fix #7's `max_normalize_stages`. Verified working after `$search`, `$vectorSearch` and `$rankFusion`, and its metadata survives both `$setWindowFields` and `$facet`. **Deferred as a future Fix #10** because `normalization: "minMaxScaler"` maps the minimum to exactly `0.0`, and both product cards guard with `{score && …}` — so the score badge would vanish for one row, landing on **page 1** whenever the match set fits within a page (measured: `tomatoe` mode 2, 10 matches, rank 20 → `0.000`). It also arguably reduces honesty: `green tea` mode 3's rank-20 document has cosine 0.830 against a 0.835 maximum but min-max displays 0.815 where the true ratio is 0.982
+3. **A native-rerank alternative to this whole approach.** MongoDB's native `$rerank` (Voyage `rerank-2.5`/`-lite`) could in principle replace bounded amplification with genuine relevance reranking over a top-N, making the relevance floor a model judgement rather than a rank heuristic. Flagged as **future exploration only** — not built, not costed beyond the rough estimate in rec L4.1
+
+**Status:** Pending Florencia's review and commit
+
+---
+## Fix #10 — Mode 2 isBoosted flag under category-scoped rules
+
+**Date:** 2026-09-15
+**Source recommendation:** none — a pre-existing defect surfaced by Fix #9's category-scoping verification, related to L2.2 (Fix #2), which corrected the same class of bug for whitespace-padded brands
+**Files modified:** text_pipeline.py
+**Hypothesis:** `_brand_amp_should_clauses` appended every rule's brand to the unscoped `boosted_brands` list *before* checking whether the rule carried `categories`. The `isBoosted` projection tests `$in [normalized($brand), boosted_brands]` as the first arm of an `$or`, so any document of that brand satisfied it regardless of category. The ranking was always correctly scoped — a scoped rule's `should` clause uses `compound.must` on `brand` with a `filter` on `category` — so mode 2 reported documents as boosted that it had never actually boosted. Moving the append inside the `if not categories:` branch should make the flag agree with the ranking, leaving scoped rules to rely on `brand_cat_pairs`, which the `$or`'s second arm already checks
+
+**Queries used to measure:** the exact test that found the bug — query `green tea`, mode 2, store-030, `page_size=50` (wide enough to hold Teamonk products from both `Beverages` and `Gourmet & World Food`), with a `Teamonk` + `categories: ["Beverages"]` rule; plus Fix #2's brand-only `Teamonk` rule as a regression check and an unamplified control. Genuine before and after passes
+
+**Result BEFORE the fix:** scoped rule flagged **14/14 in-category AND 14/14 out-of-category** Teamonk documents — 28 flagged in a page where only 14 had actually been boosted. Brand-only rule flagged 37/37; control flagged 0
+
+**Result AFTER the fix:** scoped rule flags **14/14 in-category and 0/14 out-of-category** ✅. Individual documents flipped as expected (`Strawberry Green Tea`, `Avana Darjeeling Green Tea`, `Ashwagandha Green Tea`, `Pineapple Green Tea` — all `Gourmet & World Food` — went `true` → `false`). Brand-only rule unchanged at 37/37 with 0 non-Teamonk documents flagged. Product order, scores and `total_results` (786) are **byte-identical** in all three configurations, as expected for a projection-only change
+
+**Confirms hypothesis?** ✅ Yes
+
+**Measured impact:**
+- Performance: none — the change is in Python list construction, not in the emitted pipeline
+- Accuracy: the `isBoosted` explainability signal now agrees with what the ranking actually did. No ranking change
+
+**Secondary findings:** **why this went unnoticed** — it requires a brand whose products span more than one category *and* a rule scoped to one of them; Fix #2 used `Aroma Magic`, whose products in this store are all `Beauty & Hygiene`, so scoped and brand-only rules produced identical output, which is exactly the limitation Fix #2's entry recorded at the time; **user-visible impact before the fix** — `ProductCard.jsx:61,67` keys both the lime card highlight and the "Boosted" badge off `isBoosted === true`, so a merchandiser scoping a rule to `Beverages` saw Gourmet teas presented as boosted in the very panel built to demonstrate the feature; **modes 3/4/5 were already correct** after Fix #9, since their `$switch` branches require brand **and** category and `isBoosted` derives from the same factor, verified at 0 out-of-category flags; the `boostedBrands=%d` log line now counts only brands with unscoped rules, with scoped ones under `brandCatPairs` — more accurate, but the denominator changed for anyone comparing old and new logs
+
+**Status:** Pending Florencia's review and commit
