@@ -50,6 +50,14 @@ def _norm_field(field: str) -> Dict[str, Any]:
 # Multiplicative factors per amplification level (applied post-fusion).
 BOOST_MAP: Dict[int, float] = {1: 0.05, 2: 0.10, 3: 0.15}
 
+# Candidate depth fed into `$rankFusion`, applied identically to BOTH arms.
+# RRF is rank-based: if one arm is uncapped its ranks run far deeper than the
+# other's, so the reciprocal-rank contributions of the two arms are no longer
+# comparable — and a broad query drags the whole fusion stage down with it.
+FUSION_ARM_LIMIT = 200
+# ANN over-fetch for the vector arm; must exceed FUSION_ARM_LIMIT for useful recall.
+VECTOR_NUM_CANDIDATES = 500
+
 
 def _brand_amp_switch_branches(
     specs: Optional[Sequence[Dict[str, Any]]]
@@ -188,7 +196,9 @@ def build_hybrid_rrf_pipeline(
                     ],
                 },
             }
-        }
+        },
+        # Match the vector arm's depth so both ranked lists are the same length.
+        {"$limit": FUSION_ARM_LIMIT},
     ]
 
     # Vector: semantic retrieval; scoped to store.
@@ -198,8 +208,8 @@ def build_hybrid_rrf_pipeline(
                 "index": vector_index,
                 "path": vector_field,
                 "queryVector": embedding,
-                "numCandidates": 500,
-                "limit": 200,
+                "numCandidates": VECTOR_NUM_CANDIDATES,
+                "limit": FUSION_ARM_LIMIT,
                 "filter": {"inventorySummary.storeObjectId": store_oid},
             }
         }
