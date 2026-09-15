@@ -103,6 +103,11 @@ async def startup_resources() -> None:
 @app.on_event("shutdown")
 async def shutdown_resources() -> None:
     """Close connections gracefully."""
+    if dependencies.voyage_client:
+        logger.info("🛑 Closing VoyageAI pooled HTTP client...")
+        await dependencies.voyage_client.aclose()
+        logger.info("✅ VoyageAI client closed")
+
     if dependencies.mongo_client:
         logger.info("🛑 Closing MongoDB connection...")
         dependencies.mongo_client.client.close()
