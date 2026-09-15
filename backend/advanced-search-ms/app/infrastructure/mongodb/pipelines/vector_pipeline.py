@@ -5,12 +5,12 @@ Pipeline builder for *option 3* — Atlas Lucene k-NN vector search with Brand A
 Flow
 ----
 1) `$vectorSearch` pre-filtered by store (and stock, if provided).
-2) Log raw similarity (`originalScore`) and compute amplification:
-     boostLevel → factor: 1 → +0.05, 2 → +0.10, 3 → +0.15
-     adjustedScore = originalScore × (1 + boostFactor)
-     isBoosted = boostFactor > 0
-3) Normalize a single final `score` in [0..1].
-4) Sort by `score` and paginate with `$facet`.
+2) Max-normalize the raw similarity into a single `score` in [0..1].
+3) Apply Brand Amplification as a **rank-space reorder** (see
+   `utils.amplification_stages`): a boosted document at pre-boost rank r moves to
+   `ceil(r / F)` with F = 4 / 10 / 25 for low / medium / high. The score itself is
+   never multiplied by the boost — amplification changes order, not numbers.
+4) Paginate with `$facet`.
 
 `total_results` semantics
 -------------------------
@@ -25,7 +25,7 @@ true match count; modes 3, 4 and 5 report retrieval depth. See rec L2.4.
 Response shape
 --------------
 Only a single `score` is projected (normalized). Internal fields used for
-computation (`originalScore`, `adjustedScore`, `boostFactor`, `maxScore`)
+computation (`originalScore`, and the helpers' internal rank fields)
 are not exposed.
 """
 
@@ -35,22 +35,15 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS, max_normalize_stages
+from app.infrastructure.mongodb.utils import (
+    PRODUCT_FIELDS,
+    amplification_stages,
+    max_normalize_stages,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-
-def _norm_field(field: str) -> Dict[str, Any]:
-    """
-    Whitespace/case-insensitive form of a document field, used only for
-    Brand Amplification rule matching.
-
-    Catalogue `brand` values are not normalized (38 brands carry stray leading or
-    trailing whitespace), so an exact `$eq` against a trimmed rule name silently
-    matched nothing. Compare both sides in the same normalized form instead.
-    """
-    return {"$toLower": {"$trim": {"input": {"$ifNull": [field, ""]}}}}
 
 # Retrieval depth for `$vectorSearch`, fixed and independent of `page_size`.
 # Matches FUSION_ARM_LIMIT in the two hybrid builders so all three semantic modes
@@ -59,69 +52,6 @@ def _norm_field(field: str) -> Dict[str, Any]:
 # size would make the user-visible result count move when the page-size control
 # changes — the frontend renders it as "1 - N of <total> items". See rec L2.4.
 VECTOR_RETRIEVAL_DEPTH = 200
-
-# Abstract boost levels → additive factors (applied multiplicatively)
-# adjustedScore = originalScore * (1 + factor)
-BOOST_MAP: Dict[int, float] = {
-    1: 0.05,  # low
-    2: 0.10,  # medium
-    3: 0.15,  # high
-}
-
-
-def _brand_amp_switch_branches(
-    specs: Optional[Sequence[Dict[str, Any]]],
-) -> Dict[str, Any]:
-    """
-    Build `$switch.branches` for computing `boostFactor`,
-    plus helper arrays for logging/flags.
-    """
-    if not specs:
-        return {"branches": [], "boostedBrands": [], "brandCategoryPairs": []}
-
-    branches: List[Dict[str, Any]] = []
-    boosted_brands: List[str] = []
-    brand_cat_pairs: List[str] = []
-
-    for spec in specs:
-        brand = (spec.get("name") or "").strip()
-        level = int(spec.get("boostLevel", 0))
-        factor = float(BOOST_MAP.get(level, 0.0))
-        categories = [
-            c.strip()
-            for c in (spec.get("categories") or [])
-            if isinstance(c, str) and c.strip()
-        ]
-
-        if not brand or factor <= 0.0:
-            continue
-
-        if brand not in boosted_brands:
-            boosted_brands.append(brand)
-
-        if not categories:
-            # Brand-only rule
-            branches.append({"case": {"$eq": [_norm_field("$brand"), brand.lower()]}, "then": factor})
-        else:
-            # Brand + category rules (one per category)
-            for cat in categories:
-                brand_cat_pairs.append(f"{brand}::{cat}")
-                branches.append({
-                    "case": {
-                        "$and": [
-                            {"$eq": [_norm_field("$brand"), brand.lower()]},
-                            {"$eq": [_norm_field("$category"), cat.lower()]},
-                        ]
-                    },
-                    "then": factor,
-                })
-
-    return {
-        "branches": branches,
-        "boostedBrands": boosted_brands,
-        "brandCategoryPairs": brand_cat_pairs,
-    }
-
 
 def build_vector_pipeline(
     embedding: List[float],
@@ -173,12 +103,6 @@ def build_vector_pipeline(
         knn_limit = VECTOR_RETRIEVAL_DEPTH
     num_candidates = max(num_candidates, knn_limit)
 
-    # Prepare brand-amp branches and log counters
-    amp = _brand_amp_switch_branches(brand_amplification)
-    branches = amp["branches"]
-    boosted_brands = amp["boostedBrands"]
-    brand_cat_pairs = amp["brandCategoryPairs"]
-
     logger.info(
         "[VECTOR] store=%s | skip=%d | limit=%d | numCandidates=%d | knnLimit=%d | in_stock=%s | brandAmp=%d",
         store_oid, skip, limit, num_candidates, knn_limit, in_stock,
@@ -210,24 +134,13 @@ def build_vector_pipeline(
         {"$set": {"originalScore": {"$meta": "vectorSearchScore"}}},
     ]
 
-    # Compute boostFactor via $switch
-    if branches:
-        stages.append({"$set": {"boostFactor": {"$switch": {"branches": branches, "default": 0}}}})
-    else:
-        stages.append({"$set": {"boostFactor": 0}})
-
-    # Adjust, normalize, cleanup, sort
     stages.extend([
-        {"$set": {
-            "adjustedScore": {"$multiply": ["$originalScore", {"$add": [1, "$boostFactor"]}]},
-            "isBoosted": {"$gt": ["$boostFactor", 0]},
-        }},
-        # Shared score contract (see utils.max_normalize_stages). Normalizes the
-        # post-amplification score, exactly as before, so ordering is unchanged.
-        *max_normalize_stages("adjustedScore"),
-        # Remove internals so they don't leak to the response
-        {"$unset": ["boostFactor", "originalScore", "adjustedScore"]},
-        {"$sort": {"score": -1, "_id": 1}},
+        # Score contract: the engine's own value, max-normalized. Never multiplied by
+        # amplification — see utils.amplification_stages.
+        *max_normalize_stages("originalScore"),
+        # Brand Amplification as a rank-space reorder.
+        *amplification_stages(brand_amplification),
+        {"$unset": "originalScore"},
     ])
 
     # Final projection + pagination
@@ -264,7 +177,7 @@ def build_vector_pipeline(
     pipeline = stages + finalize
 
     logger.info(
-        "[VECTOR] built | stages=%d | boostedBrands=%d | brandCatPairs=%d",
-        len(pipeline), len(boosted_brands), len(brand_cat_pairs),
+        "[VECTOR] built | stages=%d | brandAmpRules=%d (rank-space reorder)",
+        len(pipeline), len(brand_amplification or []),
     )
     return pipeline
