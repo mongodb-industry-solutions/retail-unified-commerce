@@ -182,7 +182,7 @@ def build_hybrid_rrf_pipeline(
                                               "fuzzy": {"maxEdits": 2},
                                               "score": {"boost": {"value": 3.0}}}},
                                     {"text": {"query": query, "path": "aboutTheProduct",
-                                              "score": {"boost": {"value": 1.8}}}},
+                                              "score": {"boost": {"value": 0.6}}}},
                                     {"text": {"query": query, "path": "brand",
                                               "score": {"boost": {"value": 1.2}}}},
                                     {"text": {"query": query, "path": "category",

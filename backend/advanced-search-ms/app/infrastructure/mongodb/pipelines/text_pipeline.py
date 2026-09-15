@@ -155,7 +155,7 @@ def build_text_pipeline(
                         "compound": {
                             "should": [
                                 {"text": {"query": query, "path": "productName", "fuzzy": {"maxEdits": 2}, "score": {"boost": {"value": 3.0}}}},
-                                {"text": {"query": query, "path": "aboutTheProduct", "score": {"boost": {"value": 1.8}}}},
+                                {"text": {"query": query, "path": "aboutTheProduct", "score": {"boost": {"value": 0.6}}}},
                                 {"text": {"query": query, "path": "brand", "score": {"boost": {"value": 1.2}}}},
                                 {"text": {"query": query, "path": "category", "score": {"boost": {"value": 1.1}}}},
                                 {"text": {"query": query, "path": "subCategory", "score": {"boost": {"value": 1.0}}}},
