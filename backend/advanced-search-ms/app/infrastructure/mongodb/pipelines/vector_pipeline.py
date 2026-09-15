@@ -114,8 +114,8 @@ def build_vector_pipeline(
     skip: int = 0,
     limit: int = 20,
     in_stock: Optional[bool] = None,
-    num_candidates: int = 200,
-    knn_limit: int = 200,
+    num_candidates: int = 500,
+    knn_limit: Optional[int] = None,
     projection_fields: Optional[Dict[str, int]] = None,
     brand_amplification: Optional[Sequence[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
@@ -130,7 +130,13 @@ def build_vector_pipeline(
     vector_field : str
     skip, limit : int
     in_stock : bool | None
-    num_candidates, knn_limit : int
+    num_candidates : int
+        Size of the ANN candidate pool explored by HNSW. Must comfortably exceed
+        `knn_limit`, otherwise the graph search returns no more than it retrieves and
+        recall degrades (the previous 200/200 default was exactly that degenerate case).
+    knn_limit : int | None
+        How many neighbours `$vectorSearch` returns. Defaults to `max(50, limit * 2)`
+        so it tracks the requested page size instead of a second hard-coded constant.
     projection_fields : dict | None
     brand_amplification : list[dict] | None  # [{ name, boostLevel(1..3), categories?: string[] }]
     """
@@ -142,6 +148,12 @@ def build_vector_pipeline(
     if skip < 0 or limit <= 0:
         raise ValueError("'skip' must be ≥ 0 and 'limit' must be > 0")
 
+    # Retrieval depth follows the requested page size; over-fetch the ANN candidate pool
+    # so HNSW explores meaningfully more than it returns.
+    if knn_limit is None:
+        knn_limit = max(50, limit * 2)
+    num_candidates = max(num_candidates, knn_limit)
+
     # Prepare brand-amp branches and log counters
     amp = _brand_amp_switch_branches(brand_amplification)
     branches = amp["branches"]
@@ -149,8 +161,9 @@ def build_vector_pipeline(
     brand_cat_pairs = amp["brandCategoryPairs"]
 
     logger.info(
-        "[VECTOR] store=%s | skip=%d | limit=%d | in_stock=%s | brandAmp=%d",
-        store_oid, skip, limit, in_stock, len(brand_amplification or []),
+        "[VECTOR] store=%s | skip=%d | limit=%d | numCandidates=%d | knnLimit=%d | in_stock=%s | brandAmp=%d",
+        store_oid, skip, limit, num_candidates, knn_limit, in_stock,
+        len(brand_amplification or []),
     )
 
     # Pre-filter in $vectorSearch for perf
