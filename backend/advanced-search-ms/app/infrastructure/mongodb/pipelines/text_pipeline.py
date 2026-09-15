@@ -22,6 +22,18 @@ from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
+def _norm_field(field: str) -> Dict[str, Any]:
+    """
+    Whitespace/case-insensitive form of a document field, used only for
+    Brand Amplification rule matching.
+
+    Catalogue `brand` values are not normalized (38 brands carry stray leading or
+    trailing whitespace), so an exact `$eq` against a trimmed rule name silently
+    matched nothing. Compare both sides in the same normalized form instead.
+    """
+    return {"$toLower": {"$trim": {"input": {"$ifNull": [field, ""]}}}}
+
 # Boost mapping: abstract levels → numeric multipliers
 BOOST_MAP: Dict[int, float] = {
     1: 1.5,  # low
@@ -196,10 +208,16 @@ def build_text_pipeline(
     if log_score_details:
         docs_projection["originalScore"] = {"$round": ["$originalScore", 6]}
 
+    # Compare in normalized form on both sides: the `should` clauses above match via the
+    # analyzed `text` operator (which already tolerates the catalogue's stray whitespace),
+    # so an exact `$in` here reported isBoosted=false for documents it had in fact boosted.
     docs_projection["isBoosted"] = {
         "$or": [
-            {"$in": ["$brand", boosted_brands]},
-            {"$in": [{"$concat": ["$brand", "::", {"$ifNull": ["$category", ""]}]}, brand_cat_pairs]},
+            {"$in": [_norm_field("$brand"), [b.strip().lower() for b in boosted_brands]]},
+            {"$in": [
+                {"$concat": [_norm_field("$brand"), "::", _norm_field("$category")]},
+                [p.strip().lower() for p in brand_cat_pairs],
+            ]},
         ]
     }
 

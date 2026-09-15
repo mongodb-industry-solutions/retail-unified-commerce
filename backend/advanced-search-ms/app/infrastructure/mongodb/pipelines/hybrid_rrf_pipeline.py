@@ -35,6 +35,18 @@ from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
+def _norm_field(field: str) -> Dict[str, Any]:
+    """
+    Whitespace/case-insensitive form of a document field, used only for
+    Brand Amplification rule matching.
+
+    Catalogue `brand` values are not normalized (38 brands carry stray leading or
+    trailing whitespace), so an exact `$eq` against a trimmed rule name silently
+    matched nothing. Compare both sides in the same normalized form instead.
+    """
+    return {"$toLower": {"$trim": {"input": {"$ifNull": [field, ""]}}}}
+
 # Multiplicative factors per amplification level (applied post-fusion).
 BOOST_MAP: Dict[int, float] = {1: 0.05, 2: 0.10, 3: 0.15}
 
@@ -78,15 +90,15 @@ def _brand_amp_switch_branches(
 
         # Brand-wide rule
         if not categories:
-            branches.append({"case": {"$eq": ["$brand", brand]}, "then": factor})
+            branches.append({"case": {"$eq": [_norm_field("$brand"), brand.lower()]}, "then": factor})
         else:
             # Brand + category-specific rules
             for cat in categories:
                 brand_cat_pairs.append(f"{brand}::{cat}")
                 branches.append({
                     "case": {"$and": [
-                        {"$eq": ["$brand", brand]},
-                        {"$eq": ["$category", cat]},
+                        {"$eq": [_norm_field("$brand"), brand.lower()]},
+                        {"$eq": [_norm_field("$category"), cat.lower()]},
                     ]},
                     "then": factor,
                 })
