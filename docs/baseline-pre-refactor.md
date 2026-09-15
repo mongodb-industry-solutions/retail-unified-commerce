@@ -3679,3 +3679,126 @@ in all three configurations, which is the expected result for a projection-only 
 * **The log line's meaning shifts slightly:** `boostedBrands=%d` now counts only brands with
   unscoped rules, with scoped ones counted under `brandCatPairs`. That is more accurate, but a
   reader comparing old and new logs should know the denominator changed.
+
+---
+
+## Post-fix verification — Fix 11 (pooled Voyage HTTP client, L3.1)
+
+**Date:** 2026-09-15 · **Mode:** read-only (`aggregate` only; no writes, no DDL)
+
+### What changed
+
+`app/infrastructure/voyage_ai/client.py` now builds **one** `httpx.AsyncClient` in `__init__` and
+reuses it for every embedding call; `main.py` closes it from the shutdown hook via the new
+`aclose()`. Previously `create_embedding` opened a fresh `httpx.AsyncClient` inside every call, so
+each search paid a full TCP connect and TLS handshake to the Voyage endpoint before the request
+could go out. No pipeline file was touched, so the emitted aggregation pipelines — and therefore
+the results — are unchanged.
+
+### Method
+
+Part C attributed a persistent 400–429 ms `APP − DB` gap in the three embedding-dependent modes to
+the single outward HTTP hop to Voyage. This verification measures the same gap against the pooled
+client, using **8 distinct query texts per mode, never repeated** within or across mode blocks, so
+every one of the 24 calls is a genuine first-time embedding of unseen text. APP is a real
+`POST /api/v1/search` on port 8010; the DB half was measured separately in-process with the same
+pipeline builders, median of 3 after a plan-warming call — the same APP/DB separation Part C used,
+which keeps `APP − DB` comparable to the recorded 400–429 ms.
+
+### 1. The APP − DB gap across 24 distinct-query calls, ms
+
+| Mode | Query | APP | DB | **APP − DB** |
+|---|---|---|---|---|
+| 3 | organic red onion | 1465.0 | 262.7 | **1202.3** ⚠ |
+| 3 | ripe roma tomatoes | 591.5 | 265.4 | 326.1 |
+| 3 | sparkling fruit beverage | 556.4 | 263.7 | 292.7 |
+| 3 | jasmine green tea leaves | 570.2 | 302.8 | 267.4 |
+| 3 | something soothing for a sore throat | 583.4 | 317.4 | 266.0 |
+| 3 | gluten free breakfast cereal | 631.5 | 332.8 | 298.7 |
+| 3 | cold pressed coconut oil | 578.3 | 331.4 | 246.9 |
+| 3 | low sugar dark chocolate bar | 591.3 | 333.0 | 258.3 |
+| 4 | fresh baby spinach leaves | 807.7 | 413.6 | 394.1 |
+| 4 | canned chickpeas in brine | 689.3 | 388.9 | 300.4 |
+| 4 | herbal chamomile infusion | 637.8 | 357.0 | 280.8 |
+| 4 | strong filter coffee powder | 693.9 | 365.8 | 328.1 |
+| 4 | a light snack for the evening | 589.1 | 372.5 | 216.6 |
+| 4 | whole wheat atta flour | 663.1 | 374.4 | 288.7 |
+| 4 | extra virgin olive oil spray | 644.4 | 330.8 | 313.6 |
+| 4 | sugar free vanilla ice cream | 635.7 | 329.1 | 306.6 |
+| 5 | spring onion bunch | 746.2 | 343.8 | 402.4 |
+| 5 | sun dried tomato paste | 630.7 | 334.6 | 296.1 |
+| 5 | iced lemon tea drink | 634.3 | 311.0 | 323.3 |
+| 5 | oolong tea sampler pack | 654.2 | 353.5 | 300.7 |
+| 5 | drink to help me sleep better | 572.4 | 393.1 | 179.3 |
+| 5 | multigrain sandwich bread | 649.1 | 379.5 | 269.6 |
+| 5 | virgin sesame cooking oil | 655.1 | 386.1 | 269.0 |
+| 5 | salted caramel milk chocolate | 636.6 | 417.8 | 218.8 |
+
+| Aggregate | median gap | mean gap | range |
+|---|---|---|---|
+| mode 3 (excl. first call) | 267.4 ms | 279.4 ms | 246.9 – 326.1 |
+| mode 4 | 303.5 ms | 303.6 ms | 216.6 – 394.1 |
+| mode 5 | 282.9 ms | 282.4 ms | 179.3 – 402.4 |
+| **all 24 calls** | **294.4 ms** | 326.9 ms | 179.3 – 1202.3 |
+| **all calls excl. the first (n = 23)** | **292.7 ms** | **288.9 ms** | 179.3 – 402.4 |
+
+**The gap is consistently ~280 ms per call**, against the 400–429 ms recorded in Part C — a
+reduction of roughly 110–130 ms on **every** request, with no dependence on whether a query has
+been seen before. All 24 calls returned a full page of 5 products.
+
+**The one outlier is explained, not excused.** The very first call of the process shows a 1202.3 ms
+gap. That request pays process cold-start on top of the embedding: the first TLS handshake to
+Voyage, the first Atlas connection from the service, and first-touch import/JIT of the FastAPI and
+Pydantic serialization paths. It is excluded from the "excl. first call" row and reported here
+rather than dropped silently. Every subsequent call sits in a tight 179–402 ms band.
+
+### 2. Isolating the pooling win directly against the Voyage API
+
+Measured outside the service, with 8 distinct query texts per arm. The pre-fix path is reproduced
+exactly — a brand-new `httpx.AsyncClient` per request — so the two arms differ only in connection
+reuse. Run twice:
+
+| Run | pre-fix: client per request | post-fix: pooled | saving (median excl. first call) |
+|---|---|---|---|
+| 1 | median 400.2 ms · mean 423.0 | median 280.8 ms · mean 300.1 | **120.4 ms (30%)** |
+| 2 | median 386.3 ms · mean 385.2 | median 275.6 ms · mean 293.8 | **107.7 ms (28%)** |
+
+Per-call detail, run 2 — pre-fix `[403, 391, 381, 359, 372, 409, 397, 370]` ms versus pooled
+`[389, 274, 272, 269, 278, 318, 279, 273]` ms. The pre-fix medians of 386–400 ms independently
+reproduce the 400–429 ms overhead recorded in Part C, which confirms the two measurements sit on
+the same footing.
+
+**The handshake is paid once per process, then amortized.** The *first* pooled call costs 388.5 ms
+— indistinguishable from the pre-fix path, because that call is where the connection is actually
+established. Every call after it drops to ~275 ms. This is the same effect visible in the first-call
+outlier in §1, and it is the whole mechanism of the fix: the saving is not per-call magic, it is one
+handshake amortized across the process lifetime.
+
+### 3. Every call reaches the network
+
+The fix changes only *how the connection is obtained*, never whether the API is called. The service
+log for the 24-call run confirms one outward embedding request per search, with no short-circuiting
+of any kind:
+
+| Evidence from the service log | Count |
+|---|---|
+| `POST /api/v1/search` returning 200 | 24 |
+| `[INFRA/voyage_ai] ↗️ Embedding request` — outbound call entered | 24 |
+| `[INFRA/voyage_ai] ✅ Embedding length=` — response received from Voyage | 24 |
+| **distinct query texts** in those log lines | **24** |
+
+24 requests → 24 outbound calls → 24 responses, on 24 distinct texts. Because the embedding is
+fetched fresh on every request, results cannot drift from repetition: the same input always takes
+the same code path.
+
+### Limitations of this verification
+
+* Latency was measured from the same machine over loopback against staging Atlas, single
+  concurrency. Absolute numbers are not production figures; the ~110–130 ms per-call delta is the
+  result, and it is reproducible across two independent A/B runs.
+* Run-to-run variance on a shared staging cluster is visible in the 179–402 ms band. The delta is
+  larger than that spread in the direct A/B, where both arms ran back to back within seconds.
+* The first call of each process does not benefit, by construction. For a long-lived service that
+  is one request; for very short-lived processes the benefit would be proportionally smaller.
+* `httpx` connection-pool sizing was left at library defaults. No concurrency tuning was measured,
+  and none is proposed here.

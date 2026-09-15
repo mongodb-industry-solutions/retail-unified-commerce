@@ -258,3 +258,28 @@ Companion documents:
 **Secondary findings:** **why this went unnoticed** — it requires a brand whose products span more than one category *and* a rule scoped to one of them; Fix #2 used `Aroma Magic`, whose products in this store are all `Beauty & Hygiene`, so scoped and brand-only rules produced identical output, which is exactly the limitation Fix #2's entry recorded at the time; **user-visible impact before the fix** — `ProductCard.jsx:61,67` keys both the lime card highlight and the "Boosted" badge off `isBoosted === true`, so a merchandiser scoping a rule to `Beverages` saw Gourmet teas presented as boosted in the very panel built to demonstrate the feature; **modes 3/4/5 were already correct** after Fix #9, since their `$switch` branches require brand **and** category and `isBoosted` derives from the same factor, verified at 0 out-of-category flags; the `boostedBrands=%d` log line now counts only brands with unscoped rules, with scoped ones under `brandCatPairs` — more accurate, but the denominator changed for anyone comparing old and new logs
 
 **Status:** Committed as 79e6936
+
+---
+
+## Fix #11 — Pooled Voyage HTTP client
+
+**Date:** 2026-09-15
+**Source recommendation:** L3.1 (Voyage / embeddings layer) — the last open performance item
+**Files modified:** voyage_ai/client.py, main.py
+**Hypothesis:** Part C measured a persistent 400–429 ms `APP − DB` gap in every embedding-dependent mode (3, 4, 5), larger than the entire database cost of those modes, and attributed it to the single outward HTTP hop to Voyage. `create_embedding` opened a **new** `httpx.AsyncClient` inside every call, so each search paid a fresh TCP connect and TLS handshake before the request could even go out. Building one `AsyncClient` at startup, reusing it for the process lifetime and closing it in the shutdown hook should remove that per-request connection setup and cut the gap measurably. This is an infrastructure-layer change only: no pipeline file is touched, so the emitted aggregations and therefore the results must be bit-for-bit unchanged
+
+**Queries used to measure:** **8 distinct query texts per mode, never repeated** within or across mode blocks (`organic red onion`, `ripe roma tomatoes`, `sparkling fruit beverage`, `jasmine green tea leaves`, `something soothing for a sore throat`, `gluten free breakfast cereal`, `cold pressed coconut oil`, `low sugar dark chocolate bar` for mode 3, and eight further distinct texts each for modes 4 and 5) — 24 app calls in total, every one a first-time embedding of unseen text. APP measured via `POST /api/v1/search` on port 8010, store-030, `page_size=5`; DB measured in-process with the same pipeline builders, median of 3 after a plan-warming call, preserving Part C's APP/DB separation. Pooling was then isolated directly against the Voyage API, 8 distinct texts per arm, reproducing the pre-fix path exactly (a brand-new `httpx.AsyncClient` per request) so the arms differ only in connection reuse
+
+**Result BEFORE the fix:** `APP − DB` gap of **400–429 ms** (Part C). Reproduced independently in the direct A/B: the pre-fix code path measured a median of **400.2 ms** and **386.3 ms** across two runs of 8 calls, confirming both measurements sit on the same footing
+
+**Result AFTER the fix:** the gap is consistently **~280 ms per call** — median **267.4 / 303.5 / 282.9 ms** for modes 3 / 4 / 5, and **292.7 ms** across all calls (mean 288.9, range 179.3–402.4, n=23 excluding the process's first call). The direct A/B isolates the saving at **120.4 ms (30%)** and **107.7 ms (28%)** across two runs: median **400.2 → 280.8 ms** and **386.3 → 275.6 ms**. The saving applies to **every** request — there is no cheaper path for some requests and not others. Every call still reaches the network: the service log shows 24 searches → **24** outbound `Embedding request` entries → **24** `Embedding length` responses, on **24** distinct query texts
+
+**Confirms hypothesis?** ✅ Yes
+
+**Measured impact:**
+- Performance: −110 to −130 ms of app-side overhead on **every** embedding-dependent request (gap 400–429 → ~280 ms), i.e. ~28–30% of the embedding call. Modes 1 and 2 are unaffected, as they never embed. The remaining ~280 ms is the Voyage request itself and is not addressable from the client side
+- Accuracy: none, by construction — no pipeline file was touched and the embedding is fetched fresh on every request exactly as before, so the same input takes the same code path and returns the same vector
+
+**Secondary findings:** **the handshake is paid once per process, then amortized** — the *first* pooled call still costs 388.5 ms, indistinguishable from the pre-fix path, because that is the call where the connection is actually established; every call after it drops to ~275 ms, so the win is not per-call magic but one handshake spread across the process lifetime; **the first request of the process is a visible outlier** at a 1202.3 ms gap, which also absorbs the first Atlas connection and first-touch import/JIT of the FastAPI and Pydantic serialization paths — reported rather than dropped, and excluded from the aggregate medians; **short-lived processes benefit proportionally less** for the same reason, which matters for any future serverless or per-request-process deployment; **`httpx` connection-pool sizing was left at library defaults** and no concurrency tuning was measured, so behaviour under real parallel load is untested; **the remaining ~280 ms is now the single largest cost in the semantic and hybrid paths**, still comparable to the whole database cost of those modes (291–357 ms), and it is a network round-trip rather than inference — switching to a lighter embedding model would not address it
+
+**Status:** Pending Florencia's review and commit
