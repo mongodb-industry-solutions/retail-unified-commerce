@@ -66,11 +66,14 @@ def _brand_amp_should_clauses(
         if not brand:
             continue
 
-        if brand not in boosted_brands:
-            boosted_brands.append(brand)
-
         if not categories:
-            # Brand-only boost
+            # Brand-only boost: the whole brand is amplified, so the flag may match
+            # on brand alone. Scoped rules are tracked in brand_cat_pairs instead —
+            # adding the brand here as well would flag out-of-category documents that
+            # the `should` clause below never actually boosted.
+            if brand not in boosted_brands:
+                boosted_brands.append(brand)
+
             clauses.append({
                 "text": {
                     "path": "brand",
