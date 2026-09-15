@@ -108,7 +108,7 @@ Companion documents:
 
 **Secondary findings:** the boost decision effectively governs only modes 2 and 4 — mode 5 returned the identical top 5 in identical order at all three values for Q5, because `$scoreFusion`'s sigmoid normalization compresses the text arm's contribution (same saturation seen in Fix #1), which is further argument for L2.5; the Q5 mode-4 latency regression is a measured consequence of the hybrid candidate-limit asymmetry documented as L2.6, which was P1 on the strength of a timing difference and is now a 1.7-second regression on a real query — **L2.6 should be promoted to P0 and fixed before the boost value is finalized**, since capping the text arm will change mode 4's fused ranking and therefore its optimal boost; Q2's five-way tie at exactly `1.0` in mode 2 survives untouched, confirming it is a window-max normalization artefact (L2.5) rather than a field-coverage problem; recall is a property of the index mapping and not the boost, so lowering the boost costs no coverage
 
-**Status:** Index mapping is LIVE in Atlas (applied manually, verified READY and queryable) and `docs/setup/indexes/search-index.json` is updated but uncommitted — pending Florencia's review and commit. **The boost value decision is deferred to a separate Fix #5**: recommended 0.6, currently 1.8 in the committed code. Boost values 1.0 and 0.6 existed only as temporary local edits during the sweep and were reverted; the three pipeline files were verified byte-identical to their pre-sweep blob hashes
+**Status:** Committed as bf2fb56 (index mapping doc)
 
 ---
 ## Fix #5 — Hybrid candidate-limit symmetry
@@ -132,7 +132,7 @@ Companion documents:
 
 **Secondary findings:** the Fix #4 caveat that "the L2.6 fix will invalidate part of this" proved **unfounded** — the false-positive pattern is entirely boost-driven, not candidate-pool-driven, and Q3 mode 4 returns the same four drinking vessels at boost 1.8 whether capped or uncapped, with the same clean results at 1.0 and 0.6; **0.6 remains the recommendation and gained a third supporting query** — Q4 mode 4, only covered at 1.8 in the original sweep, has `Green Tea Mugs` at rank 4 at boost 1.8 and gone from the top 5 at both 1.0 and 0.6; `FUSION_ARM_LIMIT = 200` and `VECTOR_NUM_CANDIDATES = 500` replace inline literals so mode 4's fusion depth is now one named knob, though mode 5 still carries its own inline `$limit: 200` — unifying them across files would require `utils.py` or a cross-module import, outside this fix's one-file scope; mode 4 and mode 5 `total_results` now agree but remain candidate counts rather than match counts, so L2.4 is still open — they are at least the same kind of wrong in both modes now
 
-**Status:** Pending Florencia's review and commit. **Note on numbering:** the `aboutTheProduct` boost value decision, referred to as Fix #5 in the Fix #4 entry, becomes **Fix #6** — this fix landed first. Recommended value 0.6; committed code still carries 1.8
+**Status:** Committed as 40ddc63 — note on numbering: the `aboutTheProduct` boost-value decision, referred to as "a separate Fix #5" in the Fix #4 entry above, became **Fix #6**, because this fix landed first
 
 ---
 ## Fix #6 — aboutTheProduct boost set to 0.6
@@ -156,4 +156,4 @@ Companion documents:
 
 **Secondary findings:** **one residual false positive survives** — Q4 mode 5 still returns `Green Tea Mugs - Multicolour` at rank 2 at boost 0.6, where modes 2 and 4 have no mug at all. `$scoreFusion`'s sigmoid normalization compresses its top 5 into a ~6e-4 band (0.848689 → 0.848095), so no boost value can reorder it; the fix is rec **L2.5** (single score normalization contract), not a different boost. Recorded so the Layer 1 / Layer 2 P0 work is not mistaken for having cleared every description-driven false positive. The clause ladder is now `productName` 3.0 ≫ `brand` 1.2 > `category` 1.1 > `subCategory` 1.0 > **`aboutTheProduct` 0.6**, making the description a corroborating signal — which per the embedding-source investigation is the only place description content influences ranking at all, since the stored vectors substantially under-represent it
 
-**Status:** Pending Florencia's review and commit
+**Status:** Committed as 5d9157d
