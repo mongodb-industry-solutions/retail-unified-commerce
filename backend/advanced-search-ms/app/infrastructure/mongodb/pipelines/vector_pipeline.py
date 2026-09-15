@@ -12,6 +12,16 @@ Flow
 3) Normalize a single final `score` in [0..1].
 4) Sort by `score` and paginate with `$facet`.
 
+`total_results` semantics
+-------------------------
+The `$facet` count branch counts what reaches it, which for a kNN pipeline is the
+retrieval depth rather than a match count: Atlas Vector Search has no discrete
+match-count concept comparable to a b-tree COUNT, because every filtered document
+has *some* similarity to the query vector. `total_results` therefore reports
+`VECTOR_RETRIEVAL_DEPTH` (or fewer, when the store holds fewer documents), which is
+exactly the number of results a client can page through. Modes 1 and 2 report a
+true match count; modes 3, 4 and 5 report retrieval depth. See rec L2.4.
+
 Response shape
 --------------
 Only a single `score` is projected (normalized). Internal fields used for
@@ -41,6 +51,14 @@ def _norm_field(field: str) -> Dict[str, Any]:
     matched nothing. Compare both sides in the same normalized form instead.
     """
     return {"$toLower": {"$trim": {"input": {"$ifNull": [field, ""]}}}}
+
+# Retrieval depth for `$vectorSearch`, fixed and independent of `page_size`.
+# Matches FUSION_ARM_LIMIT in the two hybrid builders so all three semantic modes
+# retrieve the same depth. Deliberately NOT derived from `page_size`: mode 3 reports
+# this value as `total_results` (kNN has no match count), so deriving it from page
+# size would make the user-visible result count move when the page-size control
+# changes — the frontend renders it as "1 - N of <total> items". See rec L2.4.
+VECTOR_RETRIEVAL_DEPTH = 200
 
 # Abstract boost levels → additive factors (applied multiplicatively)
 # adjustedScore = originalScore * (1 + factor)
@@ -135,8 +153,9 @@ def build_vector_pipeline(
         `knn_limit`, otherwise the graph search returns no more than it retrieves and
         recall degrades (the previous 200/200 default was exactly that degenerate case).
     knn_limit : int | None
-        How many neighbours `$vectorSearch` returns. Defaults to `max(50, limit * 2)`
-        so it tracks the requested page size instead of a second hard-coded constant.
+        How many neighbours `$vectorSearch` returns. Defaults to
+        `VECTOR_RETRIEVAL_DEPTH` (200), fixed and independent of `page_size`, because
+        this value is what mode 3 reports as `total_results`.
     projection_fields : dict | None
     brand_amplification : list[dict] | None  # [{ name, boostLevel(1..3), categories?: string[] }]
     """
@@ -148,10 +167,10 @@ def build_vector_pipeline(
     if skip < 0 or limit <= 0:
         raise ValueError("'skip' must be ≥ 0 and 'limit' must be > 0")
 
-    # Retrieval depth follows the requested page size; over-fetch the ANN candidate pool
-    # so HNSW explores meaningfully more than it returns.
+    # Fixed retrieval depth (see VECTOR_RETRIEVAL_DEPTH); over-fetch the ANN candidate
+    # pool so HNSW explores meaningfully more than it returns.
     if knn_limit is None:
-        knn_limit = max(50, limit * 2)
+        knn_limit = VECTOR_RETRIEVAL_DEPTH
     num_candidates = max(num_candidates, knn_limit)
 
     # Prepare brand-amp branches and log counters

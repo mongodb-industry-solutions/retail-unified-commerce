@@ -17,6 +17,14 @@ Build a hybrid search pipeline that:
    product fields, store-filtered inventory, final `score`, and `isBoosted`,
    plus a total count via `$facet`.
 
+`total_results` semantics
+-------------------------
+The `$facet` count branch counts the fused candidate window (both arms are capped at
+`FUSION_ARM_LIMIT`), not a match count: the vector arm has no discrete match count,
+so the union cannot have one either. `total_results` therefore reports the number of
+results a client can actually page through. Modes 1 and 2 report a true match count;
+modes 3, 4 and 5 report retrieval depth. See rec L2.4.
+
 Normalization (what it means here)
 ----------------------------------
 We default to `input.normalization: "minMaxScaler"` **inside** `$scoreFusion`, which
