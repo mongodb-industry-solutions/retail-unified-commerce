@@ -11,19 +11,41 @@ Build a hybrid search pipeline that:
 2) Combines results with `$scoreFusion` using a **weighted score expression**:
       fused = (w_text * text_score) + (w_vector * vector_score)
    where each input pipeline’s score is **normalized first** (see below).
-3) Applies Brand Amplification *after fusion* by multiplying the fused score by
-   (1 + boostFactor) based on brand (and optionally category) rules.
+3) Applies Brand Amplification *after fusion* as a **rank-space reorder** (see
+   `utils.amplification_stages`): a boosted document at pre-boost rank r moves to
+   `ceil(r / F)`, F = 4 / 10 / 25 for low / medium / high. The score is never
+   multiplied by the boost — amplification changes order, not numbers.
 4) Sorts by the post-boost score and returns a clean projection:
    product fields, store-filtered inventory, final `score`, and `isBoosted`,
    plus a total count via `$facet`.
 
+`total_results` semantics
+-------------------------
+The `$facet` count branch counts the fused candidate window (both arms are capped at
+`FUSION_ARM_LIMIT`), not a match count: the vector arm has no discrete match count,
+so the union cannot have one either. `total_results` therefore reports the number of
+results a client can actually page through. Modes 1 and 2 report a true match count;
+modes 3, 4 and 5 report retrieval depth. See rec L2.4.
+
 Normalization (what it means here)
 ----------------------------------
-We default to `input.normalization: "sigmoid"` **inside** `$scoreFusion`.
-This rescales each pipeline’s raw scores to the range [0, 1] *before* combining:
-• Makes text and vector scores **comparable** (they do not share a native scale).
-• Dampens outliers (common in vector similarity), improving stability.
-• Keeps the fusion monotonic: higher raw score → higher normalized score.
+We default to `input.normalization: "minMaxScaler"` **inside** `$scoreFusion`, which
+rescales each arm against its own observed min and max before the weighted sum.
+
+This replaced `"sigmoid"`, which was measured to break the fusion outright. Raw
+Lucene scores in this catalogue run ~9-12, and `sigmoid(10) ~ 0.99995`, so every
+text candidate normalized to approximately 1.0: the text arm contributed a near
+constant to every document and stopped discriminating at all. Mode 5 therefore
+degenerated into a copy of mode 3 — its top 5 matched the pure vector arm 5/5 in
+identical order, inheriting vector-only artefacts such as `Green Tea Mugs` ranking
+second for the query "green tea".
+
+`"none"` is the mirror failure: unnormalized Lucene scores (~9.76) dwarf cosine
+similarity (~1.0), so the vector arm stops contributing instead. `minMaxScaler`
+keeps both arms on a comparable scale while preserving their internal spread, so
+the weights actually blend two signals. It is window-dependent by nature — the
+min and max come from the candidate set — so scores shift slightly if that set
+changes.
 
 Why this design
 ---------------
@@ -39,72 +61,14 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+from app.infrastructure.mongodb.utils import (
+    PRODUCT_FIELDS,
+    amplification_stages,
+    max_normalize_stages,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-# Multiplicative factors per amplification level (applied post-fusion).
-BOOST_MAP: Dict[int, float] = {1: 0.05, 2: 0.10, 3: 0.15}
-
-
-def _brand_amp_switch_branches(
-    specs: Optional[Sequence[Dict[str, Any]]]
-) -> Dict[str, Any]:
-    """
-    Build `$switch.branches` for brand/category amplification and return
-    helper lists for observability.
-
-    Each spec:
-      {
-        "name": "Brand X",
-        "boostLevel": 2,             # -> 0.10
-        "categories": ["Skincare"]   # optional; empty => brand-wide
-      }
-    """
-    if not specs:
-        return {"branches": [], "boostedBrands": [], "brandCategoryPairs": []}
-
-    branches: List[Dict[str, Any]] = []
-    boosted_brands: List[str] = []
-    brand_cat_pairs: List[str] = []
-
-    for spec in specs:
-        brand = (spec.get("name") or "").strip()
-        level = int(spec.get("boostLevel", 0))
-        factor = float(BOOST_MAP.get(level, 0.0))
-
-        categories = [
-            c.strip()
-            for c in (spec.get("categories") or [])
-            if isinstance(c, str) and c.strip()
-        ]
-        if not brand or factor <= 0.0:
-            continue
-
-        if brand not in boosted_brands:
-            boosted_brands.append(brand)
-
-        # Brand-wide rule
-        if not categories:
-            branches.append({"case": {"$eq": ["$brand", brand]}, "then": factor})
-        else:
-            # Brand + category-specific rules
-            for cat in categories:
-                brand_cat_pairs.append(f"{brand}::{cat}")
-                branches.append({
-                    "case": {"$and": [
-                        {"$eq": ["$brand", brand]},
-                        {"$eq": ["$category", cat]},
-                    ]},
-                    "then": factor,
-                })
-
-    return {
-        "branches": branches,
-        "boostedBrands": boosted_brands,
-        "brandCategoryPairs": brand_cat_pairs,
-    }
 
 
 def build_hybrid_score_fusion_pipeline(
@@ -120,7 +84,7 @@ def build_hybrid_score_fusion_pipeline(
     skip: int,
     limit: int,
     projection_fields: Optional[Dict[str, int]] = None,
-    normalization: str = "sigmoid",  # default: make text/vector scores comparable inside $scoreFusion
+    normalization: str = "minMaxScaler",  # see the Normalization note in the module docstring
 ) -> List[Dict[str, Any]]:
     """
     Build a hybrid pipeline using `$scoreFusion` and *post-fusion* Brand Amplification.
@@ -130,8 +94,9 @@ def build_hybrid_score_fusion_pipeline(
 
     Notes
     -----
-    • We **don’t** apply any final normalization after Brand Amplification:
-      the returned `score` is the post-boost fused score.
+    • The fused score is max-normalized for the response via
+      `utils.max_normalize_stages`, so `score` means the same thing in every mode,
+      and Brand Amplification never alters it.
     • `$scoreFusion`’s `input.normalization` runs **per input pipeline** *before*
       the combination expression, so weights operate on comparable scales.
     """
@@ -142,23 +107,24 @@ def build_hybrid_score_fusion_pipeline(
         raise ValueError("store_object_id must be a valid ObjectId") from exc
 
     # Non-negative weights for fusion.
-    w_vec = max(0.0, float(weights.get("vectorPipeline") or 1.0))
-    w_txt = max(0.0, float(weights.get("textPipeline") or 1.0))
+    # An explicit 0.0 means "zero weight" and must survive; only a missing/None
+    # weight falls back to 1.0 (`or` would coerce 0.0 to the default).
+    def _weight(key: str) -> float:
+        raw = weights.get(key)
+        return 1.0 if raw is None else max(0.0, float(raw))
 
-    # Validate normalization choice (fallback to "sigmoid" if invalid/empty)
-    norm = (normalization or "sigmoid").strip()
+    w_vec = _weight("vectorPipeline")
+    w_txt = _weight("textPipeline")
+
+    # Validate normalization choice (fallback to "minMaxScaler" if invalid/empty)
+    norm = (normalization or "minMaxScaler").strip()
     if norm not in ("none", "sigmoid", "minMaxScaler"):
-        norm = "sigmoid"
-
-    amp = _brand_amp_switch_branches(brand_amplification)
-    branches = amp["branches"]
-    boosted_brands = amp["boostedBrands"]
-    brand_cat_pairs = amp["brandCategoryPairs"]
+        norm = "minMaxScaler"
 
     base_proj = dict(projection_fields or PRODUCT_FIELDS)
 
     logger.info(
-        "[HYBRID/scoreFusion] store=%s | skip=%d | limit=%d | w_text=%.3f | w_vec=%.3f | normalization=%s | brandAmpRules=%d (post-fusion multiply)",
+        "[HYBRID/scoreFusion] store=%s | skip=%d | limit=%d | w_text=%.3f | w_vec=%.3f | normalization=%s | brandAmpRules=%d (rank-space reorder)",
         store_oid, skip, limit, w_txt, w_vec, norm, len(brand_amplification or []),
     )
 
@@ -180,7 +146,7 @@ def build_hybrid_score_fusion_pipeline(
                                               "fuzzy": {"maxEdits": 2},
                                               "score": {"boost": {"value": 3.0}}}},
                                     {"text": {"query": query, "path": "aboutTheProduct",
-                                              "score": {"boost": {"value": 1.8}}}},
+                                              "score": {"boost": {"value": 0.6}}}},
                                     {"text": {"query": query, "path": "brand",
                                               "score": {"boost": {"value": 1.2}}}},
                                     {"text": {"query": query, "path": "category",
@@ -241,22 +207,12 @@ def build_hybrid_score_fusion_pipeline(
         {"$set": {"fusionScore": {"$meta": "score"}}},
     ]
 
-    # --- Post-fusion Brand Amplification (multiplicative) ---
-    if branches:
-        pipeline.append({"$set": {"boostFactor": {"$switch": {"branches": branches, "default": 0}}}})
-    else:
-        pipeline.append({"$set": {"boostFactor": 0}})
-
     pipeline += [
-        {
-            "$set": {
-                # Multiply by (1 + boostFactor) so that non-boosted docs remain unchanged
-                # (boostFactor=0 => multiplier=1); boosted docs get a proportional lift.
-                "boostedScore": {"$multiply": ["$fusionScore", {"$add": [1, "$boostFactor"]}]},
-                "isBoosted": {"$gt": ["$boostFactor", 0]},
-            }
-        },
-        {"$sort": {"boostedScore": -1, "_id": 1}},
+        # Score contract: the fused engine score, max-normalized. Never multiplied by
+        # amplification — see utils.amplification_stages.
+        *max_normalize_stages("fusionScore"),
+        # Brand Amplification as a rank-space reorder.
+        *amplification_stages(brand_amplification),
     ]
 
     # --- Projection (stable API shape) ---
@@ -270,12 +226,12 @@ def build_hybrid_score_fusion_pipeline(
                 "cond": {"$eq": ["$$inv.storeObjectId", store_oid]},
             }
         },
-        "score": {"$round": ["$boostedScore", 6]},
+        "score": {"$round": ["$score", 6]},
         "isBoosted": 1,
     }
 
     pipeline += [
-        {"$unset": ["fusionScore", "boostFactor"]},
+        {"$unset": ["fusionScore"]},
         {"$facet": {
             "docs": [
                 {"$project": docs_projection},
@@ -290,7 +246,7 @@ def build_hybrid_score_fusion_pipeline(
     ]
 
     logger.info(
-        "[HYBRID/scoreFusion] built | stages=%d | boostedBrands=%d | brandCatPairs=%d | normalization=%s | post-fusion multiply boosting enabled",
-        len(pipeline), len(boosted_brands), len(brand_cat_pairs), norm,
+        "[HYBRID/scoreFusion] built | stages=%d | brandAmpRules=%d (rank-space reorder) | normalization=%s",
+        len(pipeline), len(brand_amplification or []), norm,
     )
     return pipeline

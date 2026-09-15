@@ -2,6 +2,9 @@
     "mappings": {
       "dynamic": false,
       "fields": {
+        "aboutTheProduct": {
+          "type": "string"
+        },
         "brand": {
           "type": "string"
         },

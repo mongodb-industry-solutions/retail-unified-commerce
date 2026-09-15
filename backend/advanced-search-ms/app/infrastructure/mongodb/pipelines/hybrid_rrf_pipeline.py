@@ -10,11 +10,21 @@ Build a hybrid search pipeline that:
    both scoped to the active store and using business-relevant field boosts.
 2) Fuses both ranked lists using `$rankFusion` (Reciprocal Rank Fusion),
    yielding a single ranking and an RRF score per document.
-3) Applies Brand Amplification *after fusion* by multiplying the RRF score
-   with a factor derived from brand (and optionally category) rules.
+3) Applies Brand Amplification *after fusion* as a **rank-space reorder** (see
+   `utils.amplification_stages`): a boosted document at pre-boost rank r moves to
+   `ceil(r / F)`, F = 4 / 10 / 25 for low / medium / high. The score is never
+   multiplied by the boost — amplification changes order, not numbers.
 4) Sorts by the post-boost score and returns a clean projection:
    product fields, store-filtered inventory, final `score`, and `isBoosted`,
    plus a total count via `$facet`.
+
+`total_results` semantics
+-------------------------
+The `$facet` count branch counts the fused candidate window (both arms are capped at
+`FUSION_ARM_LIMIT`), not a match count: the vector arm has no discrete match count,
+so the union cannot have one either. `total_results` therefore reports the number of
+results a client can actually page through. Modes 1 and 2 report a true match count;
+modes 3, 4 and 5 report retrieval depth. See rec L2.4.
 
 Why this design
 ---------------
@@ -30,72 +40,23 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+from app.infrastructure.mongodb.utils import (
+    PRODUCT_FIELDS,
+    amplification_stages,
+    max_normalize_stages,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# Multiplicative factors per amplification level (applied post-fusion).
-BOOST_MAP: Dict[int, float] = {1: 0.05, 2: 0.10, 3: 0.15}
 
-
-def _brand_amp_switch_branches(
-    specs: Optional[Sequence[Dict[str, Any]]]
-) -> Dict[str, Any]:
-    """
-    Build `$switch.branches` for brand/category amplification and return
-    helper lists for observability.
-
-    Each spec:
-      {
-        "name": "Brand X",
-        "boostLevel": 2,             # -> 0.10
-        "categories": ["Skincare"]   # optional; empty => brand-wide
-      }
-    """
-    if not specs:
-        return {"branches": [], "boostedBrands": [], "brandCategoryPairs": []}
-
-    branches: List[Dict[str, Any]] = []
-    boosted_brands: List[str] = []
-    brand_cat_pairs: List[str] = []
-
-    for spec in specs:
-        brand = (spec.get("name") or "").strip()
-        level = int(spec.get("boostLevel", 0))
-        factor = float(BOOST_MAP.get(level, 0.0))
-
-        categories = [
-            c.strip()
-            for c in (spec.get("categories") or [])
-            if isinstance(c, str) and c.strip()
-        ]
-        if not brand or factor <= 0.0:
-            continue
-
-        if brand not in boosted_brands:
-            boosted_brands.append(brand)
-
-        # Brand-wide rule
-        if not categories:
-            branches.append({"case": {"$eq": ["$brand", brand]}, "then": factor})
-        else:
-            # Brand + category-specific rules
-            for cat in categories:
-                brand_cat_pairs.append(f"{brand}::{cat}")
-                branches.append({
-                    "case": {"$and": [
-                        {"$eq": ["$brand", brand]},
-                        {"$eq": ["$category", cat]},
-                    ]},
-                    "then": factor,
-                })
-
-    return {
-        "branches": branches,
-        "boostedBrands": boosted_brands,
-        "brandCategoryPairs": brand_cat_pairs,
-    }
+# Candidate depth fed into `$rankFusion`, applied identically to BOTH arms.
+# RRF is rank-based: if one arm is uncapped its ranks run far deeper than the
+# other's, so the reciprocal-rank contributions of the two arms are no longer
+# comparable — and a broad query drags the whole fusion stage down with it.
+FUSION_ARM_LIMIT = 200
+# ANN over-fetch for the vector arm; must exceed FUSION_ARM_LIMIT for useful recall.
+VECTOR_NUM_CANDIDATES = 500
 
 
 def build_hybrid_rrf_pipeline(
@@ -123,18 +84,19 @@ def build_hybrid_rrf_pipeline(
         raise ValueError("store_object_id must be a valid ObjectId") from exc
 
     # Non-negative fusion weights used directly by `$rankFusion`.
-    w_vec = max(0.0, float(weights.get("vectorPipeline") or 1.0))
-    w_txt = max(0.0, float(weights.get("textPipeline") or 1.0))
+    # An explicit 0.0 means "zero weight" and must survive; only a missing/None
+    # weight falls back to 1.0 (`or` would coerce 0.0 to the default).
+    def _weight(key: str) -> float:
+        raw = weights.get(key)
+        return 1.0 if raw is None else max(0.0, float(raw))
 
-    amp = _brand_amp_switch_branches(brand_amplification)
-    branches = amp["branches"]
-    boosted_brands = amp["boostedBrands"]
-    brand_cat_pairs = amp["brandCategoryPairs"]
+    w_vec = _weight("vectorPipeline")
+    w_txt = _weight("textPipeline")
 
     base_proj = dict(projection_fields or PRODUCT_FIELDS)
 
     logger.info(
-        "[HYBRID/RRF] store=%s | skip=%d | limit=%d | w_text=%.3f | w_vec=%.3f | brandAmpRules=%d (post-fusion multiply)",
+        "[HYBRID/RRF] store=%s | skip=%d | limit=%d | w_text=%.3f | w_vec=%.3f | brandAmpRules=%d (rank-space reorder)",
         store_oid, skip, limit, w_txt, w_vec, len(brand_amplification or []),
     )
 
@@ -156,7 +118,7 @@ def build_hybrid_rrf_pipeline(
                                               "fuzzy": {"maxEdits": 2},
                                               "score": {"boost": {"value": 3.0}}}},
                                     {"text": {"query": query, "path": "aboutTheProduct",
-                                              "score": {"boost": {"value": 1.8}}}},
+                                              "score": {"boost": {"value": 0.6}}}},
                                     {"text": {"query": query, "path": "brand",
                                               "score": {"boost": {"value": 1.2}}}},
                                     {"text": {"query": query, "path": "category",
@@ -170,7 +132,9 @@ def build_hybrid_rrf_pipeline(
                     ],
                 },
             }
-        }
+        },
+        # Match the vector arm's depth so both ranked lists are the same length.
+        {"$limit": FUSION_ARM_LIMIT},
     ]
 
     # Vector: semantic retrieval; scoped to store.
@@ -180,8 +144,8 @@ def build_hybrid_rrf_pipeline(
                 "index": vector_index,
                 "path": vector_field,
                 "queryVector": embedding,
-                "numCandidates": 500,
-                "limit": 200,
+                "numCandidates": VECTOR_NUM_CANDIDATES,
+                "limit": FUSION_ARM_LIMIT,
                 "filter": {"inventorySummary.storeObjectId": store_oid},
             }
         }
@@ -201,24 +165,12 @@ def build_hybrid_rrf_pipeline(
         {"$set": {"rrfScore": {"$meta": "score"}}},
     ]
 
-    # --- Post-fusion Brand Amplification (multiplicative) ---
-    # Compute a per-document boost factor from brand/category rules.
-    if branches:
-        pipeline.append({"$set": {"boostFactor": {"$switch": {"branches": branches, "default": 0}}}})
-    else:
-        pipeline.append({"$set": {"boostFactor": 0}})
-
     pipeline += [
-        {
-            "$set": {
-                # Multiply by (1 + boostFactor) so that non-boosted docs remain unchanged
-                # (boostFactor=0 => multiplier=1); boosted docs get a proportional lift.
-                "boostedScore": {"$multiply": ["$rrfScore", {"$add": [1, "$boostFactor"]}]},
-                "isBoosted": {"$gt": ["$boostFactor", 0]},
-            }
-        },
-        # Rank by the post-amplification score.
-        {"$sort": {"boostedScore": -1, "_id": 1}},
+        # Score contract: the fused engine score, max-normalized. Never multiplied by
+        # amplification — see utils.amplification_stages.
+        *max_normalize_stages("rrfScore"),
+        # Brand Amplification as a rank-space reorder.
+        *amplification_stages(brand_amplification),
     ]
 
     # --- Projection (stable API shape) ---
@@ -232,13 +184,13 @@ def build_hybrid_rrf_pipeline(
                 "cond": {"$eq": ["$$inv.storeObjectId", store_oid]},
             }
         },
-        "score": {"$round": ["$boostedScore", 6]},
+        "score": {"$round": ["$score", 6]},
         "isBoosted": 1,
     }
 
     pipeline += [
         # Do not expose helper fields in API responses.
-        {"$unset": ["rrfScore", "boostFactor"]},
+        {"$unset": ["rrfScore"]},
         # Pagination + total count
         {"$facet": {
             "docs": [
@@ -254,7 +206,7 @@ def build_hybrid_rrf_pipeline(
     ]
 
     logger.info(
-        "[HYBRID/RRF] built | stages=%d | boostedBrands=%d | brandCatPairs=%d | post-fusion multiply boosting enabled",
-        len(pipeline), len(boosted_brands), len(brand_cat_pairs),
+        "[HYBRID/RRF] built | stages=%d | brandAmpRules=%d (rank-space reorder)",
+        len(pipeline), len(brand_amplification or []),
     )
     return pipeline
