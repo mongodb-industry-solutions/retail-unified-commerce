@@ -214,8 +214,25 @@ class ProductOut(BaseModel):
 
 
 class SearchResponse(BaseModel):
-    total_results: int
-    total_pages: int
+    total_results: int = Field(
+        ...,
+        description=(
+            "Number of results a client can page through.\n"
+            "• Options 1 and 2: the true match count.\n"
+            "• Options 3, 4 and 5: the fixed retrieval depth (200). Atlas Vector Search "
+            "has no discrete match-count concept comparable to a b-tree COUNT — every "
+            "filtered document has some similarity to the query vector — so the honest "
+            "quantity is how many results were retrieved, which is exactly what is "
+            "paginable. Independent of page_size. See rec L2.4."
+        ),
+    )
+    total_pages: int = Field(
+        ...,
+        description=(
+            "ceil(total_results / page_size). Retained for API compatibility; the "
+            "frontend recomputes page count from total_results itself."
+        ),
+    )
     products: List[ProductOut]
     deployment: str = Field(
         ...,

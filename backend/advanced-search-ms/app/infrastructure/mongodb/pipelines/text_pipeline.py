@@ -17,10 +17,22 @@ import logging
 from typing import Any, Dict, List, Optional, Sequence
 
 from bson import ObjectId
-from app.infrastructure.mongodb.utils import PRODUCT_FIELDS
+from app.infrastructure.mongodb.utils import PRODUCT_FIELDS, max_normalize_stages
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+
+def _norm_field(field: str) -> Dict[str, Any]:
+    """
+    Whitespace/case-insensitive form of a document field, used only for
+    Brand Amplification rule matching.
+
+    Catalogue `brand` values are not normalized (38 brands carry stray leading or
+    trailing whitespace), so an exact `$eq` against a trimmed rule name silently
+    matched nothing. Compare both sides in the same normalized form instead.
+    """
+    return {"$toLower": {"$trim": {"input": {"$ifNull": [field, ""]}}}}
 
 # Boost mapping: abstract levels → numeric multipliers
 BOOST_MAP: Dict[int, float] = {
@@ -54,11 +66,14 @@ def _brand_amp_should_clauses(
         if not brand:
             continue
 
-        if brand not in boosted_brands:
-            boosted_brands.append(brand)
-
         if not categories:
-            # Brand-only boost
+            # Brand-only boost: the whole brand is amplified, so the flag may match
+            # on brand alone. Scoped rules are tracked in brand_cat_pairs instead —
+            # adding the brand here as well would flag out-of-category documents that
+            # the `should` clause below never actually boosted.
+            if brand not in boosted_brands:
+                boosted_brands.append(brand)
+
             clauses.append({
                 "text": {
                     "path": "brand",
@@ -143,7 +158,7 @@ def build_text_pipeline(
                         "compound": {
                             "should": [
                                 {"text": {"query": query, "path": "productName", "fuzzy": {"maxEdits": 2}, "score": {"boost": {"value": 3.0}}}},
-                                {"text": {"query": query, "path": "aboutTheProduct", "score": {"boost": {"value": 1.8}}}},
+                                {"text": {"query": query, "path": "aboutTheProduct", "score": {"boost": {"value": 0.6}}}},
                                 {"text": {"query": query, "path": "brand", "score": {"boost": {"value": 1.2}}}},
                                 {"text": {"query": query, "path": "category", "score": {"boost": {"value": 1.1}}}},
                                 {"text": {"query": query, "path": "subCategory", "score": {"boost": {"value": 1.0}}}},
@@ -160,24 +175,8 @@ def build_text_pipeline(
     stages: List[Dict[str, Any]] = [
         search_stage,
         {"$set": {"originalScore": {"$meta": "searchScore"}}},
-        {
-            "$setWindowFields": {
-                "partitionBy": None,
-                "output": {"maxScore": {"$max": "$originalScore"}},
-            }
-        },
-        {
-            "$set": {
-                "score": {
-                    "$cond": [
-                        {"$gt": ["$maxScore", 0]},
-                        {"$divide": ["$originalScore", "$maxScore"]},
-                        0,
-                    ]
-                }
-            }
-        },
-        {"$unset": "maxScore"},
+        # Shared score contract (see utils.max_normalize_stages).
+        *max_normalize_stages("originalScore"),
         {"$sort": {"originalScore": -1, "_id": 1}},
     ]
 
@@ -196,10 +195,16 @@ def build_text_pipeline(
     if log_score_details:
         docs_projection["originalScore"] = {"$round": ["$originalScore", 6]}
 
+    # Compare in normalized form on both sides: the `should` clauses above match via the
+    # analyzed `text` operator (which already tolerates the catalogue's stray whitespace),
+    # so an exact `$in` here reported isBoosted=false for documents it had in fact boosted.
     docs_projection["isBoosted"] = {
         "$or": [
-            {"$in": ["$brand", boosted_brands]},
-            {"$in": [{"$concat": ["$brand", "::", {"$ifNull": ["$category", ""]}]}, brand_cat_pairs]},
+            {"$in": [_norm_field("$brand"), [b.strip().lower() for b in boosted_brands]]},
+            {"$in": [
+                {"$concat": [_norm_field("$brand"), "::", _norm_field("$category")]},
+                [p.strip().lower() for p in brand_cat_pairs],
+            ]},
         ]
     }
 
